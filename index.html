@@ -1365,10 +1365,13 @@
       .layout-2-colunas {
         column-gap: 30px;
       }
+
       .layout-3-colunas {
-        column-count: 2 !important; /* Em tablet, 3 colunas ficam muito espremidas, rebaixamos para 2 */
+        column-count: 2 !important;
+        /* Em tablet, 3 colunas ficam muito espremidas, rebaixamos para 2 */
         column-gap: 30px;
       }
+
       #render-cifra {
         padding: 24px;
         word-break: break-word;
@@ -1450,13 +1453,10 @@
               ">
             <input id="acervo-busca" placeholder="Buscar por título, autor, momento ou trecho da letra..."
               oninput="filtrarAcervo()" style="width: 280px" />
-            <button class="btn btn-secondary" onclick="
-                  alert(
-                    'A função de filtros avançados por categorias será implementada em breve!',
-                  )
-                ">
-              Filtros
-              <i class="fa-solid fa-filter" style="margin-left: 8px; color: var(--text-muted)"></i>
+            <button type="button" class="btn btn-secondary"
+              onclick="document.getElementById('acervo-busca').value = ''; filtrarAcervo();" title="Limpar busca">
+              Limpar
+              <i class="fa-solid fa-eraser" style="margin-left: 8px; color: var(--text-muted)"></i>
             </button>
             <button class="btn btn-primary btn-nova-musica-desktop" onclick="abrirModalCadastroMusica()">
               <i class="fa-solid fa-plus"></i> Nova Música
