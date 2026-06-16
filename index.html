@@ -828,20 +828,23 @@
       box-shadow: var(--card-shadow);
       border: 1px solid var(--border);
       max-width: 100%;
+      width: 100%;
       box-sizing: border-box;
       margin: 0 auto;
       transition: max-width 0.3s ease;
+      word-break: break-word;
+      white-space: pre-wrap;
     }
 
     .layout-2-colunas {
       column-count: 2;
-      column-gap: 80px;
+      column-gap: 60px;
       width: 100%;
     }
 
     .layout-3-colunas {
       column-count: 3;
-      column-gap: 50px;
+      column-gap: 40px;
       width: 100%;
     }
 
@@ -1166,15 +1169,15 @@
       border-color: #334155;
       color: #f8fafc;
     }
-    
+
     body.dark-mode th {
       background-color: #0f172a;
     }
-    
+
     body.dark-mode tr:hover td {
       background-color: #1e293b;
     }
-    
+
     body.dark-mode .dropdown-menu .menu-item:hover {
       background: #1e293b;
     }
@@ -1287,7 +1290,8 @@
         min-width: 0 !important;
       }
 
-      .form-grid, .builder-container {
+      .form-grid,
+      .builder-container {
         grid-template-columns: 1fr !important;
       }
 
@@ -1352,6 +1356,22 @@
         max-width: 300px;
       }
 
+    }
+
+    /* Ajustes específicos para tablet (Portrait e Landscape) para evitar transbordamento */
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .layout-2-colunas {
+        column-gap: 30px;
+      }
+      .layout-3-colunas {
+        column-count: 2 !important; /* Em tablet, 3 colunas ficam muito espremidas, rebaixamos para 2 */
+        column-gap: 30px;
+      }
+      #render-cifra {
+        padding: 24px;
+        word-break: break-word;
+        white-space: pre-wrap;
+      }
     }
   </style>
 </head>
@@ -1500,7 +1520,7 @@
             ">
           <div>
             <h2>Repertórios</h2>
-            <p>Gerencie suas listas de músicas para os eventos.</p>
+            <p>Gerencie seus repertórios de músicas.</p>
           </div>
           <button class="btn btn-primary btn-nova-musica-desktop" onclick="abrirModalCadastroRepertorio()">
             <i class="fa-solid fa-plus"></i> Novo Repertório
@@ -1534,7 +1554,7 @@
             ">
           <div>
             <h2>Dicionário de Acordes</h2>
-            <p>Seus acordes personalizados.</p>
+            <p>Gerencie seus acordes personalizados.</p>
           </div>
           <button class="btn btn-primary btn-nova-musica-desktop" onclick="abrirModalCadastroAcorde()">
             <i class="fa-solid fa-plus"></i> Novo Acorde
@@ -1724,19 +1744,24 @@
         <div class="form-group">
           <label>Data</label><input type="date" id="rep-data" />
         </div>
-        
-        <div class="form-group full-width builder-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+
+        <div class="form-group full-width builder-container"
+          style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
           <!-- Lado Esquerdo: Busca e Acervo -->
           <div class="builder-acervo">
             <label>Adicionar Músicas:</label>
-            <input type="text" id="rep-busca-musica" placeholder="Buscar no acervo..." oninput="filtrarMusicasDisponiveisRepertorio()" style="margin-bottom: 12px; width: 100%; box-sizing: border-box;" />
-            <div class="lista-selecao-musicas" id="lista-disponiveis-repertorio" style="height: 350px; max-height: 350px;">
+            <input type="text" id="rep-busca-musica" placeholder="Buscar no acervo..."
+              oninput="filtrarMusicasDisponiveisRepertorio()"
+              style="margin-bottom: 12px; width: 100%; box-sizing: border-box;" />
+            <div class="lista-selecao-musicas" id="lista-disponiveis-repertorio"
+              style="height: 350px; max-height: 350px;">
             </div>
           </div>
           <!-- Lado Direito: Sequência -->
           <div class="builder-sequencia">
             <label>Sequência do Repertório:</label>
-            <div class="lista-selecao-musicas" id="lista-sequencia-repertorio" style="height: 396px; max-height: 396px; background: var(--bg-color); border: 1px dashed var(--border);">
+            <div class="lista-selecao-musicas" id="lista-sequencia-repertorio"
+              style="height: 396px; max-height: 396px; background: var(--bg-color); border: 1px dashed var(--border);">
             </div>
           </div>
         </div>
@@ -2142,36 +2167,36 @@
     }
 
     function renderizarConstrutorRepertorio() {
-       const divDisp = document.getElementById("lista-disponiveis-repertorio");
-       const divSeq = document.getElementById("lista-sequencia-repertorio");
-       if (!divDisp || !divSeq) return;
+      const divDisp = document.getElementById("lista-disponiveis-repertorio");
+      const divSeq = document.getElementById("lista-sequencia-repertorio");
+      if (!divDisp || !divSeq) return;
 
-       // Render disponíveis
-       const termo = (document.getElementById("rep-busca-musica").value || "").toLowerCase();
-       divDisp.innerHTML = "";
-       acervoGlobal.forEach(m => {
-          if (termo) {
-             const conteudo = `${m.titulo} ${m.autor||""} ${m.conteudo||""}`.toLowerCase();
-             if (!conteudo.includes(termo)) return;
-          }
-          divDisp.innerHTML += `<div class="item-selecao" style="justify-content: space-between;">
+      // Render disponíveis
+      const termo = (document.getElementById("rep-busca-musica").value || "").toLowerCase();
+      divDisp.innerHTML = "";
+      acervoGlobal.forEach(m => {
+        if (termo) {
+          const conteudo = `${m.titulo} ${m.autor || ""} ${m.conteudo || ""}`.toLowerCase();
+          if (!conteudo.includes(termo)) return;
+        }
+        divDisp.innerHTML += `<div class="item-selecao" style="justify-content: space-between;">
              <div style="flex: 1; min-width: 0;">
                 <strong style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;">${m.titulo}</strong>
                 <small style="color:var(--text-muted); display: block;">${m.momento_missa || "Geral"}</small>
              </div>
              <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px; flex-shrink: 0;" onclick="adicionarMusicaRepertorio(${m.id})" title="Adicionar ao Repertório"><i class="fa-solid fa-plus"></i></button>
           </div>`;
-       });
+      });
 
-       // Render sequência
-       divSeq.innerHTML = "";
-       if (musicasRepertorioAtual.length === 0) {
-          divSeq.innerHTML = `<div style="text-align: center; color: var(--text-muted); margin-top: 40px;">Nenhuma música adicionada.<br><small>Use o painel ao lado para adicionar.</small></div>`;
-       } else {
-          musicasRepertorioAtual.forEach((item, index) => {
-             const m = acervoGlobal.find(x => x.id === item.id);
-             if (!m) return;
-             divSeq.innerHTML += `<div class="item-selecao" style="flex-direction: column; align-items: stretch; gap: 8px; background: var(--surface); border: 1px solid var(--border); margin-bottom: 8px; border-radius: 8px;">
+      // Render sequência
+      divSeq.innerHTML = "";
+      if (musicasRepertorioAtual.length === 0) {
+        divSeq.innerHTML = `<div style="text-align: center; color: var(--text-muted); margin-top: 40px;">Nenhuma música adicionada.<br><small>Use o painel ao lado para adicionar.</small></div>`;
+      } else {
+        musicasRepertorioAtual.forEach((item, index) => {
+          const m = acervoGlobal.find(x => x.id === item.id);
+          if (!m) return;
+          divSeq.innerHTML += `<div class="item-selecao" style="flex-direction: column; align-items: stretch; gap: 8px; background: var(--surface); border: 1px solid var(--border); margin-bottom: 8px; border-radius: 8px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
                    <div style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                       <span style="font-weight: bold; color: var(--primary); margin-right: 8px;">${index + 1}.</span> 
@@ -2185,41 +2210,41 @@
                 </div>
                 <input type="text" placeholder="Momento (ex: Entrada)" list="datalist-momentos" value="${item.momento || ""}" onchange="atualizarMomentoRepertorio(${index}, this.value)" style="padding: 6px 10px; font-size: 13px; width: 100%; box-sizing: border-box;" />
              </div>`;
-          });
-       }
+        });
+      }
     }
 
     function filtrarMusicasDisponiveisRepertorio() {
-       renderizarConstrutorRepertorio();
+      renderizarConstrutorRepertorio();
     }
 
     function adicionarMusicaRepertorio(idMusica) {
-       const m = acervoGlobal.find(x => x.id === idMusica);
-       musicasRepertorioAtual.push({ id: idMusica, momento: m ? (m.momento_missa || "") : "" });
-       renderizarConstrutorRepertorio();
-       setTimeout(() => {
-          const divSeq = document.getElementById("lista-sequencia-repertorio");
-          if(divSeq) divSeq.scrollTop = divSeq.scrollHeight;
-       }, 50);
+      const m = acervoGlobal.find(x => x.id === idMusica);
+      musicasRepertorioAtual.push({ id: idMusica, momento: m ? (m.momento_missa || "") : "" });
+      renderizarConstrutorRepertorio();
+      setTimeout(() => {
+        const divSeq = document.getElementById("lista-sequencia-repertorio");
+        if (divSeq) divSeq.scrollTop = divSeq.scrollHeight;
+      }, 50);
     }
 
     function removerMusicaRepertorio(index) {
-       musicasRepertorioAtual.splice(index, 1);
-       renderizarConstrutorRepertorio();
+      musicasRepertorioAtual.splice(index, 1);
+      renderizarConstrutorRepertorio();
     }
 
     function moverMusicaRepertorio(index, direcao) {
-       if (index + direcao < 0 || index + direcao >= musicasRepertorioAtual.length) return;
-       const temp = musicasRepertorioAtual[index];
-       musicasRepertorioAtual[index] = musicasRepertorioAtual[index + direcao];
-       musicasRepertorioAtual[index + direcao] = temp;
-       renderizarConstrutorRepertorio();
+      if (index + direcao < 0 || index + direcao >= musicasRepertorioAtual.length) return;
+      const temp = musicasRepertorioAtual[index];
+      musicasRepertorioAtual[index] = musicasRepertorioAtual[index + direcao];
+      musicasRepertorioAtual[index + direcao] = temp;
+      renderizarConstrutorRepertorio();
     }
 
     function atualizarMomentoRepertorio(index, valor) {
-       if (musicasRepertorioAtual[index]) {
-           musicasRepertorioAtual[index].momento = valor;
-       }
+      if (musicasRepertorioAtual[index]) {
+        musicasRepertorioAtual[index].momento = valor;
+      }
     }
 
     function abrirModalCadastroRepertorio() {
@@ -2231,10 +2256,10 @@
       document.getElementById("rep-data").value = "";
       const inputBusca = document.getElementById("rep-busca-musica");
       if (inputBusca) inputBusca.value = "";
-      
+
       musicasRepertorioAtual = [];
       renderizarConstrutorRepertorio();
-      
+
       document.getElementById("modal-cadastro-repertorio").style.display = "flex";
     }
 
@@ -2253,9 +2278,9 @@
 
       const musicasSalvas = rep.musicas || [];
       musicasRepertorioAtual = musicasSalvas.map(item => {
-         if (typeof item === 'object') return { ...item };
-         const fallbackMomento = acervoGlobal.find(x => x.id === item)?.momento_missa || "";
-         return { id: item, momento: fallbackMomento };
+        if (typeof item === 'object') return { ...item };
+        const fallbackMomento = acervoGlobal.find(x => x.id === item)?.momento_missa || "";
+        return { id: item, momento: fallbackMomento };
       });
 
       renderizarConstrutorRepertorio();
@@ -2266,7 +2291,7 @@
     async function salvarRepertorio() {
       const nome = document.getElementById("rep-nome").value,
         data_evento = document.getElementById("rep-data").value || null;
-      
+
       if (!nome || musicasRepertorioAtual.length === 0)
         return alert("Preencha nome e adicione músicas ao repertório.");
 
@@ -2670,14 +2695,14 @@
       const rep = repertoriosGlobal[indexRepertorio];
       playlistAtual = (rep.musicas || [])
         .map((item) => {
-           let id = typeof item === 'object' ? item.id : item;
-           let originalM = acervoGlobal.find((x) => x.id === id);
-           if (originalM) {
-              let m = { ...originalM };
-              m.momento_repertorio = typeof item === 'object' ? item.momento : (m.momento_missa || "");
-              return m;
-           }
-           return undefined;
+          let id = typeof item === 'object' ? item.id : item;
+          let originalM = acervoGlobal.find((x) => x.id === id);
+          if (originalM) {
+            let m = { ...originalM };
+            m.momento_repertorio = typeof item === 'object' ? item.momento : (m.momento_missa || "");
+            return m;
+          }
+          return undefined;
         })
         .filter((m) => m !== undefined);
       if (playlistAtual.length === 0) return alert("Repertório vazio.");
@@ -2701,7 +2726,7 @@
       semitonsAcumulados = 0;
       let tituloMomento = musicaSelecionada.titulo;
       if (musicaSelecionada.momento_repertorio) {
-         tituloMomento = `<span style="display:block; font-size: 14px; color: var(--text-muted); font-weight: normal; margin-bottom: 2px;">${musicaSelecionada.momento_repertorio}</span>` + tituloMomento;
+        tituloMomento = `<span style="display:block; font-size: 14px; color: var(--text-muted); font-weight: normal; margin-bottom: 2px;">${musicaSelecionada.momento_repertorio}</span>` + tituloMomento;
       }
       document.getElementById("visor-titulo").innerHTML = tituloMomento;
       document.getElementById("contador-repertorio").textContent =
