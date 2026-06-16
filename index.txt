@@ -8,6 +8,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="dicionario_br.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js" referrerpolicy="origin"></script>
 
     <style>
         :root {
@@ -32,7 +34,7 @@
             --fw-bold: 700;
             --fw-xbold: 800;
 
-            --chord-color: #ec4899;
+            --chord-color: #ff6600; /* Laranja estilo cifras */
         }
 
         body {
@@ -222,6 +224,10 @@
             max-width: 1200px;
             margin: 0 auto;
             min-height: calc(100vh - 72px);
+        }
+
+        #tela-visor .main-area {
+            max-width: 100%;
         }
 
         /* Tabs */
@@ -675,6 +681,106 @@
             margin: 0;
         }
 
+        /* Layout do Cabeçalho do Visor em 3 colunas */
+        .visor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--surface);
+            padding: 16px 24px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border);
+            gap: 16px;
+            flex-wrap: wrap;
+            /* Garante que não quebre em telas menores */
+        }
+
+        .visor-header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 1;
+            /* Faz crescer para empurrar o centro */
+            min-width: 250px;
+        }
+
+        .visor-header-left h2 {
+            margin: 0;
+            font-size: 22px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 350px;
+            /* Evita que nomes gigantes quebrem o layout */
+        }
+
+        .visor-header-right {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            /* Alinha os itens da direita pro final */
+            gap: 16px;
+            flex: 1;
+            /* Faz crescer para empurrar o centro */
+            min-width: 350px;
+            flex-wrap: wrap;
+        }
+
+        /* Botões de Navegação do Repertório (A mágica acontece aqui) */
+        #nav-repertorio-visor {
+            display: flex;
+            align-items: center;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            padding: 4px;
+            gap: 16px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+        }
+
+        .btn-nav-rep {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-main);
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+        }
+
+        .btn-nav-rep:hover {
+            background: var(--primary);
+            color: #ffffff;
+            border-color: var(--primary);
+            transform: scale(1.05);
+            box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+        }
+
+        #contador-repertorio {
+            font-weight: var(--fw-bold);
+            font-size: 15px;
+            color: var(--text-main);
+            min-width: 50px;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        /* Ajuste fino na área de controles de tom para alinhar melhor */
+        .controles-tom {
+            margin: 0;
+        }
+
+        .controles-tom span {
+            font-weight: 600;
+        }
+
         .visor-ferramentas {
             display: flex;
             gap: 8px;
@@ -734,36 +840,63 @@
 
         #render-cifra {
             background: var(--surface);
-            padding: 48px;
+            padding: 48px 64px;
             border-radius: 16px;
-            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-            font-size: 18px;
-            white-space: pre;
+            font-family: 'Roboto Mono', 'Fira Code', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 16px; /* Um pouco menor para ficar mais elegante, comum em cifras */
+            color: #000000;
+            /* ✨ A REGRA 'white-space: pre' FOI REMOVIDA DAQUI */
             overflow-x: auto;
-            line-height: 1.5;
+            line-height: 1.2; /* Traz os acordes para BEM perto da letra */
             box-shadow: var(--card-shadow);
             border: 1px solid var(--border);
+            max-width: 900px; /* Mantém o tamanho base agradável para 1 coluna */
+            margin: 0 auto;
+            transition: max-width 0.3s ease;
         }
 
-        .layout-colunas {
+        /* Layout para 2 colunas */
+        .layout-2-colunas {
             column-count: 2;
-            column-gap: 60px;
-            column-rule: 1px solid var(--border);
+            column-gap: 80px;
+            width: 100%;
         }
 
-        .estrofe {
+        /* Layout para 3 colunas */
+        .layout-3-colunas {
+            column-count: 3;
+            column-gap: 50px;
+            width: 100%;
+        }
+
+        /* Coluna física */
+        .coluna {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Bloco que mantém o acorde grudado com a letra */
+        .bloco-linha {
             break-inside: avoid;
-            margin-bottom: 24px;
+            page-break-inside: avoid;
+            -webkit-column-break-inside: avoid;
+            margin-bottom: 8px; /* Espaçamento entre os blocos */
+        }
+
+        /* A estrofe */
+        .estrofe {
+            width: 100%;
+            white-space: pre;
         }
 
         .linha-letra {
-            color: var(--text-main);
-            margin-bottom: 8px;
+            color: #000000;
         }
 
         .linha-acorde {
             font-weight: bold;
-            color: var(--primary-700);
+            color: var(--chord-color);
         }
 
         .acorde-clicavel {
@@ -1008,6 +1141,49 @@
             display: flex;
             gap: 10px;
         }
+
+        /* Transições suaves para o movimento do menu */
+        .sidebar {
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-x: hidden;
+            /* Evita quebra de texto ao encolher */
+        }
+
+        .container {
+            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Estado da Sidebar Recolhida */
+        body.menu-recolhido .sidebar {
+            width: 80px;
+        }
+
+        body.menu-recolhido .container {
+            margin-left: 80px;
+        }
+
+        /* Ocultar textos quando recolhido */
+        body.menu-recolhido .sidebar .logo div {
+            display: none !important;
+        }
+
+        body.menu-recolhido .nav-item span {
+            display: none;
+        }
+
+        /* Centralizar ícones quando recolhido */
+        body.menu-recolhido .sidebar .logo {
+            justify-content: center;
+        }
+
+        body.menu-recolhido .nav-item {
+            justify-content: center;
+            padding: 12px 0;
+        }
+
+        body.menu-recolhido .nav-item i {
+            width: auto;
+        }
     </style>
 </head>
 
@@ -1023,6 +1199,11 @@
             </div>
         </div>
         <nav class="sidebar-nav">
+            <button class="nav-item"
+                style="margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); border-radius: 0;"
+                onclick="alternarMenu()">
+                <i class="fa-solid fa-bars"></i><span>Recolher Menu</span>
+            </button>
             <button id="nav-acervo" class="nav-item nav-active" onclick="mudarAmbiente('acervo')"><i
                     class="fa-solid fa-database"></i><span>Banco de Dados</span></button>
             <button id="nav-repertorios" class="nav-item" onclick="mudarAmbiente('repertorios')"><i
@@ -1036,7 +1217,6 @@
 
 
     <div class="container">
-
 
         <div id="tela-acervo" style="display: block;">
             <div class="main-area">
@@ -1074,76 +1254,94 @@
         </div>
 
         <div id="tela-repertorios">
-            <div class="card-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Nome do Repertório</th>
-                            <th>Data</th>
-                            <th>Qtd. Músicas</th>
-                            <th style="text-align: right;">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabela-repertorios-body"></tbody>
-                </table>
+            <div class="main-area">
+                <div class="header-title-area" style="margin-bottom: 24px;">
+                    <h2>Repertórios</h2>
+                    <p>Gerencie suas listas de músicas para os eventos.</p>
+                </div>
+                <div class="card-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nome do Repertório</th>
+                                <th>Data</th>
+                                <th>Qtd. Músicas</th>
+                                <th style="text-align: right;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-repertorios-body"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         <div id="tela-dicionario">
-            <div class="card-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Nome do Acorde</th>
-                            <th>Posição (E A D G B e)</th>
-                            <th style="text-align: right;">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabela-dicionario-body"></tbody>
-                </table>
+            <div class="main-area">
+                <div class="header-title-area" style="margin-bottom: 24px;">
+                    <h2>Dicionário de Acordes</h2>
+                    <p>Seus acordes personalizados.</p>
+                </div>
+                <div class="card-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nome do Acorde</th>
+                                <th>Posição (E A D G B e)</th>
+                                <th style="text-align: right;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-dicionario-body"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
-        <div id="tela-visor">
-            <div class="visor-header">
-                <div style="display: flex; gap: 15px; align-items: center;">
-                    <button class="btn btn-secondary" onclick="fecharVisor()"><i class="fa-solid fa-arrow-left"></i>
-                        Voltar</button>
-                    <h2 id="visor-titulo" style="margin: 0;">-</h2>
+        <div id="tela-visor" style="display: none;">
+            <div class="main-area">
+                <div class="visor-header">
+                    <div class="visor-header-left">
+                        <button class="btn btn-secondary" onclick="fecharVisor()"><i class="fa-solid fa-arrow-left"></i>
+                            Voltar</button>
+                        <h2 id="visor-titulo">-</h2>
+                    </div>
+
+                    <div id="nav-repertorio-visor" style="display: none;">
+                        <button class="btn-nav-rep" title="Música Anterior" onclick="navegarRepertorio(-1)"><i
+                                class="fa-solid fa-chevron-left"></i></button>
+                        <span id="contador-repertorio">1 / 5</span>
+                        <button class="btn-nav-rep" title="Próxima Música" onclick="navegarRepertorio(1)"><i
+                                class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+
+                    <div class="visor-header-right">
+                        <div class="visor-ferramentas">
+                            <button class="btn-ferramenta" onclick="mudarTamanhoFonte(-2)">A-</button>
+                            <button class="btn-ferramenta" onclick="mudarTamanhoFonte(2)">A+</button>
+                            <button class="btn-ferramenta" id="btn-colunas" onclick="toggleColunas()"><i
+                                    class="fa-solid fa-columns"></i> 1 Coluna</button>
+                        </div>
+
+                        <div class="controles-tom">
+                            <button class="btn-tom" onclick="alterarTom(-1)">-</button>
+                            <span>Tom: <strong id="visor-tom"
+                                    style="font-size: 20px; color: var(--primary);">E</strong></span>
+                            <button class="btn-tom" onclick="alterarTom(1)">+</button>
+                        </div>
+                    </div>
                 </div>
 
-                <div id="nav-repertorio-visor" style="display: none;">
-                    <button class="btn-nav-rep" onclick="navegarRepertorio(-1)"><i
-                            class="fa-solid fa-chevron-left"></i></button>
-                    <span id="contador-repertorio">1 / 5</span>
-                    <button class="btn-nav-rep" onclick="navegarRepertorio(1)"><i
-                            class="fa-solid fa-chevron-right"></i></button>
-                </div>
-
-                <div class="visor-ferramentas">
-                    <button class="btn-ferramenta" onclick="mudarTamanhoFonte(-2)">A-</button>
-                    <button class="btn-ferramenta" onclick="mudarTamanhoFonte(2)">A+</button>
-                    <button class="btn-ferramenta" id="btn-colunas" onclick="toggleColunas()"><i
-                            class="fa-solid fa-columns"></i> 2 Colunas</button>
-                </div>
-
-                <div class="controles-tom">
-                    <button class="btn-tom" onclick="alterarTom(-1)">-</button>
-                    <span>Tom: <strong id="visor-tom" style="font-size: 20px; color: var(--primary);">E</strong></span>
-                    <button class="btn-tom" onclick="alterarTom(1)">+</button>
-                </div>
+                <div id="render-cifra"></div>
             </div>
-            <div id="render-cifra"></div>
         </div>
-    </div>
 
-    <button class="fab" title="Nova Música" onclick="abrirModalCadastroMusica()"><i
+    </div> <button class="fab" title="Nova Música" onclick="abrirModalCadastroMusica()"><i
             class="fa-solid fa-plus"></i></button>
 
     <div class="modal-overlay" id="modal-config">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Conexão Supabase</h2><button class="close-btn" onclick="fecharModal('modal-config')"><i
+                <h2>Conexão Supabase</h2>
+                <button class="close-btn" onclick="fecharModal('modal-config')"><i
                         class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="form-group" style="margin-bottom: 10px;"><label>Project URL</label><input type="text"
@@ -1166,16 +1364,19 @@
                 Conectar</button>
         </div>
     </div>
+
     <div class="modal-overlay" id="modal-cadastro-musica">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="modal-titulo-musica">Nova Música</h2><button class="close-btn"
-                    onclick="fecharModal('modal-cadastro-musica')"><i class="fa-solid fa-xmark"></i></button>
+                <h2 id="modal-titulo-musica">Nova Música</h2>
+                <button class="close-btn" onclick="fecharModal('modal-cadastro-musica')"><i
+                        class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="form-grid">
                 <div class="form-group"><label>Título *</label><input type="text" id="cad-titulo"></div>
                 <div class="form-group"><label>Autor</label><input type="text" id="cad-autor"></div>
-                <div class="form-group"><label>Tom *</label><select id="cad-tom">
+                <div class="form-group"><label>Tom *</label>
+                    <select id="cad-tom">
                         <option value="C">C</option>
                         <option value="C#">C#</option>
                         <option value="D">D</option>
@@ -1188,26 +1389,35 @@
                         <option value="A">A</option>
                         <option value="A#">A#</option>
                         <option value="B">B</option>
-                    </select></div>
+                    </select>
+                </div>
                 <div class="form-group"><label>Momento</label><input type="text" id="cad-momento"></div>
                 <div class="form-group full-width"><label>Cifra *</label><textarea id="cad-conteudo"></textarea></div>
-            </div><button class="btn" style="width: 100%; justify-content: center;" onclick="salvarMusica()"><i
+            </div>
+            <button class="btn" style="width: 100%; justify-content: center;" onclick="salvarMusica()"><i
                     class="fa-solid fa-check"></i> Salvar Música</button>
         </div>
     </div>
+
     <div class="modal-overlay" id="modal-cadastro-repertorio">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Novo Repertório</h2><button class="close-btn" onclick="fecharModal('modal-cadastro-repertorio')"><i
+                <h2>Novo Repertório</h2>
+                <button class="close-btn" onclick="fecharModal('modal-cadastro-repertorio')"><i
                         class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="form-grid">
                 <div class="form-group"><label>Nome do Evento</label><input type="text" id="rep-nome"></div>
                 <div class="form-group"><label>Data</label><input type="date" id="rep-data"></div>
-                <div class="form-group full-width"><label>Selecione as Músicas:</label>
+                <div class="form-group full-width">
+                    <label>Selecione as Músicas:</label>
+                    <input type="text" id="rep-busca-musica"
+                        placeholder="Buscar por título, autor, momento ou trecho da cifra..."
+                        oninput="filtrarMusicasRepertorio()" style="margin-bottom: 12px;">
                     <div class="lista-selecao-musicas" id="lista-checkbox-musicas"></div>
                 </div>
-            </div><button class="btn" style="width: 100%; justify-content: center;" onclick="salvarRepertorio()"><i
+            </div>
+            <button class="btn" style="width: 100%; justify-content: center;" onclick="salvarRepertorio()"><i
                     class="fa-solid fa-check"></i> Salvar Repertório</button>
         </div>
     </div>
@@ -1247,8 +1457,7 @@
                         <div>2ª(B)</div>
                         <div>1ª(e)</div>
                     </div>
-                    <div id="braco-interativo-render">
-                    </div>
+                    <div id="braco-interativo-render"></div>
                 </div>
             </div>
 
@@ -1258,32 +1467,29 @@
     </div>
 
     <div class="modal-overlay" id="modal-visualizar-acorde">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 800px; background: #f8fafc;">
             <div class="modal-header">
-                <h2 id="visu-acorde-titulo">Diagrama</h2>
+                <h2 id="visu-acorde-titulo">Detalhes do Acorde</h2>
                 <button class="close-btn" onclick="fecharModal('modal-visualizar-acorde')"><i
                         class="fa-solid fa-xmark"></i></button>
             </div>
-            <div id="visu-acorde-conteudo" style="text-align:center;"></div>
+            <div id="visu-acorde-conteudo" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
+            </div>
         </div>
     </div>
 
     <script>
         // === DICIONÁRIO DE ACORDES BASE ===
-        const DICIONARIO_BASE = {
-            'C': [-1, 3, 2, 0, 1, 0], 'D': [-1, -1, 0, 2, 3, 2], 'Dm': [-1, -1, 0, 2, 3, 1], 'D7': [-1, -1, 0, 2, 1, 2],
-            'E': [0, 2, 2, 1, 0, 0], 'Em': [0, 2, 2, 0, 0, 0], 'E7': [0, 2, 0, 1, 0, 0], 'F': [1, 3, 3, 2, 1, 1],
-            'G': [3, 2, 0, 0, 0, 3], 'A': [-1, 0, 2, 2, 2, 0], 'Am': [-1, 0, 2, 2, 1, 0], 'A7': [-1, 0, 2, 0, 2, 0],
-            'B7': [-1, 2, 1, 2, 0, 2], 'Bm': [-1, 2, 4, 4, 3, 2]
-        };
+        // O dicionário base agora é carregado do dicionario_br.js (variável DICIONARIO_BRASIL)
 
         // === ESTADO GLOBAL ===
         let supabaseClient = null; let ambienteAtual = 'acervo';
         let acervoGlobal = []; let repertoriosGlobal = []; let dicionarioGlobal = [];
         let idEdicaoAtual = null;
         let musicaSelecionada = null; let playlistAtual = []; let indexPlaylist = 0;
-        let semitonsAcumulados = 0; let tamanhoFonteAtual = 18; let usarDuasColunas = false;
+        let semitonsAcumulados = 0; let tamanhoFonteAtual = 18; let qtdColunas = 1;
 
+        let idEdicaoAcordeAtual = null; // ✨ Nova variável
         // Estado do braço iterativo (0=Solta, -1=Muta, >0=Casa Pressionada)
         let cordasAcordeAtual = [0, 0, 0, 0, 0, 0];
         // Números dos dedos correspondentes às cordas (null ou 1-4)
@@ -1297,6 +1503,18 @@
 
         // Inicialização
         window.onload = () => {
+            tinymce.init({
+                selector: '#cad-conteudo',
+                plugins: 'lists link preview searchreplace visualblocks code fullscreen table help wordcount',
+                toolbar: 'undo redo | formatselect | fontfamily fontsize | ' +
+                    'bold italic underline | alignleft aligncenter ' +
+                    'alignright alignjustify | outdent indent | ' +
+                    'numlist bullist | forecolor backcolor | help',
+                menubar: false,
+                height: 400,
+                content_style: "body { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 16px; }"
+            });
+
             const url = localStorage.getItem('gerecifras_url'), key = localStorage.getItem('gerecifras_key');
             // Preenche campos de URL/Key
             if (url && key) { document.getElementById('sb-url').value = url; document.getElementById('sb-key').value = key; conectarSupabase(url, key); }
@@ -1359,9 +1577,43 @@
         function abrirModalConfig() { document.getElementById('modal-config').style.display = 'flex'; }
 
         // Módulos Supabase: Acervo e Repertórios
-        function abrirModalCadastroMusica() { idEdicaoAtual = null; document.getElementById('modal-titulo-musica').textContent = "Nova Música"; document.querySelectorAll('#modal-cadastro-musica input, #modal-cadastro-musica textarea').forEach(el => el.value = ''); document.getElementById('cad-tom').value = 'E'; document.getElementById('modal-cadastro-musica').style.display = 'flex'; }
-        function abrirEdicaoMusica(index) { const m = acervoGlobal[index]; idEdicaoAtual = m.id; document.getElementById('modal-titulo-musica').textContent = "Editar Música"; document.getElementById('cad-titulo').value = m.titulo; document.getElementById('cad-autor').value = m.autor || ''; document.getElementById('cad-tom').value = m.tom_original; document.getElementById('cad-momento').value = m.momento_missa || ''; document.getElementById('cad-conteudo').value = m.conteudo; document.getElementById('modal-cadastro-musica').style.display = 'flex'; }
-        async function salvarMusica() { const p = { titulo: document.getElementById('cad-titulo').value, autor: document.getElementById('cad-autor').value, tom_original: document.getElementById('cad-tom').value, momento_missa: document.getElementById('cad-momento').value, conteudo: document.getElementById('cad-conteudo').value }; if (!p.titulo || !p.conteudo) return alert("Título e Cifra obrigatórios."); if (idEdicaoAtual) await supabaseClient.from('musicas').update(p).eq('id', idEdicaoAtual); else await supabaseClient.from('musicas').insert([p]); fecharModal('modal-cadastro-musica'); carregarAcervo(); }
+        function abrirModalCadastroMusica() {
+            idEdicaoAtual = null;
+            document.getElementById('modal-titulo-musica').textContent = "Nova Música";
+            document.querySelectorAll('#modal-cadastro-musica input, #modal-cadastro-musica textarea').forEach(el => el.value = '');
+            document.getElementById('cad-tom').value = 'E';
+            if (tinymce.get('cad-conteudo')) tinymce.get('cad-conteudo').setContent('');
+            document.getElementById('modal-cadastro-musica').style.display = 'flex';
+        }
+        function abrirEdicaoMusica(index) {
+            const m = acervoGlobal[index];
+            idEdicaoAtual = m.id;
+            document.getElementById('modal-titulo-musica').textContent = "Editar Música";
+            document.getElementById('cad-titulo').value = m.titulo;
+            document.getElementById('cad-autor').value = m.autor || '';
+            document.getElementById('cad-tom').value = m.tom_original;
+            document.getElementById('cad-momento').value = m.momento_missa || '';
+            let content = m.conteudo;
+            if (!/<[a-z][\s\S]*>/i.test(content)) {
+                content = content.split('\n').map(line => `<p>${line || '&nbsp;'}</p>`).join('');
+            }
+            if (tinymce.get('cad-conteudo')) {
+                tinymce.get('cad-conteudo').setContent(content);
+            } else {
+                document.getElementById('cad-conteudo').value = content;
+            }
+            document.getElementById('modal-cadastro-musica').style.display = 'flex';
+        }
+        async function salvarMusica() {
+            const conteudoInput = tinymce.get('cad-conteudo') ? tinymce.get('cad-conteudo').getContent() : document.getElementById('cad-conteudo').value;
+            const p = { titulo: document.getElementById('cad-titulo').value, autor: document.getElementById('cad-autor').value, tom_original: document.getElementById('cad-tom').value, momento_missa: document.getElementById('cad-momento').value, conteudo: conteudoInput };
+            if (!p.titulo || !p.conteudo) return alert("Título e Cifra obrigatórios.");
+            if (idEdicaoAtual) await supabaseClient.from('musicas').update(p).eq('id', idEdicaoAtual);
+            else await supabaseClient.from('musicas').insert([p]);
+            fecharModal('modal-cadastro-musica');
+            carregarAcervo();
+        }
+
         async function carregarAcervo() {
             if (!supabaseClient) return;
             const { data } = await supabaseClient.from('musicas').select('*').order('titulo');
@@ -1402,7 +1654,6 @@
             }
         }
 
-
         // Dropdown helpers for card actions
         function toggleDropdown(event) {
             event.stopPropagation();
@@ -1428,22 +1679,86 @@
             document.removeEventListener('click', closeAllMenus);
         }
 
-        function abrirModalCadastroRepertorio() { document.getElementById('rep-nome').value = ''; document.getElementById('rep-data').value = ''; const div = document.getElementById('lista-checkbox-musicas'); div.innerHTML = ''; acervoGlobal.forEach(m => { div.innerHTML += `<label class="item-selecao"><input type="checkbox" value="${m.id}" class="check-musica-rep"><span><strong>${m.titulo}</strong> <small style="color:var(--text-muted)">(${m.momento_missa || 'Geral'})</small></span></label>`; }); document.getElementById('modal-cadastro-repertorio').style.display = 'flex'; }
+        function abrirModalCadastroRepertorio() {
+            document.getElementById('rep-nome').value = '';
+            document.getElementById('rep-data').value = '';
+
+            // ✨ Limpa o campo de busca ao abrir a janela
+            const inputBusca = document.getElementById('rep-busca-musica');
+            if (inputBusca) inputBusca.value = '';
+
+            const div = document.getElementById('lista-checkbox-musicas');
+            div.innerHTML = '';
+            acervoGlobal.forEach(m => {
+                div.innerHTML += `<label class="item-selecao"><input type="checkbox" value="${m.id}" class="check-musica-rep"><span><strong>${m.titulo}</strong> <small style="color:var(--text-muted)">(${m.momento_missa || 'Geral'})</small></span></label>`;
+            });
+            document.getElementById('modal-cadastro-repertorio').style.display = 'flex';
+        }
+
+        // ✨ NOVA FUNÇÃO: Filtra as músicas dentro do modal de repertório
+        function filtrarMusicasRepertorio() {
+            const termo = document.getElementById('rep-busca-musica').value.toLowerCase();
+            const itens = document.querySelectorAll('#lista-checkbox-musicas .item-selecao');
+
+            itens.forEach(item => {
+                // Pega o ID da música escondido no checkbox
+                const idMusica = parseInt(item.querySelector('input').value);
+                // Encontra a música completa no banco global
+                const musica = acervoGlobal.find(m => m.id === idMusica);
+
+                if (musica) {
+                    // Junta todos os dados da música numa string só para pesquisar de uma vez
+                    const conteudoBusca = `${musica.titulo} ${musica.autor || ''} ${musica.momento_missa || ''} ${musica.conteudo || ''}`.toLowerCase();
+
+                    // Se o termo digitado existir em qualquer parte da música, mostra. Se não, oculta.
+                    if (conteudoBusca.includes(termo)) {
+                        item.style.display = 'flex';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                }
+            });
+        }
+
         async function salvarRepertorio() { const nome = document.getElementById('rep-nome').value, data_evento = document.getElementById('rep-data').value || null; const selecionadas = Array.from(document.querySelectorAll('.check-musica-rep:checked')).map(cb => parseInt(cb.value)); if (!nome || selecionadas.length === 0) return alert("Preencha nome e músicas."); await supabaseClient.from('repertorios').insert([{ nome, data_evento, musicas: selecionadas }]); fecharModal('modal-cadastro-repertorio'); carregarRepertorios(); }
+
         async function carregarRepertorios() { if (!supabaseClient) return; const { data } = await supabaseClient.from('repertorios').select('*').order('created_at', { ascending: false }); repertoriosGlobal = data || []; const tbody = document.getElementById('tabela-repertorios-body'); tbody.innerHTML = ''; repertoriosGlobal.forEach((r, i) => { let qtd = Array.isArray(r.musicas) ? r.musicas.length : 0; tbody.innerHTML += `<tr><td style="font-weight: 600;">${r.nome}</td><td>${r.data_evento ? new Date(r.data_evento).toLocaleDateString('pt-BR') : '-'}</td><td>${qtd} músicas</td><td style="text-align: right;"><button class="btn" style="padding: 6px 12px;" onclick="tocarRepertorio(${i})"><i class="fa-solid fa-play"></i> Iniciar</button> <button class="btn btn-secondary" style="padding:6px 10px; margin-left:6px; background:#ef4444; border-color:transparent;" onclick="excluirRepertorio(${r.id})"><i class="fa-solid fa-trash"></i></button></td></tr>`; }); }
 
-        // === MÓDULO: LÓGICA DO BRAÇO DE VIOLÃO INTERATIVO ===
         function abrirModalCadastroAcorde() {
+            idEdicaoAcordeAtual = null; // Garante que é um NOVO cadastro
             document.getElementById('cad-acorde-nome').value = '';
-            cordasAcordeAtual = [0, 0, 0, 0, 0, 0]; // Reseta as posições
+            cordasAcordeAtual = [0, 0, 0, 0, 0, 0];
             dedosAcordeAtual = [null, null, null, null, null, null];
-            // Inicializa valores do painel de casas conforme inputs
-            const startEl = document.getElementById('cad-start-fret');
-            const numEl = document.getElementById('cad-num-casas');
-            braco_start_fret = startEl ? parseInt(startEl.value || '1') : 1;
-            braco_num_casas = numEl ? parseInt(numEl.value || '5') : 5;
+
+            if (document.getElementById('cad-start-fret')) document.getElementById('cad-start-fret').value = 1;
+            if (document.getElementById('cad-num-casas')) document.getElementById('cad-num-casas').value = 5;
+
             renderizarBracoInterativo();
             document.getElementById('modal-cadastro-acorde').style.display = 'flex';
+        }
+
+        // ✨ NOVA FUNÇÃO: Prepara a janela para editar um acorde existente
+        function abrirEdicaoAcorde(id) {
+            const acorde = dicionarioGlobal.find(a => a.id === id);
+            if (!acorde) return;
+
+            idEdicaoAcordeAtual = acorde.id; // Marca qual estamos editando
+            document.getElementById('cad-acorde-nome').value = acorde.nome;
+
+            document.getElementById('cad-start-fret').value = acorde.start_fret || 1;
+            document.getElementById('cad-num-casas').value = acorde.num_casas || 5;
+
+            // Restaura as posições
+            cordasAcordeAtual = [...acorde.posicoes];
+            while (cordasAcordeAtual.length < 6) cordasAcordeAtual.push(0);
+
+            // Restaura os dedos
+            dedosAcordeAtual = acorde.dedos ? [...acorde.dedos] : [null, null, null, null, null, null];
+            while (dedosAcordeAtual.length < 6) dedosAcordeAtual.push(null);
+
+            fecharModal('modal-visualizar-acorde'); // Fecha a visualização
+            renderizarBracoInterativo(); // Monta o braço
+            document.getElementById('modal-cadastro-acorde').style.display = 'flex'; // Abre edição
         }
 
         function renderizarBracoInterativo() {
@@ -1542,37 +1857,29 @@
             while (dedos.length < 6) dedos.push(null);
 
             try {
-                // Inclui metadados de exibição do braço
-                const startFretToSave = parseInt(document.getElementById('cad-start-fret')?.value || braco_start_fret || 1);
-                const numCasasToSave = parseInt(document.getElementById('cad-num-casas')?.value || braco_num_casas || 5);
-                console.log('Salvando acorde', { nome, posicoes, dedos, start_fret: startFretToSave, num_casas: numCasasToSave });
-                const { data, error } = await supabaseClient.from('dicionario_acordes').insert([{ nome, posicoes, dedos, start_fret: startFretToSave, num_casas: numCasasToSave }]).select();
-                if (error) {
-                    console.error('Erro ao salvar acorde:', error);
-                    // Detecta erro de coluna 'dedos' ausente no schema cache do Supabase
-                    const msg = (error.message || '').toString();
-                    if (msg.includes("Could not find the 'dedos' column") || msg.includes("column \"dedos\" does not exist") || msg.includes('start_fret') || msg.includes('num_casas')) {
-                        // Tenta gravar sem as colunas extras (compatibilidade)
-                        const { data: data2, error: error2 } = await supabaseClient.from('dicionario_acordes').insert([{ nome, posicoes }]).select();
-                        if (error2) {
-                            console.error('Erro ao salvar sem dedos:', error2);
-                            alert('Erro ao salvar acorde: ' + (error2.message || JSON.stringify(error2)) + '\nVerifique permissões do banco.');
-                            return;
-                        }
-                        alert('Algumas colunas extras (por exemplo `dedos`, `start_fret` ou `num_casas`) não existem no banco; acorde salvo sem esses metadados.\nPara suportar completamente, adicione as colunas `dedos jsonb`, `start_fret int` e `num_casas int` na tabela `dicionario_acordes` via o editor SQL do Supabase.');
-                        fecharModal('modal-cadastro-acorde');
-                        carregarDicionario();
-                        return;
-                    }
-                    alert('Erro ao salvar acorde: ' + (error.message || JSON.stringify(error)) + '\nVerifique a conexão e as permissões do banco.');
-                    return;
+                const startFretToSave = parseInt(document.getElementById('cad-start-fret')?.value || 1);
+                const numCasasToSave = parseInt(document.getElementById('cad-num-casas')?.value || 5);
+
+                const payload = { nome, posicoes, dedos, start_fret: startFretToSave, num_casas: numCasasToSave };
+
+                let error;
+                if (idEdicaoAcordeAtual) {
+                    // ATUALIZA O ACORDE EXISTENTE
+                    const res = await supabaseClient.from('dicionario_acordes').update(payload).eq('id', idEdicaoAcordeAtual);
+                    error = res.error;
+                } else {
+                    // CRIA NOVO (Ou nova variação)
+                    const res = await supabaseClient.from('dicionario_acordes').insert([payload]);
+                    error = res.error;
                 }
-                // Sucesso
+
+                if (error) throw error;
+
                 fecharModal('modal-cadastro-acorde');
                 carregarDicionario();
             } catch (err) {
-                console.error('Exceção ao salvar acorde:', err);
-                alert('Exceção ao salvar acorde. Veja o console para mais detalhes.');
+                console.error('Erro ao salvar acorde:', err);
+                alert('Ocorreu um erro ao salvar o acorde. Tente novamente.');
             }
         }
 
@@ -1581,36 +1888,84 @@
             const { data } = await supabaseClient.from('dicionario_acordes').select('*').order('nome');
             dicionarioGlobal = data || [];
 
+            // ✨ Lógica mágica: Agrupa acordes com o mesmo nome
+            const agrupados = {};
+            dicionarioGlobal.forEach(a => {
+                if (!agrupados[a.nome]) agrupados[a.nome] = [];
+                agrupados[a.nome].push(a);
+            });
+
             const tbody = document.getElementById('tabela-dicionario-body');
             tbody.innerHTML = '';
 
-            dicionarioGlobal.forEach(a => {
-                const visu = (a.posicoes || []).map((p, i) => {
-                    if (p === -1) return 'X';
-                    const d = (a.dedos && a.dedos[i]) ? `(${a.dedos[i]})` : '';
-                    return p > 0 ? `${p}${d}` : '0';
-                }).join(' - ');
+            Object.keys(agrupados).forEach(nome => {
+                const variacoes = agrupados[nome];
+                const resumo = variacoes.length === 1 ? '1 formato' : `${variacoes.length} formatos`;
+
                 tbody.innerHTML += `
                     <tr>
-                        <td style="font-weight: bold; color: var(--primary);">${a.nome}</td>
-                        <td>[ ${visu} ]</td>
-                        <td style="text-align: right; color: var(--text-muted); font-size: 13px;">
-                            <button class="btn btn-secondary" style="padding:6px 10px; margin-right:6px;" onclick="mostrarAcordeModalById(${a.id})"><i class="fa-solid fa-eye"></i></button>
-                            <button class="btn" style="padding:6px 10px; margin-right:6px;" onclick="mostrarAcordeByName('${a.nome.replace(/'/g, "\\'")}')">Ver</button>
-                            <button class="btn btn-secondary" style="padding:6px 10px; margin-left:6px; background:#ef4444; border-color:transparent;" onclick="excluirAcorde(${a.id})"><i class="fa-solid fa-trash"></i></button>
+                        <td style="font-weight: bold; color: var(--primary); font-size: 16px;">${nome}</td>
+                        <td style="color: var(--text-muted); font-weight: 600;">${resumo}</td>
+                        <td style="text-align: right;">
+                            <button class="btn btn-secondary" style="padding:8px 14px;" onclick="abrirModalVisualizarAgrupado('${nome}')"><i class="fa-solid fa-eye" style="margin-right: 6px;"></i> Detalhes</button>
                         </td>
                     </tr>`;
             });
         }
 
-        // Mostrar acorde em modal pelo id do registro
-        function mostrarAcordeModalById(id) {
-            const acorde = dicionarioGlobal.find(a => a.id === id);
-            if (!acorde) return alert('Acorde não encontrado.');
-            const html = desenharAcordeSVG(acorde.nome, { posicoes: acorde.posicoes, dedos: acorde.dedos, start_fret: acorde.start_fret, num_casas: acorde.num_casas }, { width: 260, height: 260, numCasas: acorde.num_casas || 5 });
-            document.getElementById('visu-acorde-titulo').textContent = acorde.nome;
-            document.getElementById('visu-acorde-conteudo').innerHTML = html;
+        function abrirModalVisualizarAgrupado(nome) {
+            console.log("Botão clicado! Tentando abrir detalhes para o acorde:", nome);
+
+            const variacoes = dicionarioGlobal.filter(a => a.nome === nome);
+            if (variacoes.length === 0) {
+                console.error("Nenhuma variação encontrada para este acorde no dicionarioGlobal.");
+                return;
+            }
+
+            const tituloEl = document.getElementById('visu-acorde-titulo');
+            const containerEl = document.getElementById('visu-acorde-conteudo');
+
+            if (!tituloEl || !containerEl) {
+                console.error("ERRO: O HTML do modal não foi encontrado. Verifique se o ID 'visu-acorde-titulo' e 'visu-acorde-conteudo' existem no HTML.");
+                return;
+            }
+
+            tituloEl.textContent = `Formatos para: ${nome}`;
+            containerEl.innerHTML = '';
+
+            variacoes.forEach((v, index) => {
+                const svgHtml = desenharAcordeSVG(nome, { posicoes: v.posicoes, dedos: v.dedos, start_fret: v.start_fret, num_casas: v.num_casas }, { width: 140, height: 200, numCasas: v.num_casas || 5 });
+
+                containerEl.innerHTML += `
+                    <div style="background: #ffffff; border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: var(--card-shadow); display: flex; flex-direction: column; align-items: center; gap: 16px;">
+                        <span class="tag-pill">Formato ${index + 1}</span>
+                        ${svgHtml}
+                        <div style="display: flex; gap: 8px; width: 100%; justify-content: center; margin-top: auto;">
+                            <button class="btn btn-secondary" style="padding: 8px 16px;" onclick="abrirEdicaoAcorde(${v.id})" title="Editar formato"><i class="fa-solid fa-pen"></i></button>
+                            <button class="btn btn-secondary" style="padding: 8px 16px; color: #ef4444;" onclick="excluirAcordeUnico(${v.id}, '${nome}')" title="Excluir formato"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+
             document.getElementById('modal-visualizar-acorde').style.display = 'flex';
+        }
+
+        // ✨ NOVA FUNÇÃO: Exclui apenas uma variação específica
+        async function excluirAcordeUnico(id, nome) {
+            if (!confirm('Deseja excluir este formato específico?')) return;
+            if (!supabaseClient) return;
+
+            await supabaseClient.from('dicionario_acordes').delete().eq('id', id);
+            await carregarDicionario(); // Recarrega o banco
+
+            // Se ainda existirem variações com esse nome, atualiza o modal. Se não, fecha.
+            const variacoesRestantes = dicionarioGlobal.filter(a => a.nome === nome);
+            if (variacoesRestantes.length > 0) {
+                abrirModalVisualizarAgrupado(nome);
+            } else {
+                fecharModal('modal-visualizar-acorde');
+            }
         }
 
         // Mostrar acorde pelo nome (usa tooltip existente)
@@ -1618,14 +1973,6 @@
             // cria um evento simples para posicionar o tooltip no centro da tela
             const fakeEvent = { pageX: window.innerWidth / 2, pageY: window.innerHeight / 2, stopPropagation: () => { } };
             mostrarAcorde(fakeEvent, nome);
-        }
-
-        // Excluir funções
-        async function excluirAcorde(id) {
-            if (!confirm('Excluir este acorde do dicionário?')) return;
-            if (!supabaseClient) return alert('Sem conexão.');
-            await supabaseClient.from('dicionario_acordes').delete().eq('id', id);
-            carregarDicionario();
         }
 
         async function excluirMusica(id) {
@@ -1645,7 +1992,7 @@
         function obterPosicoesAcorde(nomeAcorde) {
             const acordeCustom = dicionarioGlobal.find(a => a.nome === nomeAcorde);
             if (acordeCustom) return { posicoes: acordeCustom.posicoes, dedos: acordeCustom.dedos };
-            const base = DICIONARIO_BASE[nomeAcorde];
+            const base = (typeof DICIONARIO_BRASIL !== 'undefined' && DICIONARIO_BRASIL[nomeAcorde]) ? DICIONARIO_BRASIL[nomeAcorde] : null;
             return { posicoes: base, dedos: null };
         }
 
@@ -1671,6 +2018,7 @@
             let svg = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">`;
             svg += `<text x="${width / 2}" y="22" font-family="sans-serif" font-size="16" font-weight="bold" fill="var(--text-main)" text-anchor="middle">${nomeAcorde}</text>`;
             svg += `<line x1="${left}" y1="${top}" x2="${right}" y2="${top}" stroke="var(--text-main)" stroke-width="4"/>`;
+
             for (let i = 1; i <= numCasas; i++) { svg += `<line x1="${left}" y1="${top + i * rowH}" x2="${right}" y2="${top + i * rowH}" stroke="var(--text-muted)" stroke-width="1"/>`; }
             for (let i = 0; i < 6; i++) { let x = left + i * ((right - left) / 5); svg += `<line x1="${x}" y1="${top}" x2="${x}" y2="${top + numCasas * rowH}" stroke="var(--text-main)" stroke-width="1"/>`; }
 
@@ -1683,6 +2031,39 @@
                 }
             }
 
+            // ✨ NOVO: Lógica Mágica para detectar e desenhar a barra da pestana
+            let pestanas = {};
+            if (dedos) {
+                for (let i = 0; i < 6; i++) {
+                    let casa = posicoes[i];
+                    let dedo = dedos[i];
+                    // Se a corda está pressionada e tem um dedo atribuído
+                    if (casa > 0 && dedo) {
+                        let key = casa + '_' + dedo; // Ex: "1_1" (Casa 1, Dedo 1)
+                        if (!pestanas[key]) pestanas[key] = { fret: casa, minStr: i, maxStr: i };
+                        else {
+                            // Expande a barra da corda mais grave até a mais aguda que tem esse dedo
+                            pestanas[key].minStr = Math.min(pestanas[key].minStr, i);
+                            pestanas[key].maxStr = Math.max(pestanas[key].maxStr, i);
+                        }
+                    }
+                }
+
+                // Desenha as barras no SVG antes das bolinhas
+                Object.values(pestanas).forEach(p => {
+                    // Só desenha se o dedo estiver cobrindo mais de uma corda
+                    if (p.maxStr > p.minStr) {
+                        const rel = p.fret - startFret;
+                        const y = top + (rel + 1) * rowH - Math.floor(rowH / 2);
+                        const x1 = left + p.minStr * ((right - left) / 5);
+                        const x2 = left + p.maxStr * ((right - left) / 5);
+                        // Desenha uma linha grossa ligando as cordas com opacidade
+                        svg += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="var(--primary)" stroke-width="${Math.max(10, Math.floor(rowH / 1.8))}" stroke-linecap="round" opacity="0.9"/>`;
+                    }
+                });
+            }
+
+            // Renderiza os círculos e números dos dedos normalmente
             for (let i = 0; i < 6; i++) {
                 let x = left + i * ((right - left) / 5); let casa = (posicoes && posicoes[i] !== undefined) ? posicoes[i] : null;
                 if (casa === -1) { svg += `<text x="${x}" y="${top - 6}" font-family="sans-serif" font-size="10" font-weight="bold" fill="#ef4444" text-anchor="middle">X</text>`; }
@@ -1721,34 +2102,120 @@
         function fecharVisor() { document.getElementById('tela-visor').style.display = 'none'; mudarAmbiente(ambienteAtual); }
         function alterarTom(modificador) { semitonsAcumulados += modificador; renderizarTextoTransposto(); }
         function mudarTamanhoFonte(delta) { tamanhoFonteAtual = Math.max(12, Math.min(36, tamanhoFonteAtual + delta)); document.getElementById('render-cifra').style.fontSize = tamanhoFonteAtual + 'px'; }
-        function toggleColunas() { usarDuasColunas = !usarDuasColunas; const rc = document.getElementById('render-cifra'), btn = document.getElementById('btn-colunas'); usarDuasColunas ? (rc.classList.add('layout-colunas'), btn.classList.add('ativo')) : (rc.classList.remove('layout-colunas'), btn.classList.remove('ativo')); }
+
+        function toggleColunas() {
+            // Avança o número de colunas. Se passar de 3, volta para 1.
+            qtdColunas++;
+            if (qtdColunas > 3) {
+                qtdColunas = 1;
+            }
+
+            const rc = document.getElementById('render-cifra');
+            const btn = document.getElementById('btn-colunas');
+
+            // Primeiro, limpamos os estilos anteriores
+            rc.classList.remove('layout-2-colunas', 'layout-3-colunas');
+
+            // Aplica a classe e atualiza o visual do botão dependendo do número
+            if (qtdColunas === 1) {
+                btn.classList.remove('ativo');
+                btn.innerHTML = '<i class="fa-solid fa-columns"></i> 1 Coluna';
+            }
+            else if (qtdColunas === 2) {
+                rc.classList.add('layout-2-colunas');
+                btn.classList.add('ativo');
+                btn.innerHTML = '<i class="fa-solid fa-columns"></i> 2 Colunas';
+            }
+            else if (qtdColunas === 3) {
+                rc.classList.add('layout-3-colunas');
+                btn.classList.add('ativo');
+                btn.innerHTML = '<i class="fa-solid fa-table-columns"></i> 3 Colunas';
+            }
+
+            renderizarTextoTransposto(); // Re-renderiza para distribuir nas colunas
+        }
+
         function transporNota(notaCompleta, semitons) { return notaCompleta.replace(/([A-G][#b]?)/g, (match) => { let nota = match; if (nota === 'Db') nota = 'C#'; if (nota === 'Eb') nota = 'D#'; if (nota === 'Gb') nota = 'F#'; if (nota === 'Ab') nota = 'G#'; if (nota === 'Bb') nota = 'A#'; let idx = NOTAS.indexOf(nota); if (idx === -1) return match; let novoIdx = (idx + semitons) % 12; if (novoIdx < 0) novoIdx += 12; return NOTAS[novoIdx]; }); }
 
         function renderizarTextoTransposto() {
             if (!musicaSelecionada) return;
-            const visor = document.getElementById('render-cifra'); visor.innerHTML = ''; visor.style.fontSize = tamanhoFonteAtual + 'px';
+            const visor = document.getElementById('render-cifra');
+            visor.innerHTML = ''; visor.style.fontSize = tamanhoFonteAtual + 'px';
             document.getElementById('visor-tom').textContent = transporNota(musicaSelecionada.tom_original, semitonsAcumulados);
 
-            musicaSelecionada.conteudo.split(/\n\s*\n/).forEach(estrofeTexto => {
-                const divEstrofe = document.createElement('div'); divEstrofe.className = 'estrofe';
-                estrofeTexto.split('\n').forEach(linha => {
-                    const divLinha = document.createElement('div');
-                    const linhaSemEspaco = linha.replace(/\s/g, '');
-                    const tamanhoAcordes = (linha.match(regexAcorde) || []).join('').length;
+            visor.className = '';
+            if (qtdColunas === 2) visor.classList.add('layout-2-colunas');
+            if (qtdColunas === 3) visor.classList.add('layout-3-colunas');
 
-                    if (linhaSemEspaco.length > 0 && (tamanhoAcordes / linhaSemEspaco.length) > 0.5) {
-                        divLinha.className = 'linha-acorde';
-                        divLinha.innerHTML = linha.replace(regexAcorde, match => {
+            let htmlContent = musicaSelecionada.conteudo;
+            if (!/<[a-z][\s\S]*>/i.test(htmlContent)) {
+                htmlContent = htmlContent.split('\n').map(line => `<p>${line || '&nbsp;'}</p>`).join('');
+            }
+            htmlContent = htmlContent.replace(/<br\s*\/?>/gi, '</p><p>');
+
+            const container = document.createElement('div');
+            container.innerHTML = htmlContent;
+
+            const children = Array.from(container.children);
+            for (let i = 0; i < children.length; i++) {
+                const block = children[i];
+                const textContent = block.textContent || '';
+                const textoSemEspaco = textContent.replace(/\s/g, '');
+                const tamanhoAcordes = (textContent.match(regexAcorde) || []).join('').length;
+                const isAcorde = textoSemEspaco.length > 0 && (tamanhoAcordes / textoSemEspaco.length) > 0.4;
+
+                if (isAcorde) {
+                    block.classList.add('linha-acorde');
+                    
+                    const textWalker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT, null, false);
+                    const textNodes = [];
+                    let tn;
+                    while (tn = textWalker.nextNode()) textNodes.push(tn);
+                    
+                    for (let tNode of textNodes) {
+                        const originalText = tNode.nodeValue;
+                        const newHtml = originalText.replace(regexAcorde, match => {
                             let transposto = transporNota(match, semitonsAcumulados);
                             return `<span class="acorde-clicavel" onclick="mostrarAcorde(event, '${transposto}')">${transposto}</span>`;
                         });
-                    } else {
-                        divLinha.className = 'linha-letra'; divLinha.textContent = linha || ' ';
+                        if (newHtml !== originalText) {
+                            const span = document.createElement('span');
+                            span.innerHTML = newHtml;
+                            tNode.parentNode.replaceChild(span, tNode);
+                        }
                     }
-                    divEstrofe.appendChild(divLinha);
-                });
-                visor.appendChild(divEstrofe);
-            });
+
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'bloco-linha';
+                    wrapper.appendChild(block);
+
+                    if (i + 1 < children.length) {
+                        const nextBlock = children[i + 1];
+                        const nextText = nextBlock.textContent || '';
+                        const nextSemEspaco = nextText.replace(/\s/g, '');
+                        const nextTamanhoAcordes = (nextText.match(regexAcorde) || []).join('').length;
+                        const nextIsAcorde = nextSemEspaco.length > 0 && (nextTamanhoAcordes / nextSemEspaco.length) > 0.4;
+
+                        if (!nextIsAcorde && nextSemEspaco.length > 0) {
+                            nextBlock.classList.add('linha-letra');
+                            wrapper.appendChild(nextBlock);
+                            i++; 
+                        }
+                    }
+                    visor.appendChild(wrapper);
+                } else {
+                    block.classList.add('linha-letra');
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'bloco-linha';
+                    wrapper.appendChild(block);
+                    visor.appendChild(wrapper);
+                }
+            }
+        }
+
+        // Função para alternar o estado do menu
+        function alternarMenu() {
+            document.body.classList.toggle('menu-recolhido');
         }
     </script>
 </body>
