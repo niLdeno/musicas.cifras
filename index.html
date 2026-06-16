@@ -642,7 +642,7 @@
       border-radius: 10px;
       font-family: inherit;
       font-size: 14px;
-      background: #f8fafc;
+      background: var(--bg-color);
       transition: all 0.2s;
       color: var(--text-main);
     }
@@ -652,7 +652,7 @@
     textarea:focus {
       outline: none;
       border-color: var(--primary);
-      background: #fff;
+      background: var(--surface);
       box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
     }
 
@@ -848,7 +848,7 @@
       break-inside: avoid;
       page-break-inside: avoid;
       -webkit-column-break-inside: avoid;
-      margin-bottom: 8px;
+      margin-bottom: 14px;
     }
 
     .estrofe {
@@ -857,12 +857,14 @@
     }
 
     .linha-letra {
-      color: #000000;
+      color: var(--text-main);
+      margin: 0;
     }
 
     .linha-acorde {
       font-weight: bold;
       color: var(--chord-color);
+      margin: 0 0 2px 0;
     }
 
     .acorde-clicavel {
@@ -898,7 +900,7 @@
       display: grid;
       grid-template-columns: repeat(6, 1fr);
       grid-template-rows: repeat(5, 60px);
-      background: #ffffff;
+      background: var(--surface);
       border: 1px solid var(--border);
       border-top: none;
       position: relative;
@@ -980,7 +982,7 @@
       max-height: 250px;
       overflow-y: auto;
       padding: 12px;
-      background: #fff;
+      background: var(--surface);
     }
 
     .item-selecao {
@@ -993,7 +995,7 @@
     }
 
     .item-selecao:hover {
-      background: #f8fafc;
+      background: var(--bg-color);
     }
 
     .item-selecao:last-child {
@@ -1012,7 +1014,7 @@
       border-radius: 10px;
       border: 1px solid var(--border);
       width: 320px;
-      background: #fff;
+      background: var(--surface);
       font-size: 14px;
       color: var(--text-main);
       transition: all 0.2s;
@@ -1284,8 +1286,8 @@
         min-width: 0 !important;
       }
 
-      .form-grid {
-        grid-template-columns: 1fr;
+      .form-grid, .builder-container {
+        grid-template-columns: 1fr !important;
       }
 
       .form-group.full-width {
@@ -1476,7 +1478,7 @@
                 padding: 8px 10px;
                 border-radius: 10px;
                 border: 1px solid var(--border);
-                background: #fff;
+                background: var(--surface);
               ">
             <option>10 por página</option>
             <option>20 por página</option>
@@ -1692,8 +1694,22 @@
     </div>
   </div>
 
+  <datalist id="datalist-momentos">
+    <option value="Canto de Entrada">
+    <option value="Ato Penitencial">
+    <option value="Hino de Louvor (Glória)">
+    <option value="Salmo Responsorial">
+    <option value="Aclamação ao Evangelho">
+    <option value="Apresentação das Ofertas">
+    <option value="Santo">
+    <option value="Cordeiro de Deus">
+    <option value="Canto de Comunhão">
+    <option value="Ação de Graças">
+    <option value="Canto Final">
+  </datalist>
+
   <div class="modal-overlay" id="modal-cadastro-repertorio">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width: 900px;">
       <div class="modal-header">
         <h2 id="modal-titulo-repertorio">Novo Repertório</h2>
         <button class="close-btn" onclick="fecharModal('modal-cadastro-repertorio')">
@@ -1707,11 +1723,21 @@
         <div class="form-group">
           <label>Data</label><input type="date" id="rep-data" />
         </div>
-        <div class="form-group full-width">
-          <label>Selecione as Músicas:</label>
-          <input type="text" id="rep-busca-musica" placeholder="Buscar por título, autor, momento ou trecho da cifra..."
-            oninput="filtrarMusicasRepertorio()" style="margin-bottom: 12px" />
-          <div class="lista-selecao-musicas" id="lista-checkbox-musicas"></div>
+        
+        <div class="form-group full-width builder-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <!-- Lado Esquerdo: Busca e Acervo -->
+          <div class="builder-acervo">
+            <label>Adicionar Músicas:</label>
+            <input type="text" id="rep-busca-musica" placeholder="Buscar no acervo..." oninput="filtrarMusicasDisponiveisRepertorio()" style="margin-bottom: 12px; width: 100%; box-sizing: border-box;" />
+            <div class="lista-selecao-musicas" id="lista-disponiveis-repertorio" style="height: 350px; max-height: 350px;">
+            </div>
+          </div>
+          <!-- Lado Direito: Sequência -->
+          <div class="builder-sequencia">
+            <label>Sequência do Repertório:</label>
+            <div class="lista-selecao-musicas" id="lista-sequencia-repertorio" style="height: 396px; max-height: 396px; background: var(--bg-color); border: 1px dashed var(--border);">
+            </div>
+          </div>
         </div>
       </div>
       <button class="btn" style="width: 100%; justify-content: center" onclick="salvarRepertorio()">
@@ -1786,7 +1812,7 @@
   </div>
 
   <div class="modal-overlay" id="modal-visualizar-acorde">
-    <div class="modal-content" style="max-width: 800px; background: #f8fafc">
+    <div class="modal-content" style="max-width: 800px; background: var(--surface)">
       <div class="modal-header">
         <h2 id="visu-acorde-titulo">Detalhes do Acorde</h2>
         <button class="close-btn" onclick="fecharModal('modal-visualizar-acorde')">
@@ -1812,6 +1838,7 @@
     let idEdicaoAtual = null;
     let idEdicaoRepertorioAtual = null;
     let musicaSelecionada = null;
+    let musicasRepertorioAtual = [];
     let playlistAtual = [];
     let indexPlaylist = 0;
     let semitonsAcumulados = 0;
@@ -2113,6 +2140,87 @@
       document.removeEventListener("click", closeAllMenus);
     }
 
+    function renderizarConstrutorRepertorio() {
+       const divDisp = document.getElementById("lista-disponiveis-repertorio");
+       const divSeq = document.getElementById("lista-sequencia-repertorio");
+       if (!divDisp || !divSeq) return;
+
+       // Render disponíveis
+       const termo = (document.getElementById("rep-busca-musica").value || "").toLowerCase();
+       divDisp.innerHTML = "";
+       acervoGlobal.forEach(m => {
+          if (termo) {
+             const conteudo = `${m.titulo} ${m.autor||""} ${m.conteudo||""}`.toLowerCase();
+             if (!conteudo.includes(termo)) return;
+          }
+          divDisp.innerHTML += `<div class="item-selecao" style="justify-content: space-between;">
+             <div style="flex: 1; min-width: 0;">
+                <strong style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;">${m.titulo}</strong>
+                <small style="color:var(--text-muted); display: block;">${m.momento_missa || "Geral"}</small>
+             </div>
+             <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px; flex-shrink: 0;" onclick="adicionarMusicaRepertorio(${m.id})" title="Adicionar ao Repertório"><i class="fa-solid fa-plus"></i></button>
+          </div>`;
+       });
+
+       // Render sequência
+       divSeq.innerHTML = "";
+       if (musicasRepertorioAtual.length === 0) {
+          divSeq.innerHTML = `<div style="text-align: center; color: var(--text-muted); margin-top: 40px;">Nenhuma música adicionada.<br><small>Use o painel ao lado para adicionar.</small></div>`;
+       } else {
+          musicasRepertorioAtual.forEach((item, index) => {
+             const m = acervoGlobal.find(x => x.id === item.id);
+             if (!m) return;
+             divSeq.innerHTML += `<div class="item-selecao" style="flex-direction: column; align-items: stretch; gap: 8px; background: var(--surface); border: 1px solid var(--border); margin-bottom: 8px; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                   <div style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                      <span style="font-weight: bold; color: var(--primary); margin-right: 8px;">${index + 1}.</span> 
+                      <strong>${m.titulo}</strong>
+                   </div>
+                   <div style="display: flex; gap: 4px; flex-shrink: 0;">
+                      <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;" onclick="moverMusicaRepertorio(${index}, -1)" ${index === 0 ? "disabled" : ""} title="Subir"><i class="fa-solid fa-chevron-up"></i></button>
+                      <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;" onclick="moverMusicaRepertorio(${index}, 1)" ${index === musicasRepertorioAtual.length - 1 ? "disabled" : ""} title="Descer"><i class="fa-solid fa-chevron-down"></i></button>
+                      <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px; color: #ef4444;" onclick="removerMusicaRepertorio(${index})" title="Remover"><i class="fa-solid fa-xmark"></i></button>
+                   </div>
+                </div>
+                <input type="text" placeholder="Momento (ex: Entrada)" list="datalist-momentos" value="${item.momento || ""}" onchange="atualizarMomentoRepertorio(${index}, this.value)" style="padding: 6px 10px; font-size: 13px; width: 100%; box-sizing: border-box;" />
+             </div>`;
+          });
+       }
+    }
+
+    function filtrarMusicasDisponiveisRepertorio() {
+       renderizarConstrutorRepertorio();
+    }
+
+    function adicionarMusicaRepertorio(idMusica) {
+       const m = acervoGlobal.find(x => x.id === idMusica);
+       musicasRepertorioAtual.push({ id: idMusica, momento: m ? (m.momento_missa || "") : "" });
+       renderizarConstrutorRepertorio();
+       setTimeout(() => {
+          const divSeq = document.getElementById("lista-sequencia-repertorio");
+          if(divSeq) divSeq.scrollTop = divSeq.scrollHeight;
+       }, 50);
+    }
+
+    function removerMusicaRepertorio(index) {
+       musicasRepertorioAtual.splice(index, 1);
+       renderizarConstrutorRepertorio();
+    }
+
+    function moverMusicaRepertorio(index, direcao) {
+       if (index + direcao < 0 || index + direcao >= musicasRepertorioAtual.length) return;
+       const temp = musicasRepertorioAtual[index];
+       musicasRepertorioAtual[index] = musicasRepertorioAtual[index + direcao];
+       musicasRepertorioAtual[index + direcao] = temp;
+       renderizarConstrutorRepertorio();
+    }
+
+    function atualizarMomentoRepertorio(index, valor) {
+       if (musicasRepertorioAtual[index]) {
+           musicasRepertorioAtual[index].momento = valor;
+       }
+    }
+
     function abrirModalCadastroRepertorio() {
       idEdicaoRepertorioAtual = null;
       const tituloEl = document.getElementById("modal-titulo-repertorio");
@@ -2122,13 +2230,11 @@
       document.getElementById("rep-data").value = "";
       const inputBusca = document.getElementById("rep-busca-musica");
       if (inputBusca) inputBusca.value = "";
-      const div = document.getElementById("lista-checkbox-musicas");
-      div.innerHTML = "";
-      acervoGlobal.forEach((m) => {
-        div.innerHTML += `<label class="item-selecao"><input type="checkbox" value="${m.id}" class="check-musica-rep"><span><strong>${m.titulo}</strong> <small style="color:var(--text-muted)">(${m.momento_missa || "Geral"})</small></span></label>`;
-      });
-      document.getElementById("modal-cadastro-repertorio").style.display =
-        "flex";
+      
+      musicasRepertorioAtual = [];
+      renderizarConstrutorRepertorio();
+      
+      document.getElementById("modal-cadastro-repertorio").style.display = "flex";
     }
 
     function abrirEdicaoRepertorio(index) {
@@ -2144,50 +2250,26 @@
       const inputBusca = document.getElementById("rep-busca-musica");
       if (inputBusca) inputBusca.value = "";
 
-      const div = document.getElementById("lista-checkbox-musicas");
-      div.innerHTML = "";
-      const musicasSelecionadas = rep.musicas || [];
-
-      acervoGlobal.forEach((m) => {
-        const checked = musicasSelecionadas.includes(m.id) ? "checked" : "";
-        div.innerHTML += `<label class="item-selecao"><input type="checkbox" value="${m.id}" class="check-musica-rep" ${checked}><span><strong>${m.titulo}</strong> <small style="color:var(--text-muted)">(${m.momento_missa || "Geral"})</small></span></label>`;
+      const musicasSalvas = rep.musicas || [];
+      musicasRepertorioAtual = musicasSalvas.map(item => {
+         if (typeof item === 'object') return { ...item };
+         const fallbackMomento = acervoGlobal.find(x => x.id === item)?.momento_missa || "";
+         return { id: item, momento: fallbackMomento };
       });
+
+      renderizarConstrutorRepertorio();
 
       document.getElementById("modal-cadastro-repertorio").style.display = "flex";
-    }
-
-    function filtrarMusicasRepertorio() {
-      const termo = document
-        .getElementById("rep-busca-musica")
-        .value.toLowerCase();
-      const itens = document.querySelectorAll(
-        "#lista-checkbox-musicas .item-selecao",
-      );
-      itens.forEach((item) => {
-        const idMusica = parseInt(item.querySelector("input").value);
-        const musica = acervoGlobal.find((m) => m.id === idMusica);
-        if (musica) {
-          const conteudoBusca =
-            `${musica.titulo} ${musica.autor || ""} ${musica.momento_missa || ""} ${musica.conteudo || ""}`.toLowerCase();
-          if (conteudoBusca.includes(termo)) {
-            item.style.display = "flex";
-          } else {
-            item.style.display = "none";
-          }
-        }
-      });
     }
 
     async function salvarRepertorio() {
       const nome = document.getElementById("rep-nome").value,
         data_evento = document.getElementById("rep-data").value || null;
-      const selecionadas = Array.from(
-        document.querySelectorAll(".check-musica-rep:checked"),
-      ).map((cb) => parseInt(cb.value));
-      if (!nome || selecionadas.length === 0)
-        return alert("Preencha nome e músicas.");
+      
+      if (!nome || musicasRepertorioAtual.length === 0)
+        return alert("Preencha nome e adicione músicas ao repertório.");
 
-      const payload = { nome, data_evento, musicas: selecionadas };
+      const payload = { nome, data_evento, musicas: musicasRepertorioAtual };
 
       if (idEdicaoRepertorioAtual) {
         await supabaseClient
@@ -2407,7 +2489,7 @@
           },
           { width: 140, height: 200, numCasas: v.num_casas || 5 },
         );
-        containerEl.innerHTML += `<div style="background: #ffffff; border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: var(--card-shadow); display: flex; flex-direction: column; align-items: center; gap: 16px;"><span class="tag-pill">Formato ${index + 1}</span>${svgHtml}<div style="display: flex; gap: 8px; width: 100%; justify-content: center; margin-top: auto;"><button class="btn btn-secondary" style="padding: 8px 16px;" onclick="abrirEdicaoAcorde(${v.id})" title="Editar formato"><i class="fa-solid fa-pen"></i></button><button class="btn btn-secondary" style="padding: 8px 16px; color: #ef4444;" onclick="excluirAcordeUnico(${v.id}, '${nome}')" title="Excluir formato"><i class="fa-solid fa-trash"></i></button></div></div>`;
+        containerEl.innerHTML += `<div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: var(--card-shadow); display: flex; flex-direction: column; align-items: center; gap: 16px;"><span class="tag-pill">Formato ${index + 1}</span>${svgHtml}<div style="display: flex; gap: 8px; width: 100%; justify-content: center; margin-top: auto;"><button class="btn btn-secondary" style="padding: 8px 16px;" onclick="abrirEdicaoAcorde(${v.id})" title="Editar formato"><i class="fa-solid fa-pen"></i></button><button class="btn btn-secondary" style="padding: 8px 16px; color: #ef4444;" onclick="excluirAcordeUnico(${v.id}, '${nome}')" title="Excluir formato"><i class="fa-solid fa-trash"></i></button></div></div>`;
       });
       document.getElementById("modal-visualizar-acorde").style.display =
         "flex";
@@ -2586,7 +2668,16 @@
     function tocarRepertorio(indexRepertorio) {
       const rep = repertoriosGlobal[indexRepertorio];
       playlistAtual = (rep.musicas || [])
-        .map((id) => acervoGlobal.find((m) => m.id === id))
+        .map((item) => {
+           let id = typeof item === 'object' ? item.id : item;
+           let originalM = acervoGlobal.find((x) => x.id === id);
+           if (originalM) {
+              let m = { ...originalM };
+              m.momento_repertorio = typeof item === 'object' ? item.momento : (m.momento_missa || "");
+              return m;
+           }
+           return undefined;
+        })
         .filter((m) => m !== undefined);
       if (playlistAtual.length === 0) return alert("Repertório vazio.");
       indexPlaylist = 0;
@@ -2607,8 +2698,11 @@
       document.getElementById("tela-visor").style.display = "block";
       musicaSelecionada = playlistAtual[indexPlaylist];
       semitonsAcumulados = 0;
-      document.getElementById("visor-titulo").textContent =
-        musicaSelecionada.titulo;
+      let tituloMomento = musicaSelecionada.titulo;
+      if (musicaSelecionada.momento_repertorio) {
+         tituloMomento = `<span style="display:block; font-size: 14px; color: var(--text-muted); font-weight: normal; margin-bottom: 2px;">${musicaSelecionada.momento_repertorio}</span>` + tituloMomento;
+      }
+      document.getElementById("visor-titulo").innerHTML = tituloMomento;
       document.getElementById("contador-repertorio").textContent =
         `${indexPlaylist + 1} / ${playlistAtual.length}`;
       renderizarTextoTransposto();
