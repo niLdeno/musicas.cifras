@@ -1402,7 +1402,7 @@
         <i class="fa-solid fa-bars"></i><span>Recolher Menu</span>
       </button>
       <button id="nav-acervo" class="nav-item nav-active" onclick="mudarAmbiente('acervo')">
-        <i class="fa-solid fa-database"></i><span>Banco de Dados</span>
+        <i class="fa-solid fa-database"></i><span>Músicas</span>
       </button>
       <button id="nav-repertorios" class="nav-item" onclick="mudarAmbiente('repertorios')">
         <i class="fa-solid fa-list"></i><span>Repertórios</span>
@@ -1419,11 +1419,11 @@
       </button>
 
       <div class="sidebar-profile" style="cursor: pointer; transition: 0.2s" onclick="abrirModalConfig()"
-        onmouseover="this.style.background = 'rgba(255,255,255,0.05)'"
+        onmouseover="this.style.background = 'rgba(255,255,255,0.01)'"
         onmouseout="this.style.background = 'transparent'">
         <div class="profile-avatar"><i class="fa-solid fa-user"></i></div>
         <div class="profile-info">
-          <span class="profile-name">Ministério</span>
+          <span class="profile-name">Ministério de Música</span>
           <span class="profile-role">Administrador</span>
         </div>
       </div>
@@ -1894,7 +1894,7 @@
       "B",
     ];
     const regexAcorde =
-      /\b([A-G][b#]?(m|maj|dim|aug|sus)?\d*(\/[A-G][b#]?)?)\b/g;
+      /(^|[\s()[\]{}|-])([CDEFGAB][b#]?(?:m|maj|dim|aug|sus)?\d*(?:\/[CDEFGAB][b#]?)?)(?=[()\s[\]{}|-]|$)/g;
 
     window.onload = () => {
       tinymce.init({
@@ -2820,26 +2820,45 @@
 
       let htmlContent = musicaSelecionada.conteudo;
       if (!/<[a-z][\s\S]*>/i.test(htmlContent)) {
-        htmlContent = htmlContent
-          .split("\n")
-          .map((line) => `<p>${line || "&nbsp;"}</p>`)
-          .join("");
+        htmlContent = htmlContent.replace(/\n/g, "<br>");
       }
-      htmlContent = htmlContent.replace(/<br\s*\/?>/gi, "</p><p>");
 
-      const container = document.createElement("div");
-      container.innerHTML = htmlContent;
-      const children = Array.from(container.children);
-      for (let i = 0; i < children.length; i++) {
-        const block = children[i];
+      let temp = htmlContent
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<\/(p|div|h[1-6]|li)>/gi, "\n")
+        .replace(/<(p|div|h[1-6]|li)[^>]*>/gi, "");
+
+      const linhasRaw = temp.split("\n");
+      const childrenProcessados = [];
+
+      for (let i = 0; i < linhasRaw.length; i++) {
+        let lineHtml = linhasRaw[i];
+        if (lineHtml.trim() === "" && lineHtml.indexOf("&nbsp;") === -1) {
+          const p = document.createElement("p");
+          p.innerHTML = "&nbsp;";
+          p.className = "linha-letra";
+          childrenProcessados.push(p);
+          continue;
+        }
+
+        const block = document.createElement("p");
+        block.innerHTML = lineHtml;
+        block.style.margin = "0";
         const textContent = block.textContent || "";
         const textoSemEspaco = textContent.replace(/\s/g, "");
-        const tamanhoAcordes = (textContent.match(regexAcorde) || []).join(
-          "",
-        ).length;
+
+        let matchArray = [];
+        let m;
+        regexAcorde.lastIndex = 0;
+        while ((m = regexAcorde.exec(textContent)) !== null) {
+          matchArray.push(m[2]);
+        }
+        const tamanhoAcordes = matchArray.join("").length;
+
         const isAcorde =
           textoSemEspaco.length > 0 &&
           tamanhoAcordes / textoSemEspaco.length > 0.4;
+
         if (isAcorde) {
           block.classList.add("linha-acorde");
           const textWalker = document.createTreeWalker(
@@ -2853,9 +2872,10 @@
           while ((tn = textWalker.nextNode())) textNodes.push(tn);
           for (let tNode of textNodes) {
             const originalText = tNode.nodeValue;
-            const newHtml = originalText.replace(regexAcorde, (match) => {
-              let transposto = transporNota(match, semitonsAcumulados);
-              return `<span class="acorde-clicavel" onclick="mostrarAcorde(event, '${transposto}')">${transposto}</span>`;
+            regexAcorde.lastIndex = 0;
+            const newHtml = originalText.replace(regexAcorde, (match, prefix, chord) => {
+              let transposto = transporNota(chord, semitonsAcumulados);
+              return `${prefix}<span class="acorde-clicavel" onclick="mostrarAcorde(event, '${transposto}')">${transposto}</span>`;
             });
             if (newHtml !== originalText) {
               const span = document.createElement("span");
@@ -2863,28 +2883,27 @@
               tNode.parentNode.replaceChild(span, tNode);
             }
           }
+        } else {
+          block.classList.add("linha-letra");
+        }
+        childrenProcessados.push(block);
+      }
+
+      for (let i = 0; i < childrenProcessados.length; i++) {
+        const block = childrenProcessados[i];
+        if (block.classList.contains("linha-acorde")) {
           const wrapper = document.createElement("div");
           wrapper.className = "bloco-linha";
           wrapper.appendChild(block);
-          if (i + 1 < children.length) {
-            const nextBlock = children[i + 1];
-            const nextText = nextBlock.textContent || "";
-            const nextSemEspaco = nextText.replace(/\s/g, "");
-            const nextTamanhoAcordes = (
-              nextText.match(regexAcorde) || []
-            ).join("").length;
-            const nextIsAcorde =
-              nextSemEspaco.length > 0 &&
-              nextTamanhoAcordes / nextSemEspaco.length > 0.4;
-            if (!nextIsAcorde && nextSemEspaco.length > 0) {
-              nextBlock.classList.add("linha-letra");
+          if (i + 1 < childrenProcessados.length) {
+            const nextBlock = childrenProcessados[i + 1];
+            if (!nextBlock.classList.contains("linha-acorde") && nextBlock.textContent.trim().length > 0) {
               wrapper.appendChild(nextBlock);
               i++;
             }
           }
           visor.appendChild(wrapper);
         } else {
-          block.classList.add("linha-letra");
           const wrapper = document.createElement("div");
           wrapper.className = "bloco-linha";
           wrapper.appendChild(block);
