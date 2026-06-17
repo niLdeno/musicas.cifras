@@ -1476,36 +1476,6 @@
           <div style="color: var(--text-muted)">
             Mostrando <span id="acervo-count">0</span> acordes
           </div>
-          <div style="display: flex; gap: 8px; align-items: center">
-            <button class="btn btn-secondary" style="border-radius: 10px; padding: 8px 12px">
-              ◀
-            </button>
-            <div style="
-                  width: 40px;
-                  height: 40px;
-                  border-radius: 10px;
-                  background: var(--primary);
-                  color: #fff;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  font-weight: 700;
-                ">
-              1
-            </div>
-            <button class="btn btn-secondary" style="border-radius: 10px; padding: 8px 12px">
-              ▶
-            </button>
-          </div>
-          <select style="
-                padding: 8px 10px;
-                border-radius: 10px;
-                border: 1px solid var(--border);
-                background: var(--surface);
-              ">
-            <option>10 por página</option>
-            <option>20 por página</option>
-          </select>
         </div>
       </div>
     </div>
@@ -1705,7 +1675,7 @@
           </select>
         </div>
         <div class="form-group">
-          <label>Momento</label><input type="text" id="cad-momento" />
+          <label>Momento</label><input type="text" id="cad-momento" list="datalist-momentos" />
         </div>
         <div class="form-group full-width">
           <label>Cifra *</label><textarea id="cad-conteudo"></textarea>
@@ -2052,12 +2022,15 @@
       };
       if (!p.titulo || !p.conteudo)
         return alert("Título e Cifra obrigatórios.");
-      if (idEdicaoAtual)
-        await supabaseClient
+      const { error } = idEdicaoAtual
+        ? await supabaseClient
           .from("musicas")
           .update(p)
-          .eq("id", idEdicaoAtual);
-      else await supabaseClient.from("musicas").insert([p]);
+          .eq("id", idEdicaoAtual)
+        : await supabaseClient.from("musicas").insert([p]);
+
+      if (error) return alert("Erro ao salvar: " + error.message);
+
       fecharModal("modal-cadastro-musica");
       carregarAcervo();
     }
@@ -2155,7 +2128,7 @@
         else card.classList.remove("menu-open");
       }
       setTimeout(() => {
-        document.addEventListener("click", closeAllMenus);
+        document.addEventListener("click", closeAllMenus, { once: true });
       }, 10);
     }
 
