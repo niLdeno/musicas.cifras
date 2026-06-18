@@ -1378,6 +1378,106 @@
         white-space: pre-wrap;
       }
     }
+
+    /* =========================================
+       ✨ ESTILOS DO RENDERIZADOR REALISTA
+       ========================================= */
+    .fretboard-realista {
+      background: linear-gradient(to left, #2a1610 0%, #3d2314 20%, #4a2a18 50%, #3d2314 80%, #2a1610 100%);
+      background-image: repeating-linear-gradient(to right, transparent, transparent 2px, rgba(0, 0, 0, 0.1) 3px, transparent 4px), linear-gradient(to bottom, #2a1610 0%, #4a2a18 50%, #2a1610 100%);
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .fretboard-realista::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 3px;
+      background: linear-gradient(to bottom, #f4e8d1, #d4c4a8, #9a8a70);
+      z-index: 10;
+    }
+
+    .fretboard-realista::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 3px;
+      background: linear-gradient(to bottom, #f4e8d1, #d4c4a8, #9a8a70);
+      z-index: 10;
+    }
+
+    .fret-realista {
+      border-left: 2px solid #b8c6cb;
+      box-shadow: -1px 0 2px rgba(255, 255, 255, 0.6), 1px 0 2px rgba(0, 0, 0, 0.6);
+      position: relative;
+    }
+
+    .inlay-realista {
+      background: radial-gradient(circle at 30% 30%, #ffffff, #e0e5ec, #b0b8c4);
+      box-shadow: inset -1px -1px 2px rgba(0, 0, 0, 0.3), 0 1px 1px rgba(0, 0, 0, 0.5);
+      border-radius: 50%;
+    }
+
+    .string-realista {
+      position: absolute;
+      left: 0;
+      right: 0;
+      z-index: 20;
+      transform: translateY(-50%);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    }
+
+    .string-r6 {
+      height: 4px;
+      background: repeating-linear-gradient(to right, #8c8273, #a69b8a 2px, #736a5c 3px);
+    }
+
+    .string-r5 {
+      height: 3.5px;
+      background: repeating-linear-gradient(to right, #8c8273, #a69b8a 2px, #736a5c 3px);
+    }
+
+    .string-r4 {
+      height: 3px;
+      background: repeating-linear-gradient(to right, #8c8273, #a69b8a 2px, #736a5c 3px);
+    }
+
+    .string-r3 {
+      height: 2px;
+      background: linear-gradient(to bottom, #666, #ccc 50%, #666);
+    }
+
+    .string-r2 {
+      height: 1.5px;
+      background: linear-gradient(to bottom, #777, #ddd 50%, #777);
+    }
+
+    .string-r1 {
+      height: 1px;
+      background: linear-gradient(to bottom, #888, #eee 50%, #888);
+    }
+
+    .finger-marker-realista {
+      background: radial-gradient(circle at 30% 30%, #4facfe, #00f2fe);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), inset -1px -1px 2px rgba(0, 0, 0, 0.2);
+      border: 1.5px solid rgba(255, 255, 255, 0.8);
+      z-index: 40;
+      border-radius: 50%;
+    }
+
+    .barre-marker-realista {
+      background: linear-gradient(to right, rgba(79, 172, 254, 0.9), rgba(0, 242, 254, 0.9));
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+      border: 1.5px solid rgba(255, 255, 255, 0.8);
+      border-radius: 999px;
+      z-index: 35;
+    }
   </style>
 </head>
 
@@ -1866,12 +1966,13 @@
         plugins:
           "lists link preview searchreplace visualblocks code fullscreen table help wordcount",
         toolbar:
-          "undo redo | formatselect | fontfamily fontsize | " +
+          "undo redo | formatselect | fontfamily fontsize lineheight | " +
           "bold italic underline | alignleft aligncenter " +
           "alignright alignjustify | outdent indent | " +
           "numlist bullist | forecolor backcolor | help",
         menubar: false,
         height: 400,
+        lineheight_formats: '1 1.1 1.2 1.3 1.4 1.5 1.6 1.8 2 2.5 3',
         content_style:
           "body { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 16px; }",
       });
@@ -1879,7 +1980,7 @@
       // LÓGICA DE CONEXÃO
       const url = "https://azscmfqhqarpudwjcgky.supabase.co";
       const key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6c2NtZnFocWFycHVkd2pjZ2t5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMTg3MDcsImV4cCI6MjA5NjU5NDcwN30.uZdkWQ0hONUfU9gjadxRh8nCWboVX-lseoF2CLBn9_4";
-      
+
       conectarSupabase(url, key);
 
       // LÓGICA DE CONFIGURAÇÕES
@@ -2342,8 +2443,13 @@
         }
         html += `<div class="status-item" onclick="toggleStatusCorda(${i})">${status}</div>`;
       }
-      html +=
-        '</div><div class="pestana"></div><div class="braco-grid"><div class="cordas-linhas">';
+      html += '</div>';
+      if (braco_start_fret === 1) {
+        html += '<div class="pestana"></div>';
+      } else {
+        html += `<div style="width: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; color: var(--text-main); border-right: 2px solid var(--border);">${braco_start_fret}ª</div>`;
+      }
+      html += '<div class="braco-grid"><div class="cordas-linhas">';
       for (let i = 0; i < 6; i++) html += "<div></div>";
       html += "</div>";
       for (let idx = 0; idx < braco_num_casas; idx++) {
@@ -2468,7 +2574,7 @@
       tituloEl.textContent = `Formatos para: ${nome}`;
       containerEl.innerHTML = "";
       variacoes.forEach((v, index) => {
-        const svgHtml = desenharAcordeSVG(
+        const svgHtml = gerarHtmlAcordeRealista(
           nome,
           {
             posicoes: v.posicoes,
@@ -2476,7 +2582,7 @@
             start_fret: v.start_fret,
             num_casas: v.num_casas,
           },
-          { width: 140, height: 200, numCasas: v.num_casas || 5 },
+          { width: 280, height: 160, numCasas: v.num_casas || 5 },
         );
         containerEl.innerHTML += `<div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: var(--card-shadow); display: flex; flex-direction: column; align-items: center; gap: 16px;"><span class="tag-pill">Formato ${index + 1}</span>${svgHtml}<div style="display: flex; gap: 8px; width: 100%; justify-content: center; margin-top: auto;"><button class="btn btn-secondary" style="padding: 8px 16px;" onclick="abrirEdicaoAcorde(${v.id})" title="Editar formato"><i class="fa-solid fa-pen"></i></button><button class="btn btn-secondary" style="padding: 8px 16px; color: #ef4444;" onclick="excluirAcordeUnico(${v.id}, '${nome}')" title="Excluir formato"><i class="fa-solid fa-trash"></i></button></div></div>`;
       });
@@ -2520,21 +2626,34 @@
       carregarRepertorios();
     }
 
-    function obterPosicoesAcorde(nomeAcorde) {
-      const acordeCustom = dicionarioGlobal.find(
-        (a) => a.nome === nomeAcorde,
-      );
-      if (acordeCustom)
-        return { posicoes: acordeCustom.posicoes, dedos: acordeCustom.dedos };
-      const base =
-        typeof DICIONARIO_BRASIL !== "undefined" &&
-          DICIONARIO_BRASIL[nomeAcorde]
-          ? DICIONARIO_BRASIL[nomeAcorde]
-          : null;
-      return { posicoes: base, dedos: null };
+    // Traz todas as variações daquele acorde em formato de Lista
+    function obterTodasPosicoesAcorde(nomeAcorde) {
+      const acordeCustom = dicionarioGlobal.filter((a) => a.nome === nomeAcorde);
+      if (acordeCustom && acordeCustom.length > 0) {
+        return acordeCustom.map(a => ({ posicoes: a.posicoes, dedos: a.dedos, start_fret: a.start_fret, num_casas: a.num_casas }));
+      }
+
+      if (typeof DICIONARIO_BRASIL !== "undefined" && DICIONARIO_BRASIL[nomeAcorde]) {
+        const dados = DICIONARIO_BRASIL[nomeAcorde];
+        // Retorna a lista de opções (Opção 1, Opção 2...)
+        if (Array.isArray(dados) && typeof dados[0] === 'object' && dados[0] !== null) {
+          return dados;
+        }
+        // Retrocompatibilidade
+        else if (Array.isArray(dados)) {
+          return [{ posicoes: dados, dedos: null }];
+        }
+      }
+      return [];
     }
 
-    function desenharAcordeSVG(nomeAcorde, data, opts) {
+    // Mantida para a tela do Dicionário não quebrar
+    function obterPosicoesAcorde(nomeAcorde) {
+      const variacoes = obterTodasPosicoesAcorde(nomeAcorde);
+      return variacoes.length > 0 ? variacoes[0] : { posicoes: null, dedos: null };
+    }
+
+    function gerarHtmlAcordeRealista(nomeAcorde, data, opts) {
       let posicoes = [],
         dedos = null;
       if (Array.isArray(data)) posicoes = data;
@@ -2542,102 +2661,218 @@
         posicoes = data.posicoes;
         dedos = data.dedos || null;
       }
-      const showFret =
-        localStorage.getItem("gerecifras_show_fret_numbers") === "1";
-      const globalStartFret = parseInt(
-        localStorage.getItem("gerecifras_start_fret") || "1",
-      );
-      const showFinger =
-        localStorage.getItem("gerecifras_show_finger_numbers") === "1";
-      const startFret =
-        data && data.start_fret ? parseInt(data.start_fret) : globalStartFret;
-      const numCasas =
-        data && data.num_casas
-          ? parseInt(data.num_casas)
-          : (opts && opts.numCasas) || 5;
-      const width = (opts && opts.width) || 140;
-      const height = (opts && opts.height) || 200;
-      const left = 20;
-      const right = width - 20;
-      const top = 40;
-      const rowH = Math.floor((height - top - 20) / (numCasas + 1));
+      const showFret = localStorage.getItem("gerecifras_show_fret_numbers") === "1";
+      const globalStartFret = parseInt(localStorage.getItem("gerecifras_start_fret") || "1");
+      const showFinger = localStorage.getItem("gerecifras_show_finger_numbers") === "1";
+      let computedNumCasas = data && data.num_casas ? parseInt(data.num_casas) : (opts && opts.numCasas) || 5;
+      let computedStartFret = globalStartFret;
+      
+      if (data && data.start_fret) {
+         computedStartFret = parseInt(data.start_fret);
+      } else if (posicoes && posicoes.length === 6) {
+         let maxFret = Math.max(...posicoes);
+         let hasOpen = posicoes.includes(0);
+         
+         if (maxFret > computedNumCasas) {
+             if (hasOpen) {
+                 computedNumCasas = maxFret;
+             } else {
+                 let minFretObj = posicoes.filter(p => p > 0);
+                 let minFret = minFretObj.length > 0 ? Math.min(...minFretObj) : 1;
+                 if (isFinite(minFret) && minFret > 1) {
+                     computedStartFret = minFret;
+                 }
+                 if (maxFret - computedStartFret + 1 > computedNumCasas) {
+                     computedNumCasas = maxFret - computedStartFret + 1;
+                 }
+             }
+         }
+      }
+      
+      const startFret = computedStartFret;
+      const numCasas = computedNumCasas;
+      const width = (opts && opts.width) || 300;
 
-      let svg = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">`;
-      svg += `<text x="${width / 2}" y="22" font-family="sans-serif" font-size="16" font-weight="bold" fill="var(--text-main)" text-anchor="middle">${nomeAcorde}</text>`;
-      svg += `<line x1="${left}" y1="${top}" x2="${right}" y2="${top}" stroke="var(--text-main)" stroke-width="4"/>`;
-      for (let i = 1; i <= numCasas; i++) {
-        svg += `<line x1="${left}" y1="${top + i * rowH}" x2="${right}" y2="${top + i * rowH}" stroke="var(--text-muted)" stroke-width="1"/>`;
-      }
-      for (let i = 0; i < 6; i++) {
-        let x = left + i * ((right - left) / 5);
-        svg += `<line x1="${x}" y1="${top}" x2="${x}" y2="${top + numCasas * rowH}" stroke="var(--text-main)" stroke-width="1"/>`;
-      }
-      if (showFret) {
-        for (let i = 0; i < numCasas; i++) {
-          const numero = startFret + i;
-          const y = top + (i + 1) * rowH - Math.floor(rowH / 2);
-          svg += `<text x="${left - 8}" y="${y}" font-family="sans-serif" font-size="11" fill="var(--text-muted)" text-anchor="end">${numero}</text>`;
-        }
-      }
+      const positionsY = [12, 27.6, 43.2, 58.8, 74.4, 90];
+      const stringNames = ['E', 'A', 'D', 'G', 'B', 'e'];
 
-      let pestanas = {};
+      let pestanas = [];
       if (dedos) {
+        let pestanaMap = {};
         for (let i = 0; i < 6; i++) {
           let casa = posicoes[i];
           let dedo = dedos[i];
           if (casa > 0 && dedo) {
             let key = casa + "_" + dedo;
-            if (!pestanas[key])
-              pestanas[key] = { fret: casa, minStr: i, maxStr: i };
+            if (!pestanaMap[key]) pestanaMap[key] = { fret: casa, minStr: i, maxStr: i };
             else {
-              pestanas[key].minStr = Math.min(pestanas[key].minStr, i);
-              pestanas[key].maxStr = Math.max(pestanas[key].maxStr, i);
+              pestanaMap[key].minStr = Math.min(pestanaMap[key].minStr, i);
+              pestanaMap[key].maxStr = Math.max(pestanaMap[key].maxStr, i);
             }
           }
         }
-        Object.values(pestanas).forEach((p) => {
-          if (p.maxStr > p.minStr) {
-            const rel = p.fret - startFret;
-            const y = top + (rel + 1) * rowH - Math.floor(rowH / 2);
-            const x1 = left + p.minStr * ((right - left) / 5);
-            const x2 = left + p.maxStr * ((right - left) / 5);
-            svg += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="var(--primary)" stroke-width="${Math.max(10, Math.floor(rowH / 1.8))}" stroke-linecap="round" opacity="0.9"/>`;
-          }
-        });
+        pestanas = Object.values(pestanaMap).filter(p => p.maxStr > p.minStr);
       }
 
-      for (let i = 0; i < 6; i++) {
-        let x = left + i * ((right - left) / 5);
-        let casa = posicoes && posicoes[i] !== undefined ? posicoes[i] : null;
-        if (casa === -1) {
-          svg += `<text x="${x}" y="${top - 6}" font-family="sans-serif" font-size="10" font-weight="bold" fill="#ef4444" text-anchor="middle">X</text>`;
-        } else if (casa === 0) {
-          svg += `<circle cx="${x}" cy="${top - 6}" r="3" fill="none" stroke="var(--text-main)"/>`;
-        } else if (casa > 0) {
-          const rel = casa - startFret;
-          const y = top + (rel + 1) * rowH - Math.floor(rowH / 2);
-          svg += `<circle cx="${x}" cy="${y}" r="${Math.max(5, Math.floor(rowH / 3))}" fill="var(--primary)"/>`;
-          if (showFinger && dedos && dedos[i]) {
-            svg += `<text x="${x}" y="${y + 3}" font-family="sans-serif" font-size="${Math.max(10, Math.floor(rowH / 3))}" font-weight="700" fill="#fff" text-anchor="middle">${dedos[i]}</text>`;
+      const getFretXPosition = (fretNumber) => {
+        const fretWidthPercentage = 100 / numCasas;
+        const positionFromStart = (fretNumber - startFret) * fretWidthPercentage + (fretWidthPercentage / 2);
+        return 100 - positionFromStart;
+      };
+
+      let html = `<div style="width: ${width}px; font-family: sans-serif; margin: 0 auto;">`;
+      html += `<div style="text-align: center; font-weight: bold; font-size: 18px; margin-bottom: 12px; color: var(--text-main);">${nomeAcorde}</div>`;
+
+      html += `<div style="position: relative; display: flex; flex-direction: row-reverse; height: 130px; border-radius: 8px; box-shadow: 0 10px 20px rgba(0,0,0,0.15);">`;
+
+      if (startFret === 1) {
+        // Cabeçote / Indicadores
+        html += `<div style="width: 36px; height: 100%; flex-shrink: 0; border-top: 3px solid #1a0f0a; border-bottom: 3px solid #1a0f0a; border-right: 3px solid #1a0f0a; border-radius: 0 8px 8px 0; background: linear-gradient(to left, #2a1610, #4a2a18); position: relative; overflow: hidden; z-index: 10;">`;
+        for (let i = 0; i < 6; i++) {
+          let p = posicoes[i];
+          let sinal = p === -1 ? '<span style="color:#ef4444; font-weight:bold; font-size:12px;">X</span>' : (p === 0 ? '<span style="color:#22c55e; font-weight:bold; font-size:12px;">O</span>' : '');
+          html += `<div style="position: absolute; width: 100%; top: ${positionsY[i]}%; transform: translateY(-50%); display: flex; flex-direction: row-reverse; justify-content: space-between; padding: 0 4px; box-sizing: border-box; align-items: center;">
+              <span style="color: rgba(255,255,255,0.3); font-size: 9px; font-family: monospace;">${stringNames[i]}</span>
+              ${sinal}
+          </div>`;
+        }
+        html += `</div>`;
+
+        // Pestana (Nut)
+        html += `<div style="width: 6px; height: 100%; flex-shrink: 0; background: linear-gradient(to left, #f0e6d2, #d1c5b0); border-left: 1px solid #8a7c66; box-shadow: -2px 0 4px rgba(0,0,0,0.4); z-index: 30;"></div>`;
+      } else {
+        // Indicador de Casa Inicial
+        html += `<div style="width: 36px; height: 100%; flex-shrink: 0; position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10;">`;
+        html += `<div style="font-weight: bold; font-size: 16px; color: var(--text-main); margin-bottom: 8px;">${startFret}ª</div>`;
+        for (let i = 0; i < 6; i++) {
+          let p = posicoes[i];
+          if (p === -1 || p === 0) {
+            let sinal = p === -1 ? '<span style="color:#ef4444; font-weight:bold; font-size:12px;">X</span>' : '<span style="color:#22c55e; font-weight:bold; font-size:12px;">O</span>';
+            html += `<div style="position: absolute; width: 100%; top: ${positionsY[i]}%; transform: translateY(-50%); display: flex; justify-content: center; align-items: center; padding-right: 4px;">
+                ${sinal}
+            </div>`;
           }
         }
+        html += `</div>`;
+
+        // Traste normal em vez de Nut
+        html += `<div style="width: 2px; height: 100%; flex-shrink: 0; background: #b8c6cb; z-index: 30; box-shadow: -1px 0 2px rgba(255, 255, 255, 0.6), 1px 0 2px rgba(0, 0, 0, 0.6);"></div>`;
       }
-      svg += `</svg>`;
-      return svg;
+
+      // Braço (Fretboard)
+      html += `<div class="fretboard-realista" style="flex-grow: 1; display: flex; flex-direction: row-reverse; position: relative;">`;
+
+      for (let i = 0; i < 6; i++) {
+        html += `<div class="string-realista string-r${6 - i}" style="top: ${positionsY[i]}%;"></div>`;
+      }
+
+      for (let i = 0; i < numCasas; i++) {
+        html += `<div class="fret-realista" style="flex: 1; position: relative; display: flex; justify-content: center; align-items: center;">`;
+        let casaAbsoluta = startFret + i;
+        if ([3, 5, 7, 9, 12, 15, 17].includes(casaAbsoluta)) {
+          html += `<div class="inlay-realista" style="width: 12px; height: 12px;"></div>`;
+        }
+        html += `</div>`;
+      }
+
+      html += `<div style="position: absolute; inset: 0; z-index: 40; pointer-events: none;">`;
+
+      // Pestanas do Acorde (Barres)
+      pestanas.forEach(barre => {
+        let xPos = getFretXPosition(barre.fret);
+        let startY = positionsY[barre.minStr];
+        let endY = positionsY[barre.maxStr];
+        let topY = Math.min(startY, endY);
+        let bottomY = Math.max(startY, endY);
+        html += `<div class="barre-marker-realista" style="position: absolute; left: calc(${xPos}% - 8px); width: 16px; top: calc(${topY}% - 8px); height: calc(${bottomY - topY}% + 16px); display: flex; justify-content: center; align-items: center; color: white; font-weight: bold; font-size: 10px;"></div>`;
+      });
+
+      // Dedos
+      for (let i = 0; i < 6; i++) {
+        let casa = posicoes[i];
+        if (casa <= 0) continue;
+
+        let coberto = pestanas.some(p => p.fret === casa && i >= p.minStr && i <= p.maxStr);
+        if (coberto) continue;
+
+        let xPos = getFretXPosition(casa);
+        let yPos = positionsY[i];
+        let numDedo = showFinger && dedos && dedos[i] ? dedos[i] : '';
+
+        html += `<div class="finger-marker-realista" style="position: absolute; left: calc(${xPos}% - 9px); top: calc(${yPos}% - 9px); width: 18px; height: 18px; display: flex; justify-content: center; align-items: center; color: white; font-weight: bold; font-size: 10px;">${numDedo}</div>`;
+      }
+
+      html += `</div></div></div>`;
+
+      // Numeração das casas abaixo do braço
+      if (showFret) {
+        html += `<div style="display: flex; flex-direction: row-reverse; margin-top: 6px; padding-right: 42px;">`;
+        for (let i = 0; i < numCasas; i++) {
+          let num = startFret + i;
+          html += `<div style="flex: 1; text-align: center; color: var(--text-muted); font-size: 11px; font-weight: bold;">${num}ª</div>`;
+        }
+        html += `</div>`;
+      }
+
+      html += `</div>`;
+      return html;
     }
+
+    // Variáveis Globais do Carrossel
+    let tooltipVariacoesAtuais = [];
+    let tooltipNomeAcordeAtual = "";
+
+    function renderTooltipIndex(index) {
+      const tooltip = document.getElementById("tooltip-acorde");
+      if (!tooltipVariacoesAtuais || tooltipVariacoesAtuais.length === 0) return;
+
+      // Lógica de loop infinito (Se passar do último, volta pro primeiro)
+      if (index < 0) index = tooltipVariacoesAtuais.length - 1;
+      if (index >= tooltipVariacoesAtuais.length) index = 0;
+
+      const data = tooltipVariacoesAtuais[index];
+      let html = gerarHtmlAcordeRealista(tooltipNomeAcordeAtual, data);
+
+      // Se houver mais de 1 forma, adiciona os botões "Anterior" e "Próximo"
+      if (tooltipVariacoesAtuais.length > 1) {
+        html += `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding: 0 4px;">
+              <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px;" onclick="mudarVariacaoAcorde(event, ${index - 1})"><i class="fa-solid fa-chevron-left"></i></button>
+              <span style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Formato ${index + 1} de ${tooltipVariacoesAtuais.length}</span>
+              <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px;" onclick="mudarVariacaoAcorde(event, ${index + 1})"><i class="fa-solid fa-chevron-right"></i></button>
+          </div>`;
+      }
+
+      tooltip.innerHTML = html;
+    }
+
+    // Função chamada pelos botões < e >
+    window.mudarVariacaoAcorde = function (event, newIndex) {
+      event.stopPropagation(); // Evita que o clique feche a janelinha
+      renderTooltipIndex(newIndex);
+    };
+
 
     function mostrarAcorde(event, acorde) {
       event.stopPropagation();
       const tooltip = document.getElementById("tooltip-acorde");
-      const data = obterPosicoesAcorde(acorde);
-      if (data && data.posicoes) {
-        tooltip.innerHTML = desenharAcordeSVG(acorde, data);
+
+      // 1. Pega todas as formas de tocar e guarda na memória
+      tooltipVariacoesAtuais = obterTodasPosicoesAcorde(acorde);
+      tooltipNomeAcordeAtual = acorde;
+
+      // 2. Tenta desenhar a primeira opção (Índice 0)
+      if (tooltipVariacoesAtuais.length > 0) {
+        renderTooltipIndex(0);
       } else {
         tooltip.innerHTML = `<div style="text-align:center; font-family:sans-serif; font-size:13px; color:var(--text-muted);">Diagrama<br>de <b>${acorde}</b><br>não mapeado.</div>`;
       }
-      tooltip.style.left = event.pageX - 50 + "px";
-      tooltip.style.top = event.pageY + 20 + "px";
+
+      // 3. Posiciona a janelinha no meio do mouse (150px é o centro)
+      tooltip.style.left = (event.pageX - 150) + "px";
+      tooltip.style.top = (event.pageY + 20) + "px";
       tooltip.style.display = "block";
+
       setTimeout(() => {
         document.addEventListener("click", fecharTooltip);
       }, 10);
