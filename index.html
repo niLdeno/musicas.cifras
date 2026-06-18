@@ -1598,16 +1598,10 @@
   <div class="modal-overlay" id="modal-config">
     <div class="modal-content">
       <div class="modal-header">
-        <h2>Conexão Supabase</h2>
+        <h2>Configurações</h2>
         <button class="close-btn" onclick="fecharModal('modal-config')">
           <i class="fa-solid fa-xmark"></i>
         </button>
-      </div>
-      <div class="form-group" style="margin-bottom: 10px">
-        <label>Project URL</label><input type="text" id="sb-url" />
-      </div>
-      <div class="form-group" style="margin-bottom: 10px">
-        <label>API Anon Key</label><input type="password" id="sb-key" />
       </div>
       <div class="form-group" style="
             margin-bottom: 10px;
@@ -1637,7 +1631,7 @@
         <label for="cfg-show-finger-numbers" style="margin: 0">Exibir numeração dos dedos nos diagramas</label>
       </div>
       <button class="btn" style="width: 100%; justify-content: center" onclick="salvarConfiguracao()">
-        Salvar e Conectar
+        Salvar Configurações
       </button>
     </div>
   </div>
@@ -1883,13 +1877,10 @@
       });
 
       // LÓGICA DE CONEXÃO
-      const url = localStorage.getItem("gerecifras_url"),
-        key = localStorage.getItem("gerecifras_key");
-      if (url && key) {
-        document.getElementById("sb-url").value = url;
-        document.getElementById("sb-key").value = key;
-        conectarSupabase(url, key);
-      } else abrirModalConfig();
+      const url = "https://azscmfqhqarpudwjcgky.supabase.co";
+      const key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6c2NtZnFocWFycHVkd2pjZ2t5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMTg3MDcsImV4cCI6MjA5NjU5NDcwN30.uZdkWQ0hONUfU9gjadxRh8nCWboVX-lseoF2CLBn9_4";
+      
+      conectarSupabase(url, key);
 
       // LÓGICA DE CONFIGURAÇÕES
       const showFret =
@@ -1913,11 +1904,8 @@
     };
 
     function salvarConfiguracao() {
-      const url = document.getElementById("sb-url").value.trim(),
-        key = document.getElementById("sb-key").value.trim();
-      if (!url || !key) return alert("Preencha URL e Chave.");
-      localStorage.setItem("gerecifras_url", url);
-      localStorage.setItem("gerecifras_key", key);
+      const url = "https://azscmfqhqarpudwjcgky.supabase.co";
+      const key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6c2NtZnFocWFycHVkd2pjZ2t5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMTg3MDcsImV4cCI6MjA5NjU5NDcwN30.uZdkWQ0hONUfU9gjadxRh8nCWboVX-lseoF2CLBn9_4";
 
       const showFret = document.getElementById("cfg-show-fret-numbers")
         .checked
