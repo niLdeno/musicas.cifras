@@ -272,35 +272,30 @@
     /* Cards and Lists */
     .acervo-list {
       display: grid;
-      gap: 20px;
-      grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
-    }
-
-    @media (max-width: 800px) {
-      .acervo-list {
-        grid-template-columns: 1fr;
-      }
+      gap: 16px;
+      grid-template-columns: repeat(auto-fill, minmax(min(480px, 100%), 1fr));
     }
 
     .acervo-card {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 20px;
+      border-left: 3px solid transparent;
+      border-radius: 14px;
+      padding: 18px 20px;
       box-shadow: var(--card-shadow);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
       cursor: pointer;
       position: relative;
       z-index: 0;
     }
 
     .acervo-card:hover {
-      transform: translateY(-4px);
+      transform: translateY(-2px);
       box-shadow: var(--card-shadow-hover);
-      border-color: #cbd5e1;
+      border-left-color: var(--primary);
     }
 
     .acervo-card.menu-open {
@@ -1188,195 +1183,437 @@
       background: #1e293b;
     }
 
+    body.dark-mode .toast {
+      background: #1e293b;
+      border-color: #334155;
+      color: #f8fafc;
+    }
+    body.dark-mode .skeleton {
+      background: linear-gradient(90deg, #1e293b 25%, rgba(51,65,85,0.5) 50%, #1e293b 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+    body.dark-mode .skeleton-card {
+      background: #0f172a;
+    }
+    body.dark-mode .tag-pill[style*="background: #e0e7ff"] {
+      background: #1e293b !important;
+      color: #818cf8 !important;
+    }
+
     /* =========================================
-           ✨ RESPONSIVIDADE (MOBILE & TABLET)
-           ========================================= */
+       ✨ TOAST NOTIFICATIONS
+       ========================================= */
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+    .toast {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-main);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      pointer-events: all;
+      min-width: 240px;
+      max-width: 340px;
+      animation: toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .toast.saindo { animation: toastOut 0.3s ease forwards; }
+    .toast.sucesso { border-left-color: #22c55e; }
+    .toast.erro    { border-left-color: #ef4444; }
+    .toast.info    { border-left-color: var(--primary); }
+    .toast i       { font-size: 16px; flex-shrink: 0; }
+    .toast.sucesso i { color: #22c55e; }
+    .toast.erro    i { color: #ef4444; }
+    .toast.info    i { color: var(--primary); }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(20px) scale(0.95); }
+      to   { opacity: 1; transform: translateX(0) scale(1); }
+    }
+    @keyframes toastOut {
+      from { opacity: 1; transform: translateX(0) scale(1); }
+      to   { opacity: 0; transform: translateX(20px) scale(0.95); }
+    }
+
+    /* =========================================
+       ✨ LOADING OVERLAY
+       ========================================= */
+    #loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.25);
+      backdrop-filter: blur(2px);
+      z-index: 9000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    #loading-overlay.ativo { display: flex; }
+    .spinner {
+      width: 44px;
+      height: 44px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Skeleton loading nos cards */
+    .skeleton-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .skeleton {
+      background: linear-gradient(90deg, var(--border) 25%, rgba(148,163,184,0.15) 50%, var(--border) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 6px;
+    }
+    .sk-icon { width: 48px; height: 48px; border-radius: 12px; flex-shrink: 0; }
+    .sk-lines { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+    .sk-title { height: 16px; width: 55%; }
+    .sk-sub   { height: 12px; width: 38%; }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* =========================================
+       ✨ SEARCH WRAPPER
+       ========================================= */
+    .search-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      flex: 1;
+      min-width: 0;
+    }
+    .search-wrapper input {
+      width: 100%;
+      padding-right: 38px;
+      box-sizing: border-box;
+    }
+    .search-clear {
+      position: absolute;
+      right: 10px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 13px;
+      padding: 4px 6px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.15s;
+      line-height: 1;
+    }
+    .search-clear:hover { color: var(--text-main); background: var(--border); }
+    .search-clear.visivel { display: flex; }
+
+    /* =========================================
+       ✨ FAB (Mobile nova música)
+       ========================================= */
+    .fab {
+      display: none;
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--primary-600));
+      color: white;
+      border: none;
+      font-size: 22px;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(99,102,241,0.45);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .fab:hover { transform: scale(1.08); }
+    .fab:active { transform: scale(0.95); }
+
+    /* =========================================
+       ✨ EMPTY STATE
+       ========================================= */
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state i {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.3;
+      display: block;
+    }
+    .empty-state p { font-size: 15px; margin: 0; }
+    .empty-state small { font-size: 13px; margin-top: 6px; display: block; }
+
+    /* =========================================
+       ✨ RESPONSIVIDADE (MOBILE & TABLET)
+       ========================================= */
+    /* ===== TELAS MÉDIAS (< 1024px) ===== */
     @media (max-width: 1024px) {
-      .layout-3-colunas {
-        column-count: 2 !important;
-        column-gap: 30px !important;
-      }
-
-      .layout-2-colunas {
-        column-count: 2 !important;
-        column-gap: 30px !important;
-      }
-
-      #render-cifra {
-        padding: 32px 32px;
-      }
-
-      .main-area {
-        padding: 32px 24px;
-      }
+      .main-area { padding: 28px 24px; }
+      #render-cifra { padding: 28px 32px; }
+      .layout-3-colunas { column-count: 2 !important; column-gap: 30px !important; }
     }
 
+    /* ===== TABLET (769px - 1024px) ===== */
     @media (min-width: 769px) and (max-width: 1024px) {
+      body:not(.menu-recolhido) .sidebar { width: 210px !important; }
+      body:not(.menu-recolhido) .container { margin-left: calc(210px + 20px) !important; }
 
-      /* Garantia absoluta anti-sobreposição para tablets em paisagem ou telas médias */
-      body:not(.menu-recolhido) .sidebar {
-        width: 240px !important;
-      }
+      .acervo-list { grid-template-columns: 1fr !important; }
 
-      body:not(.menu-recolhido) .container {
-        margin-left: calc(240px + 30px) !important;
-      }
-    }
+      .visor-header { flex-wrap: wrap; gap: 12px; }
+      .visor-header-right { flex-wrap: wrap; gap: 10px; }
 
-    @media (max-width: 768px) {
-      .sidebar {
-        top: auto;
-        bottom: 0;
-        width: 100% !important;
-        height: 64px;
-        flex-direction: row;
-        padding: 0;
-        border-right: none;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-        z-index: 1000;
-      }
-
-      .sidebar .sidebar-top,
-      .sidebar-profile,
-      .sidebar-nav button:first-child {
-        display: none !important;
-      }
-
-      .sidebar-nav {
-        flex-direction: row;
-        justify-content: space-around;
-        align-items: center;
-        width: 100%;
-        gap: 0;
-      }
-
-      .nav-item {
-        flex-direction: column;
-        gap: 4px;
-        padding: 8px 4px !important;
-        border-radius: 8px;
-        font-size: 10px;
-        flex: 1;
-        justify-content: center !important;
-        text-align: center;
-      }
-
-      .nav-item i {
-        font-size: 18px;
-        width: auto !important;
-      }
-
-      .nav-item span {
-        display: block !important;
-      }
-
-      .nav-active {
-        border-left: none !important;
-        border-bottom: 3px solid var(--primary);
-        border-radius: 8px 8px 0 0 !important;
-        padding-left: 4px !important;
-        background: transparent !important;
-      }
-
-      .container {
-        margin-left: 0 !important;
-        padding-bottom: 70px;
-      }
-
-      .main-area {
-        padding: 20px 16px;
-      }
-
-      #acervo-busca {
-        flex: 1 !important;
-        min-width: 0 !important;
-      }
-
-      .form-grid,
-      .builder-container {
-        grid-template-columns: 1fr !important;
-      }
-
-      .form-group.full-width {
-        grid-column: span 1;
-      }
-
-      .modal-content {
-        padding: 24px 20px;
-      }
-
-      .card-table {
-        overflow-x: auto;
-        display: block;
-      }
-
-      table {
-        white-space: nowrap;
-      }
-
-      .visor-header {
-        flex-direction: column;
-        padding: 16px;
-      }
-
-      .visor-header-left,
-      .visor-header-right {
-        min-width: 100%;
-        width: 100%;
-        justify-content: flex-start;
-      }
-
-      .visor-header-right {
-        margin-top: 16px;
-        flex-direction: column;
-        gap: 12px;
-      }
-
-      .visor-ferramentas,
-      .controles-tom {
-        width: 100%;
-        justify-content: space-between;
-      }
-
-      #nav-repertorio-visor {
-        width: 100%;
-        justify-content: space-between;
-        margin-top: 12px;
-      }
-
-      #render-cifra {
-        padding: 24px 16px;
-      }
-
-      .layout-2-colunas,
-      .layout-3-colunas {
-        column-count: 1 !important;
-      }
-
-      .braco-container {
-        width: 100%;
-        max-width: 300px;
-      }
-
-    }
-
-    /* Ajustes específicos para tablet (Portrait e Landscape) para evitar transbordamento */
-    @media (min-width: 769px) and (max-width: 1024px) {
-      .layout-2-colunas {
-        column-gap: 30px;
-      }
-
-      .layout-3-colunas {
-        column-count: 2 !important;
-        /* Em tablet, 3 colunas ficam muito espremidas, rebaixamos para 2 */
-        column-gap: 30px;
-      }
+      .modal-content { padding: 28px 24px; }
+      .builder-container { grid-template-columns: 1fr 1fr !important; }
 
       #render-cifra {
         padding: 24px;
         word-break: break-word;
         white-space: pre-wrap;
       }
+      .layout-2-colunas { column-gap: 30px; }
+      .layout-3-colunas { column-count: 2 !important; column-gap: 30px; }
+
+      /* Toast fica acima do normal, não sobrepõe nada */
+      #toast-container { bottom: 20px; right: 20px; }
+    }
+
+    /* ===== MOBILE (≤ 768px) ===== */
+    @media (max-width: 768px) {
+      /* --- Bottom Navigation Bar --- */
+      .sidebar {
+        top: auto;
+        bottom: 0;
+        width: 100% !important;
+        height: 62px;
+        flex-direction: row;
+        padding: 0;
+        border-right: none;
+        border-top: 1px solid rgba(255,255,255,0.08);
+        z-index: 1000;
+        overflow: visible;
+      }
+      .sidebar .sidebar-top,
+      .sidebar-profile,
+      .sidebar-nav > button:first-child {
+        display: none !important;
+      }
+      .sidebar-nav {
+        flex-direction: row;
+        justify-content: space-around;
+        align-items: center;
+        width: 100%;
+        gap: 0;
+        padding: 0 4px;
+      }
+      .nav-item {
+        flex-direction: column;
+        gap: 2px;
+        padding: 8px 2px !important;
+        border-radius: 8px;
+        font-size: 9px;
+        flex: 1;
+        min-width: 0;
+        justify-content: center !important;
+        text-align: center;
+        letter-spacing: 0;
+      }
+      .nav-item i {
+        font-size: 20px;
+        width: auto !important;
+        margin: 0;
+      }
+      .nav-item span { display: block !important; white-space: nowrap; }
+
+      /* Indicador ativo: borda no TOPO (vem de baixo) */
+      .nav-active {
+        border-left: none !important;
+        border-top: 3px solid var(--primary) !important;
+        border-radius: 0 !important;
+        padding-left: 2px !important;
+        background: rgba(99,102,241,0.08) !important;
+        color: #818cf8 !important;
+      }
+      .nav-active i { color: #818cf8; }
+
+      /* --- Layout --- */
+      .container {
+        margin-left: 0 !important;
+        padding-bottom: 80px;
+      }
+      .main-area { padding: 16px 14px; }
+
+      /* --- Header titles --- */
+      .header-title-area h2 { font-size: 22px; }
+      .header-title-area p  { font-size: 13px; }
+
+      /* --- Área de busca --- */
+      .acervo-busca-area {
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 10px !important;
+        align-items: stretch !important;
+      }
+      .acervo-busca-area .search-wrapper,
+      .acervo-busca-area #acervo-busca {
+        width: 100% !important;
+        min-width: 0 !important;
+      }
+      .btn-nova-musica-desktop { display: none !important; }
+      .fab { display: flex !important; }
+      #toast-container { bottom: 74px; right: 14px; }
+
+      /* --- Botão Limpar --- */
+      .btn-limpar-busca { width: 100%; justify-content: center; }
+
+      /* --- Cards --- */
+      .acervo-card { padding: 14px 14px; border-radius: 12px; }
+      .card-icon { width: 44px; height: 44px; font-size: 17px; border-radius: 10px; }
+      .acervo-titulo { font-size: 15px; }
+      .acervo-sub { gap: 6px; }
+      .tag-pill { font-size: 10px; padding: 3px 8px; }
+
+      /* --- Formulários --- */
+      .form-grid { grid-template-columns: 1fr !important; gap: 14px; }
+      .builder-container { grid-template-columns: 1fr !important; gap: 12px !important; }
+      .form-group.full-width { grid-column: span 1; }
+
+      /* --- Modals (sheet do fundo em mobile) --- */
+      .modal-overlay { align-items: flex-end; }
+      .modal-content {
+        padding: 20px 16px 28px;
+        border-radius: 20px 20px 0 0 !important;
+        max-height: 94vh;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0;
+        animation: sheetIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      @keyframes sheetIn {
+        from { transform: translateY(30px); opacity: 0; }
+        to   { transform: translateY(0); opacity: 1; }
+      }
+      .modal-header { margin-bottom: 18px; }
+      .modal-header h2 { font-size: 18px; }
+
+      /* --- Tabelas (scroll horizontal, touch-friendly) --- */
+      .card-table {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        display: block;
+      }
+      th, td { padding: 12px 14px; white-space: nowrap; }
+
+      /* --- Visor de Cifras --- */
+      .visor-header {
+        flex-direction: column;
+        padding: 12px 14px;
+        gap: 10px;
+        border-radius: 12px;
+        margin-bottom: 14px;
+      }
+      .visor-header-left {
+        width: 100%;
+        gap: 10px;
+      }
+      .visor-header-left h2 {
+        font-size: 15px;
+        line-height: 1.3;
+      }
+      .visor-header-right {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        margin-top: 0;
+      }
+      .visor-ferramentas {
+        width: 100%;
+        justify-content: stretch;
+        gap: 6px;
+      }
+      .btn-ferramenta {
+        flex: 1;
+        font-size: 12px;
+        padding: 0 8px;
+        height: 38px;
+        border-radius: 10px;
+      }
+      .controles-tom {
+        width: 100%;
+        justify-content: center;
+        height: 40px;
+        border-radius: 10px;
+      }
+      #nav-repertorio-visor {
+        width: 100%;
+        justify-content: space-between;
+        order: -1;
+      }
+      #render-cifra {
+        padding: 18px 14px;
+        border-radius: 12px;
+        font-size: 14px;
+        line-height: 1.4;
+      }
+      .layout-2-colunas,
+      .layout-3-colunas {
+        column-count: 1 !important;
+      }
+
+      /* --- Construtor de acorde --- */
+      .braco-container { width: 100%; max-width: 300px; }
+
+      /* --- Botões ação nos cards (maior para touch) --- */
+      .action-circle { width: 44px; height: 44px; }
+      .action-more   { width: 40px; height: 40px; }
+
+      /* --- Cabeçalho do header que empilha bem --- */
+      .header-area-top {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 14px !important;
+      }
+    }
+
+    /* ===== PEQUENOS (≤ 400px) ===== */
+    @media (max-width: 400px) {
+      .acervo-card { padding: 12px 12px; }
+      .card-icon { width: 38px; height: 38px; font-size: 15px; }
+      .acervo-titulo { font-size: 14px; }
+      .main-area { padding: 12px 10px; }
     }
 
     /* =========================================
@@ -1482,6 +1719,8 @@
 </head>
 
 <body>
+  <div id="toast-container"></div>
+  <div id="loading-overlay"><div class="spinner"></div></div>
   <div id="tooltip-acorde"></div>
 
   <aside class="sidebar">
@@ -1545,19 +1784,13 @@
             <h2>Músicas</h2>
             <p>Organize e acesse seus acordes com rapidez.</p>
           </div>
-          <div style="
-                display: flex;
-                gap: 12px;
-                align-items: center;
-                flex-wrap: wrap;
-              ">
-            <input id="acervo-busca" placeholder="Buscar por título, autor, momento ou trecho da letra..."
-              oninput="filtrarAcervo()" style="width: 280px" />
-            <button type="button" class="btn btn-secondary"
-              onclick="document.getElementById('acervo-busca').value = ''; filtrarAcervo();" title="Limpar busca">
-              Limpar
-              <i class="fa-solid fa-eraser" style="margin-left: 8px; color: var(--text-muted)"></i>
-            </button>
+          <div class="acervo-busca-area" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <div class="search-wrapper" style="min-width: 260px; max-width: 340px;">
+              <input id="acervo-busca" placeholder="Buscar por título, autor, momento..."
+                oninput="filtrarAcervo(); atualizarBotaoLimpar()" style="width: 100%" />
+              <button class="search-clear" id="btn-search-clear" title="Limpar busca"
+                onclick="limparBusca()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
             <button class="btn btn-primary btn-nova-musica-desktop" onclick="abrirModalCadastroMusica()">
               <i class="fa-solid fa-plus"></i> Nova Música
             </button>
@@ -1566,19 +1799,18 @@
 
         <div id="acervo-cards" class="acervo-list"></div>
 
-        <div style="height: 40px"></div>
-        <div style="
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              gap: 18px;
-            ">
-          <div style="color: var(--text-muted)">
-            Mostrando <span id="acervo-count">0</span> acordes
+        <div style="height: 32px"></div>
+        <div style="display: flex; justify-content: center; align-items: center;">
+          <div style="color: var(--text-muted); font-size: 14px;">
+            <span id="acervo-count">0</span> música(s) encontrada(s)
           </div>
         </div>
       </div>
     </div>
+
+    <button class="fab" onclick="abrirModalCadastroMusica()" title="Nova Música" id="fab-nova-musica">
+      <i class="fa-solid fa-plus"></i>
+    </button>
 
     <div id="tela-repertorios">
       <div class="main-area">
@@ -1938,6 +2170,7 @@
   <script>
     // === ESTADO GLOBAL ===
     let supabaseClient = null;
+    let _carregandoCount = 0;
     let ambienteAtual = "acervo";
     let acervoGlobal = [];
     let repertoriosGlobal = [];
@@ -1974,6 +2207,51 @@
     ];
     const regexAcorde =
       /(^|[\s()[\]{}|-])([CDEFGAB][b#]?(?:m|maj|dim|aug|sus)?\d*(?:\/[CDEFGAB][b#]?)?)(?=[()\s[\]{}|-]|$)/g;
+
+    // === TOAST ===
+    function mostrarToast(mensagem, tipo = "info", duracao = 3200) {
+      const container = document.getElementById("toast-container");
+      const icons = { sucesso: "fa-circle-check", erro: "fa-circle-xmark", info: "fa-circle-info" };
+      const toast = document.createElement("div");
+      toast.className = `toast ${tipo}`;
+      toast.innerHTML = `<i class="fa-solid ${icons[tipo] || icons.info}"></i><span>${mensagem}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.classList.add("saindo");
+        toast.addEventListener("animationend", () => toast.remove());
+      }, duracao);
+    }
+
+    // === LOADING ===
+    function mostrarCarregando() {
+      _carregandoCount++;
+      document.getElementById("loading-overlay").classList.add("ativo");
+    }
+    function esconderCarregando() {
+      _carregandoCount = Math.max(0, _carregandoCount - 1);
+      if (_carregandoCount === 0) document.getElementById("loading-overlay").classList.remove("ativo");
+    }
+
+    // === SKELETON CARDS ===
+    function mostrarSkeletons(qtd = 4) {
+      const container = document.getElementById("acervo-cards");
+      container.innerHTML = "";
+      for (let i = 0; i < qtd; i++) {
+        container.innerHTML += `<div class="skeleton-card"><div class="skeleton sk-icon"></div><div class="sk-lines"><div class="skeleton sk-title"></div><div class="skeleton sk-sub"></div></div></div>`;
+      }
+    }
+
+    // === BUSCA ===
+    function atualizarBotaoLimpar() {
+      const val = document.getElementById("acervo-busca").value;
+      const btn = document.getElementById("btn-search-clear");
+      if (btn) btn.classList.toggle("visivel", val.length > 0);
+    }
+    function limparBusca() {
+      document.getElementById("acervo-busca").value = "";
+      filtrarAcervo();
+      atualizarBotaoLimpar();
+    }
 
     window.onload = () => {
       tinymce.init({
@@ -2020,24 +2298,14 @@
     };
 
     function salvarConfiguracao() {
-      const url = "https://azscmfqhqarpudwjcgky.supabase.co";
-      const key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6c2NtZnFocWFycHVkd2pjZ2t5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMTg3MDcsImV4cCI6MjA5NjU5NDcwN30.uZdkWQ0hONUfU9gjadxRh8nCWboVX-lseoF2CLBn9_4";
-
-      const showFret = document.getElementById("cfg-show-fret-numbers")
-        .checked
-        ? "1"
-        : "0";
-      const startFret =
-        document.getElementById("cfg-start-fret").value || "1";
-      const showFinger = document.getElementById("cfg-show-finger-numbers")
-        .checked
-        ? "1"
-        : "0";
+      const showFret   = document.getElementById("cfg-show-fret-numbers").checked ? "1" : "0";
+      const startFret  = document.getElementById("cfg-start-fret").value || "1";
+      const showFinger = document.getElementById("cfg-show-finger-numbers").checked ? "1" : "0";
       localStorage.setItem("gerecifras_show_fret_numbers", showFret);
       localStorage.setItem("gerecifras_start_fret", startFret);
       localStorage.setItem("gerecifras_show_finger_numbers", showFinger);
-      conectarSupabase(url, key);
       fecharModal("modal-config");
+      mostrarToast("Configurações salvas!", "sucesso");
     }
 
     function conectarSupabase(url, key) {
@@ -2047,31 +2315,60 @@
         carregarRepertorios();
         carregarDicionario();
       } catch (error) {
-        alert("Erro ao conectar.");
+        mostrarToast("Erro ao conectar ao banco de dados.", "erro");
         abrirModalConfig();
       }
     }
 
+    // === ATALHOS DE TECLADO ===
+    document.addEventListener("keydown", function(e) {
+      const visor = document.getElementById("tela-visor");
+      if (!visor || visor.style.display === "none") return;
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault(); navegarRepertorio(1);
+      } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault(); navegarRepertorio(-1);
+      } else if (e.key === "Escape") {
+        fecharVisor();
+      } else if (e.key === "+" || e.key === "=") {
+        alterarTom(1);
+      } else if (e.key === "-") {
+        alterarTom(-1);
+      }
+    });
+
     function mudarAmbiente(ambiente) {
       ambienteAtual = ambiente;
-      document
-        .querySelectorAll(".sidebar-nav .nav-item")
-        .forEach((el) => el.classList.remove("nav-active"));
+      document.querySelectorAll(".sidebar-nav .nav-item").forEach((el) => el.classList.remove("nav-active"));
       const activeNav = document.getElementById(`nav-${ambiente}`);
       if (activeNav) activeNav.classList.add("nav-active");
 
-      document.getElementById("tela-acervo").style.display =
-        ambiente === "acervo" ? "block" : "none";
-      document.getElementById("tela-repertorios").style.display =
-        ambiente === "repertorios" ? "block" : "none";
-      document.getElementById("tela-dicionario").style.display =
-        ambiente === "dicionario" ? "block" : "none";
-      document.getElementById("tela-visor").style.display = "none";
+      document.getElementById("tela-acervo").style.display      = ambiente === "acervo"      ? "block" : "none";
+      document.getElementById("tela-repertorios").style.display  = ambiente === "repertorios" ? "block" : "none";
+      document.getElementById("tela-dicionario").style.display   = ambiente === "dicionario"  ? "block" : "none";
+      document.getElementById("tela-visor").style.display        = "none";
 
+      const fab = document.getElementById("fab-nova-musica");
+      if (fab) fab.style.display = ambiente === "acervo" ? "" : "none";
     }
     function fecharModal(id) {
       document.getElementById(id).style.display = "none";
     }
+
+    // Fecha modal aberto ao clicar no overlay
+    document.addEventListener("click", function(e) {
+      if (e.target.classList.contains("modal-overlay")) {
+        e.target.style.display = "none";
+      }
+    });
+
+    // Fecha modal com Escape
+    document.addEventListener("keydown", function(e) {
+      if (e.key !== "Escape") return;
+      const abertos = document.querySelectorAll('.modal-overlay[style*="flex"]');
+      abertos.forEach(m => m.style.display = "none");
+    });
     function abrirModalConfig() {
       document.getElementById("modal-config").style.display = "flex";
     }
@@ -2118,36 +2415,38 @@
         ? tinymce.get("cad-conteudo").getContent()
         : document.getElementById("cad-conteudo").value;
       const p = {
-        titulo: document.getElementById("cad-titulo").value,
-        autor: document.getElementById("cad-autor").value,
+        titulo: document.getElementById("cad-titulo").value.trim(),
+        autor: document.getElementById("cad-autor").value.trim(),
         tom_original: document.getElementById("cad-tom").value,
-        momento_missa: document.getElementById("cad-momento").value,
+        momento_missa: document.getElementById("cad-momento").value.trim(),
         conteudo: conteudoInput,
       };
-      if (!p.titulo || !p.conteudo)
-        return alert("Título e Cifra obrigatórios.");
-      const { error } = idEdicaoAtual
-        ? await supabaseClient
-          .from("musicas")
-          .update(p)
-          .eq("id", idEdicaoAtual)
-        : await supabaseClient.from("musicas").insert([p]);
+      if (!p.titulo) return mostrarToast("O título da música é obrigatório.", "erro");
+      if (!p.conteudo || p.conteudo === "<p></p>" || p.conteudo.trim() === "")
+        return mostrarToast("A cifra não pode estar vazia.", "erro");
 
-      if (error) return alert("Erro ao salvar: " + error.message);
+      mostrarCarregando();
+      const { error } = idEdicaoAtual
+        ? await supabaseClient.from("musicas").update(p).eq("id", idEdicaoAtual)
+        : await supabaseClient.from("musicas").insert([p]);
+      esconderCarregando();
+
+      if (error) return mostrarToast("Erro ao salvar: " + error.message, "erro");
 
       fecharModal("modal-cadastro-musica");
+      mostrarToast(idEdicaoAtual ? "Música atualizada!" : "Música salva!", "sucesso");
       carregarAcervo();
     }
 
     async function carregarAcervo() {
       if (!supabaseClient) return;
-      const { data } = await supabaseClient
+      mostrarSkeletons(4);
+      const { data, error } = await supabaseClient
         .from("musicas")
         .select("*")
         .order("titulo");
+      if (error) { mostrarToast("Erro ao carregar músicas.", "erro"); return; }
       acervoGlobal = data || [];
-
-      // Chama a nova função de renderização passando todas as músicas
       renderizarAcervo(acervoGlobal);
     }
 
@@ -2156,10 +2455,11 @@
       const container = document.getElementById("acervo-cards");
       container.innerHTML = "";
 
-      // Mensagem se a pesquisa não encontrar nada
       if (lista.length === 0) {
-        container.innerHTML =
-          '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-muted); font-size: 16px;">Nenhuma música encontrada com estes termos.</div>';
+        const busca = document.getElementById("acervo-busca").value;
+        container.innerHTML = busca
+          ? `<div class="empty-state"><i class="fa-solid fa-magnifying-glass"></i><p>Nenhuma música encontrada para "<strong>${busca}</strong>"</p><small>Tente outro termo de busca.</small></div>`
+          : `<div class="empty-state"><i class="fa-solid fa-music"></i><p>Nenhuma música cadastrada ainda.</p><small>Clique em "Nova Música" para começar.</small></div>`;
       }
 
       lista.forEach((m) => {
@@ -2193,7 +2493,7 @@
                         </div>
                         <div class="dropdown-menu" data-music-id="${m.id}">
                             <div class="menu-item" onclick="abrirEdicaoMusica(${i}); closeAllMenus();"><i class="fa-solid fa-pen"></i> Editar</div>
-                            <div class="menu-item danger" onclick="excluirMusica(${m.id}); closeAllMenus();"><i class="fa-solid fa-trash"></i> Excluir</div>
+                            <div class="menu-item danger" onclick="excluirMusica('${m.id}'); closeAllMenus();"><i class="fa-solid fa-trash"></i> Excluir</div>
                         </div>
                     </div>`;
         container.appendChild(card);
@@ -2368,45 +2668,70 @@
     }
 
     async function salvarRepertorio() {
-      const nome = document.getElementById("rep-nome").value,
-        data_evento = document.getElementById("rep-data").value || null;
+      const nome = document.getElementById("rep-nome").value.trim();
+      const data_evento = document.getElementById("rep-data").value || null;
 
-      if (!nome || musicasRepertorioAtual.length === 0)
-        return alert("Preencha nome e adicione músicas ao repertório.");
+      if (!nome) return mostrarToast("O nome do evento é obrigatório.", "erro");
+      if (musicasRepertorioAtual.length === 0)
+        return mostrarToast("Adicione ao menos uma música ao repertório.", "erro");
 
       const payload = { nome, data_evento, musicas: musicasRepertorioAtual };
 
+      mostrarCarregando();
+      let error;
       if (idEdicaoRepertorioAtual) {
-        await supabaseClient
-          .from("repertorios")
-          .update(payload)
-          .eq("id", idEdicaoRepertorioAtual);
+        const res = await supabaseClient.from("repertorios").update(payload).eq("id", idEdicaoRepertorioAtual);
+        error = res.error;
       } else {
-        await supabaseClient
-          .from("repertorios")
-          .insert([payload]);
+        const res = await supabaseClient.from("repertorios").insert([payload]);
+        error = res.error;
       }
+      esconderCarregando();
+
+      if (error) return mostrarToast("Erro ao salvar repertório: " + error.message, "erro");
 
       fecharModal("modal-cadastro-repertorio");
+      mostrarToast(idEdicaoRepertorioAtual ? "Repertório atualizado!" : "Repertório criado!", "sucesso");
       carregarRepertorios();
     }
+    function formatarData(data_evento) {
+      if (!data_evento) return "-";
+      const partes = data_evento.split("T")[0].split("-");
+      return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
+
     async function carregarRepertorios() {
       if (!supabaseClient) return;
-      const { data } = await supabaseClient
+      const { data, error } = await supabaseClient
         .from("repertorios")
         .select("*")
         .order("created_at", { ascending: false });
+      if (error) { mostrarToast("Erro ao carregar repertórios.", "erro"); return; }
       repertoriosGlobal = data || [];
       const tbody = document.getElementById("tabela-repertorios-body");
       tbody.innerHTML = "";
+      if (repertoriosGlobal.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 40px; color: var(--text-muted);">Nenhum repertório cadastrado ainda.</td></tr>`;
+        return;
+      }
       repertoriosGlobal.forEach((r, i) => {
         let qtd = Array.isArray(r.musicas) ? r.musicas.length : 0;
-        tbody.innerHTML += `<tr><td style="font-weight: 600;">${r.nome}</td><td>${r.data_evento ? new Date(r.data_evento).toLocaleDateString("pt-BR") : "-"}</td><td>${qtd} músicas</td><td style="text-align: right;"><button class="btn" style="padding: 6px 12px;" onclick="tocarRepertorio(${i})"><i class="fa-solid fa-play"></i> Iniciar</button> <button class="btn btn-secondary" style="padding: 6px 10px; margin-left: 6px;" onclick="abrirEdicaoRepertorio(${i})" title="Editar"><i class="fa-solid fa-pen"></i></button> <button class="btn btn-secondary" style="padding:6px 10px; margin-left:6px; background:#ef4444; border-color:transparent; color:#fff;" onclick="excluirRepertorio(${r.id})" title="Excluir"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+        tbody.innerHTML += `<tr>
+          <td style="font-weight: 600;">${r.nome}</td>
+          <td>${formatarData(r.data_evento)}</td>
+          <td><span class="tag-pill">${qtd} música${qtd !== 1 ? "s" : ""}</span></td>
+          <td style="text-align: right; white-space: nowrap;">
+            <button class="btn" style="padding: 6px 12px;" onclick="tocarRepertorio(${i})"><i class="fa-solid fa-play"></i> Iniciar</button>
+            <button class="btn btn-secondary" style="padding: 6px 10px; margin-left: 6px;" onclick="abrirEdicaoRepertorio(${i})" title="Editar"><i class="fa-solid fa-pen"></i></button>
+            <button class="btn btn-secondary" style="padding:6px 10px; margin-left:6px; background:#ef4444; border-color:transparent; color:#fff;" onclick="excluirRepertorio('${r.id}')" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+          </td></tr>`;
       });
     }
 
     function abrirModalCadastroAcorde() {
       idEdicaoAcordeAtual = null;
+      const h2 = document.querySelector("#modal-cadastro-acorde .modal-header h2");
+      if (h2) h2.textContent = "Novo Acorde";
       document.getElementById("cad-acorde-nome").value = "";
       cordasAcordeAtual = [0, 0, 0, 0, 0, 0];
       dedosAcordeAtual = [null, null, null, null, null, null];
@@ -2422,6 +2747,8 @@
       const acorde = dicionarioGlobal.find((a) => a.id === id);
       if (!acorde) return;
       idEdicaoAcordeAtual = acorde.id;
+      const h2 = document.querySelector("#modal-cadastro-acorde .modal-header h2");
+      if (h2) h2.textContent = "Editar Acorde";
       document.getElementById("cad-acorde-nome").value = acorde.nome;
       document.getElementById("cad-start-fret").value =
         acorde.start_fret || 1;
@@ -2510,47 +2837,33 @@
 
     async function salvarAcorde() {
       const nome = document.getElementById("cad-acorde-nome").value.trim();
-      if (!nome) return alert("Dê um nome ao acorde.");
+      if (!nome) return mostrarToast("Dê um nome ao acorde.", "erro");
+      if (!supabaseClient) return mostrarToast("Sem conexão.", "erro");
       const posicoes = [...cordasAcordeAtual];
       const dedos = [...dedosAcordeAtual];
-      if (!supabaseClient) {
-        alert("Sem conexão ao Supabase.");
-        return;
-      }
       while (posicoes.length < 6) posicoes.push(0);
       while (dedos.length < 6) dedos.push(null);
       try {
-        const startFretToSave = parseInt(
-          document.getElementById("cad-start-fret")?.value || 1,
-        );
-        const numCasasToSave = parseInt(
-          document.getElementById("cad-num-casas")?.value || 5,
-        );
-        const payload = {
-          nome,
-          posicoes,
-          dedos,
-          start_fret: startFretToSave,
-          num_casas: numCasasToSave,
-        };
+        const startFretToSave = parseInt(document.getElementById("cad-start-fret")?.value || 1);
+        const numCasasToSave  = parseInt(document.getElementById("cad-num-casas")?.value || 5);
+        const payload = { nome, posicoes, dedos, start_fret: startFretToSave, num_casas: numCasasToSave };
+        mostrarCarregando();
         let error;
         if (idEdicaoAcordeAtual) {
-          const res = await supabaseClient
-            .from("dicionario_acordes")
-            .update(payload)
-            .eq("id", idEdicaoAcordeAtual);
+          const res = await supabaseClient.from("dicionario_acordes").update(payload).eq("id", idEdicaoAcordeAtual);
           error = res.error;
         } else {
-          const res = await supabaseClient
-            .from("dicionario_acordes")
-            .insert([payload]);
+          const res = await supabaseClient.from("dicionario_acordes").insert([payload]);
           error = res.error;
         }
+        esconderCarregando();
         if (error) throw error;
         fecharModal("modal-cadastro-acorde");
+        mostrarToast(idEdicaoAcordeAtual ? "Acorde atualizado!" : "Acorde salvo!", "sucesso");
         carregarDicionario();
       } catch (err) {
-        alert("Erro ao salvar o acorde. Tente novamente.");
+        esconderCarregando();
+        mostrarToast("Erro ao salvar o acorde. Tente novamente.", "erro");
       }
     }
 
@@ -2608,7 +2921,11 @@
     async function excluirAcordeUnico(id, nome) {
       if (!confirm("Deseja excluir este formato específico?")) return;
       if (!supabaseClient) return;
-      await supabaseClient.from("dicionario_acordes").delete().eq("id", id);
+      mostrarCarregando();
+      const { error } = await supabaseClient.from("dicionario_acordes").delete().eq("id", id);
+      esconderCarregando();
+      if (error) { mostrarToast("Erro ao excluir.", "erro"); return; }
+      mostrarToast("Formato excluído.", "sucesso");
       await carregarDicionario();
       const variacoesRestantes = dicionarioGlobal.filter(
         (a) => a.nome === nome,
@@ -2629,15 +2946,23 @@
       mostrarAcorde(fakeEvent, nome);
     }
     async function excluirMusica(id) {
-      if (!confirm("Excluir música? Esta ação é irreversível.")) return;
-      if (!supabaseClient) return alert("Sem conexão.");
-      await supabaseClient.from("musicas").delete().eq("id", id);
+      if (!confirm("Excluir esta música? A ação é irreversível.")) return;
+      if (!supabaseClient) return mostrarToast("Sem conexão.", "erro");
+      mostrarCarregando();
+      const { error } = await supabaseClient.from("musicas").delete().eq("id", id);
+      esconderCarregando();
+      if (error) return mostrarToast("Erro ao excluir.", "erro");
+      mostrarToast("Música excluída.", "sucesso");
       carregarAcervo();
     }
     async function excluirRepertorio(id) {
-      if (!confirm("Excluir repertório? Esta ação é irreversível.")) return;
-      if (!supabaseClient) return alert("Sem conexão.");
-      await supabaseClient.from("repertorios").delete().eq("id", id);
+      if (!confirm("Excluir este repertório? A ação é irreversível.")) return;
+      if (!supabaseClient) return mostrarToast("Sem conexão.", "erro");
+      mostrarCarregando();
+      const { error } = await supabaseClient.from("repertorios").delete().eq("id", id);
+      esconderCarregando();
+      if (error) return mostrarToast("Erro ao excluir.", "erro");
+      mostrarToast("Repertório excluído.", "sucesso");
       carregarRepertorios();
     }
 
@@ -2918,7 +3243,7 @@
           return undefined;
         })
         .filter((m) => m !== undefined);
-      if (playlistAtual.length === 0) return alert("Repertório vazio.");
+      if (playlistAtual.length === 0) return mostrarToast("Este repertório não tem músicas cadastradas.", "info");
       indexPlaylist = 0;
       document.getElementById("nav-repertorio-visor").style.display = "flex";
       iniciarVisor();
