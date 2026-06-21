@@ -7,28 +7,39 @@
   <title>Músicas - Sistema Completo</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;700&family=Source+Code+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script src="dicionario_br.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js" referrerpolicy="origin"></script>
 
   <style>
     :root {
-      --primary: #6366f1;
-      --primary-600: #4f46e5;
-      --primary-700: #4338ca;
-      --bg-color: #f8fafc;
+      --primary: #6d5dfc;
+      --primary-600: #5a47f0;
+      --primary-700: #4a37d6;
+      --bg-color: #f3f4f8;
       --surface: #ffffff;
-      --text-main: #0f172a;
-      --text-muted: #64748b;
-      --border: #e2e8f0;
-      --accent: #e0e7ff;
+      --surface-2: #f7f8fc;
+      --text-main: #16172e;
+      --text-muted: #6b7088;
+      --border: #e7e8f0;
+      --accent: #ebe9ff;
       --card-shadow:
-        0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        0 1px 2px rgba(22, 23, 46, 0.04), 0 4px 16px rgba(22, 23, 46, 0.05);
       --card-shadow-hover:
-        0 20px 25px -5px rgba(0, 0, 0, 0.1),
-        0 10px 10px -5px rgba(0, 0, 0, 0.04);
-      --pill-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.39);
-      --sidebar-width: 240px;
+        0 10px 20px -6px rgba(22, 23, 46, 0.10),
+        0 20px 44px -10px rgba(109, 93, 252, 0.18);
+      --pill-shadow: 0 6px 18px 0 rgba(109, 93, 252, 0.40);
+      --ring: rgba(109, 93, 252, 0.16);
+      --sidebar-bg: #15162b;
+      --sidebar-width: 244px;
+      --radius: 16px;
+
+      --font-ui: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont,
+        "Segoe UI", Roboto, sans-serif;
+      --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas,
+        "Liberation Mono", Menlo, monospace;
 
       --font-base: 15px;
       --fw-regular: 400;
@@ -37,22 +48,19 @@
       --fw-bold: 700;
       --fw-xbold: 800;
 
-      --chord-color: #ff6600;
+      --chord-color: #e0590b;
+      --chord-bg: rgba(224, 89, 11, 0.10);
     }
 
     body {
-      font-family:
-        "Inter",
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        Roboto,
-        sans-serif;
+      font-family: var(--font-ui);
       background-color: var(--bg-color);
       margin: 0;
       color: var(--text-main);
       font-size: var(--font-base);
       -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
 
     h1,
@@ -68,17 +76,18 @@
       background: var(--primary);
       color: white;
       border: none;
-      padding: 10px 18px;
-      border-radius: 10px;
+      padding: 11px 18px;
+      border-radius: 12px;
       cursor: pointer;
       font-weight: var(--fw-semibold);
+      letter-spacing: -0.01em;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      transition: all 0.2s ease;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
       font-size: 14px;
-      box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
+      box-shadow: 0 2px 6px rgba(109, 102, 241, 0.22);
     }
 
     .btn:hover {
@@ -106,7 +115,7 @@
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, var(--primary), var(--primary-600));
+      background: linear-gradient(135deg, #7d6efe, var(--primary-600));
     }
 
 
@@ -117,9 +126,9 @@
       top: 0;
       bottom: 0;
       width: var(--sidebar-width);
-      background: #0f172a;
+      background: var(--sidebar-bg);
       color: #f8fafc;
-      padding: 32px 20px;
+      padding: 30px 18px;
       z-index: 90;
       display: flex;
       flex-direction: column;
@@ -280,7 +289,7 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-left: 3px solid transparent;
-      border-radius: 14px;
+      border-radius: var(--radius);
       padding: 18px 20px;
       box-shadow: var(--card-shadow);
       display: flex;
@@ -317,11 +326,17 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #e0e7ff, #ede9fe);
-      color: var(--primary-600);
+      background: linear-gradient(135deg, #ece9ff, #f3eaff);
+      color: var(--primary);
       font-size: 20px;
       flex-shrink: 0;
-      box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.5);
+      box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.8),
+        0 2px 6px rgba(109, 93, 252, 0.12);
+      transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .acervo-card:hover .card-icon {
+      transform: scale(1.06) rotate(-3deg);
     }
 
     .acervo-meta {
@@ -349,15 +364,15 @@
     }
 
     .tag-pill {
-      background: #f1f5f9;
-      color: #475569;
+      background: var(--surface-2);
+      color: var(--text-muted);
       padding: 4px 10px;
       border-radius: 8px;
       font-weight: var(--fw-semibold);
       font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      border: 1px solid #e2e8f0;
+      border: 1px solid var(--border);
     }
 
     .acervo-right {
@@ -654,8 +669,7 @@
     textarea {
       height: 160px;
       resize: vertical;
-      font-family:
-        "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-family: var(--font-mono);
     }
 
     /* Visor */
@@ -669,8 +683,8 @@
       align-items: center;
       justify-content: space-between;
       background: var(--surface);
-      padding: 20px 24px;
-      border-radius: 16px;
+      padding: 18px 22px;
+      border-radius: var(--radius);
       margin-bottom: 24px;
       box-shadow: var(--card-shadow);
       border: 1px solid var(--border);
@@ -703,16 +717,15 @@
     #nav-repertorio-visor {
       display: flex;
       align-items: center;
-      background: #f8fafc;
+      background: var(--surface-2);
       border: 1px solid var(--border);
       border-radius: 30px;
       padding: 4px;
       gap: 16px;
-      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
     }
 
     .btn-nav-rep {
-      background: #ffffff;
+      background: var(--surface);
       border: 1px solid var(--border);
       width: 36px;
       height: 36px;
@@ -723,7 +736,7 @@
       cursor: pointer;
       color: var(--text-main);
       transition: all 0.2s;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
     }
 
     .btn-nav-rep:hover {
@@ -750,9 +763,9 @@
     }
 
     .btn-ferramenta {
-      background-color: #f1f5f9;
+      background-color: var(--surface-2);
       color: var(--text-main);
-      border: 1px solid transparent;
+      border: 1px solid var(--border);
       padding: 0 16px;
       height: 44px;
       display: inline-flex;
@@ -771,19 +784,36 @@
     }
 
     .btn-ferramenta:hover {
-      background-color: #e2e8f0;
+      background-color: var(--accent);
+      border-color: var(--primary);
+      color: var(--primary-700);
     }
 
     .btn-ferramenta.ativo {
-      background-color: var(--text-main);
+      background-color: var(--primary);
+      border-color: var(--primary);
       color: white;
+      box-shadow: var(--pill-shadow);
+    }
+
+    .select-fonte {
+      font-family: var(--font-ui);
+      max-width: 170px;
+      cursor: pointer;
+      padding-right: 12px;
+    }
+
+    .select-fonte option {
+      background: var(--surface);
+      color: var(--text-main);
     }
 
     .controles-tom {
       display: flex;
       align-items: center;
       gap: 16px;
-      background: #f1f5f9;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
       padding: 0 16px;
       height: 44px;
       border-radius: 12px;
@@ -795,7 +825,7 @@
     }
 
     .btn-tom {
-      background: white;
+      background: var(--surface);
       color: var(--text-main);
       border: 1px solid var(--border);
       width: 32px;
@@ -817,14 +847,14 @@
 
     #render-cifra {
       background: var(--surface);
-      padding: 48px 64px;
-      border-radius: 16px;
-      font-family:
-        "Roboto Mono", "Fira Code", "SFMono-Regular", Consolas, monospace;
+      padding: 52px 60px;
+      border-radius: 20px;
+      font-family: var(--font-mono);
       font-size: 16px;
+      font-weight: 500;
       color: var(--text-main);
       overflow-x: auto;
-      line-height: 1.2;
+      line-height: 1.3;
       box-shadow: var(--card-shadow);
       border: 1px solid var(--border);
       max-width: 100%;
@@ -834,27 +864,68 @@
       transition: max-width 0.3s ease;
       word-break: break-word;
       white-space: pre-wrap;
+      position: relative;
     }
 
     .layout-2-colunas {
       column-count: 2;
-      column-gap: 60px;
+      column-gap: 32px;
       width: 100%;
     }
 
     .layout-3-colunas {
       column-count: 3;
-      column-gap: 40px;
+      column-gap: 20px;
       width: 100%;
+    }
+
+    #render-cifra.layout-2-colunas {
+      padding: 44px 38px;
+    }
+
+    #render-cifra.layout-3-colunas {
+      padding: 40px 30px;
     }
 
     .bloco-linha {
       break-inside: avoid;
       page-break-inside: avoid;
       -webkit-column-break-inside: avoid;
-      display: inline-block;
+      display: block;
       width: 100%;
+      margin-bottom: 20px;
+    }
+
+    /* Estrofe = unidade que NUNCA é dividida entre colunas */
+    .estrofe-bloco {
+      break-inside: avoid;
+      page-break-inside: avoid;
+      -webkit-column-break-inside: avoid;
+      display: block;
+      width: 100%;
+      margin-bottom: 18px;
+    }
+
+    /* Par acorde+letra: mantém o respiro entre as linhas do verso */
+    .linha-grupo {
       margin-bottom: 14px;
+    }
+
+    .estrofe-bloco .linha-grupo:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Cabeçalho de seção ([Refrão] etc.) gruda no verso seguinte */
+    .colar-proxima {
+      break-after: avoid;
+      -webkit-column-break-after: avoid;
+      margin-bottom: 6px;
+    }
+
+    /* Quebra de coluna manual (linha com --- ou ===) */
+    .quebra-antes {
+      break-before: column;
+      -webkit-column-break-before: always;
     }
 
     .estrofe {
@@ -865,24 +936,31 @@
     .linha-letra {
       color: var(--text-main);
       margin: 0;
+      line-height: 1.5;
+      letter-spacing: 0.005em;
     }
 
     .linha-acorde {
-      font-weight: bold;
+      font-weight: 700;
       color: var(--chord-color);
-      margin: 0 0 2px 0;
+      margin: 0 0 1px 0;
+      line-height: 1.2;
+      letter-spacing: 0.01em;
     }
 
     .acorde-clicavel {
       color: var(--chord-color);
       cursor: pointer;
       border-bottom: 2px solid transparent;
-      transition: 0.2s;
-      font-weight: bold;
+      border-radius: 4px;
+      transition: background 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+      font-weight: 700;
     }
 
     .acorde-clicavel:hover {
       border-bottom-color: var(--chord-color);
+      background: var(--chord-bg);
+      box-shadow: 0 0 0 3px var(--chord-bg);
     }
 
 
@@ -1114,33 +1192,48 @@
            ✨ MODO ESCURO GERAL
            ========================================= */
     body.dark-mode {
-      --bg-color: #020617;
-      --surface: #0f172a;
-      --text-main: #f8fafc;
-      --text-muted: #cbd5e1;
-      --border: #1e293b;
-      --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-      --chord-color: #fb923c;
+      --primary: #8a7bff;
+      --primary-600: #7a6bf5;
+      --primary-700: #6a5bf0;
+      --bg-color: #0a0a14;
+      --surface: #15162a;
+      --surface-2: #1c1d34;
+      --text-main: #f2f2fa;
+      --text-muted: #9b9fbb;
+      --border: #282a47;
+      --accent: #232352;
+      --ring: rgba(138, 123, 255, 0.24);
+      --card-shadow: 0 2px 6px rgba(0, 0, 0, 0.4), 0 14px 36px rgba(0, 0, 0, 0.5);
+      --pill-shadow: 0 6px 20px rgba(138, 123, 255, 0.45);
+      --sidebar-bg: #08080f;
+      --chord-color: #fbbf63;
+      --chord-bg: rgba(251, 191, 99, 0.13);
     }
 
     body.dark-mode .sidebar {
-      background: #020617;
+      background: var(--sidebar-bg);
+    }
+
+    body.dark-mode .btn-ferramenta.ativo {
+      background-color: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
     }
 
     body.dark-mode .linha-letra {
-      color: #cbd5e1;
+      color: var(--text-main);
     }
 
     body.dark-mode .acorde-clicavel {
-      color: #fb923c;
+      color: var(--chord-color);
     }
 
     body.dark-mode .acorde-clicavel:hover {
-      border-bottom-color: #fb923c;
+      border-bottom-color: var(--chord-color);
     }
 
     body.dark-mode #visor-tom {
-      color: #fb923c !important;
+      color: var(--chord-color) !important;
     }
 
     body.dark-mode .btn-secondary,
@@ -1315,7 +1408,7 @@
     }
     .search-wrapper input {
       width: 100%;
-      padding-right: 38px;
+      padding-right: 16px;
       box-sizing: border-box;
     }
     .search-clear {
@@ -1791,11 +1884,13 @@
           </div>
           <div class="acervo-busca-area" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
             <div class="search-wrapper" style="min-width: 260px; max-width: 340px;">
-              <input id="acervo-busca" placeholder="Buscar por título, autor, momento..."
+              <input id="acervo-busca" placeholder="Buscar por título, autor, trecho da letra..."
                 oninput="filtrarAcervo(); atualizarBotaoLimpar()" style="width: 100%" />
-              <button class="search-clear" id="btn-search-clear" title="Limpar busca"
-                onclick="limparBusca()"><i class="fa-solid fa-xmark"></i></button>
             </div>
+            <button class="btn btn-secondary btn-limpar-busca" id="btn-limpar-busca" title="Limpar busca"
+              onclick="limparBusca()" style="display: none;">
+              <i class="fa-solid fa-xmark"></i> Limpar
+            </button>
             <button class="btn btn-primary btn-nova-musica-desktop" onclick="abrirModalCadastroMusica()">
               <i class="fa-solid fa-plus"></i> Nova Música
             </button>
@@ -1912,6 +2007,12 @@
               <button class="btn-ferramenta" onclick="mudarTamanhoFonte(2)">
                 A+
               </button>
+              <select class="btn-ferramenta select-fonte" id="seletor-fonte" title="Fonte da cifra" onchange="mudarFonte(this.value)">
+                <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
+                <option value="'Roboto Mono', monospace">Roboto Mono</option>
+                <option value="'Source Code Pro', monospace">Source Code Pro</option>
+                <option value="'Courier New', Courier, monospace">Courier</option>
+              </select>
               <button class="btn-ferramenta" id="btn-colunas" onclick="toggleColunas()">
                 <i class="fa-solid fa-columns"></i> 1 Coluna
               </button>
@@ -2011,17 +2112,10 @@
         <div class="form-group full-width">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
             <label style="margin: 0;">Cifra *</label>
-            <div style="font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 12px;">
-              <span style="display: flex; align-items: center; gap: 4px;">
-                <span
-                  style="display: inline-block; width: 12px; height: 2px; background: rgba(59, 130, 246, 0.6);"></span>
-                Quebras (3 Colunas)
-              </span>
-              <span style="display: flex; align-items: center; gap: 4px;">
-                <span
-                  style="display: inline-block; width: 12px; height: 2px; background: rgba(239, 68, 68, 0.6);"></span>
-                Quebra (Metade)
-              </span>
+            <div style="font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-circle-info"></i>
+              Os versos não são divididos entre colunas. Para forçar uma nova coluna, escreva uma linha só com
+              <code style="background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px;">---</code>
             </div>
           </div>
           <textarea id="cad-conteudo"></textarea>
@@ -2188,6 +2282,7 @@
     let indexPlaylist = 0;
     let semitonsAcumulados = 0;
     let tamanhoFonteAtual = 18;
+    let fonteAtual = "'JetBrains Mono', monospace";
     let qtdColunas = 1;
 
     let idEdicaoAcordeAtual = null;
@@ -2249,13 +2344,15 @@
     // === BUSCA ===
     function atualizarBotaoLimpar() {
       const val = document.getElementById("acervo-busca").value;
-      const btn = document.getElementById("btn-search-clear");
-      if (btn) btn.classList.toggle("visivel", val.length > 0);
+      const btn = document.getElementById("btn-limpar-busca");
+      if (btn) btn.style.display = val.length > 0 ? "inline-flex" : "none";
     }
     function limparBusca() {
-      document.getElementById("acervo-busca").value = "";
+      const input = document.getElementById("acervo-busca");
+      input.value = "";
       filtrarAcervo();
       atualizarBotaoLimpar();
+      input.focus();
     }
 
     window.onload = () => {
@@ -2272,7 +2369,7 @@
         height: 600,
         lineheight_formats: '1 1.1 1.2 1.3 1.4 1.5 1.6 1.8 2 2.5 3',
         content_style:
-          "html { position: relative; min-height: 100%; height: auto; } body { margin: 0; padding: 16px; min-height: 100vh; box-sizing: border-box; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 16px; position: relative; background-image: linear-gradient(to bottom, transparent calc(33.33% - 1px), rgba(59,130,246,0.3) calc(33.33% - 1px), rgba(59,130,246,0.3) calc(33.33% + 1px), transparent calc(33.33% + 1px)), linear-gradient(to bottom, transparent calc(50% - 1px), rgba(239,68,68,0.3) calc(50% - 1px), rgba(239,68,68,0.3) calc(50% + 1px), transparent calc(50% + 1px)), linear-gradient(to bottom, transparent calc(66.66% - 1px), rgba(59,130,246,0.3) calc(66.66% - 1px), rgba(59,130,246,0.3) calc(66.66% + 1px), transparent calc(66.66% + 1px)); background-size: 100% 100%; background-repeat: no-repeat; } body::before { content: '▼ Quebra 3 Colunas (1/3)'; position: absolute; top: 33.33%; right: 16px; color: #3b82f6; font-size: 12px; font-weight: bold; transform: translateY(-100%); pointer-events: none; } body::after { content: '▼ Quebra 2 Colunas (Metade)'; position: absolute; top: 50%; right: 16px; color: #ef4444; font-size: 12px; font-weight: bold; transform: translateY(-100%); pointer-events: none; } html::after { content: '▼ Quebra 3 Colunas (2/3)'; position: absolute; top: 66.66%; right: 16px; color: #3b82f6; font-size: 12px; font-weight: bold; transform: translateY(-100%); pointer-events: none; z-index: 100; }",
+          "body { margin: 0; padding: 16px; box-sizing: border-box; font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 16px; line-height: 1.5; }",
       });
 
       // LÓGICA DE CONEXÃO
@@ -2300,6 +2397,16 @@
         const btnDark = document.getElementById("btn-dark-sidebar");
         if (btnDark) btnDark.innerHTML = '<i class="fa-solid fa-sun"></i><span>Modo Claro</span>';
       }
+
+      // ✨ PREFERÊNCIAS DE FONTE E TAMANHO DA CIFRA
+      const fonteSalva = localStorage.getItem("gerecifras_fonte");
+      if (fonteSalva) {
+        fonteAtual = fonteSalva;
+        const selFonte = document.getElementById("seletor-fonte");
+        if (selFonte) selFonte.value = fonteSalva;
+      }
+      const tamanhoSalvo = parseInt(localStorage.getItem("gerecifras_fonte_tamanho") || "");
+      if (!isNaN(tamanhoSalvo)) tamanhoFonteAtual = tamanhoSalvo;
     };
 
     function salvarConfiguracao() {
@@ -2452,6 +2559,7 @@
         .order("titulo");
       if (error) { mostrarToast("Erro ao carregar músicas.", "erro"); return; }
       acervoGlobal = data || [];
+      construirIndiceBusca();
       renderizarAcervo(acervoGlobal);
     }
 
@@ -2507,20 +2615,72 @@
       if (countEl) countEl.textContent = String(lista.length || 0);
     }
 
-    // ✨ NOVA FUNÇÃO: O "Cérebro" da Busca Inteligente
-    function filtrarAcervo() {
-      const termo = document
-        .getElementById("acervo-busca")
-        .value.toLowerCase();
+    // ✨ Normaliza texto p/ busca: remove HTML, decodifica entidades,
+    // junta linhas num único espaço e ignora acentos
+    function normalizarTexto(str) {
+      if (!str) return "";
+      let t = String(str).replace(/<[^>]+>/g, " ");
+      if (t.indexOf("&") !== -1) {
+        const ta = document.createElement("textarea");
+        ta.innerHTML = t;
+        t = ta.value;
+      }
+      return t
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
 
-      const filtradas = acervoGlobal.filter((m) => {
-        // Junta todos os dados da música num "texto invisível" gigante e procura se o que você digitou está lá dentro
-        const conteudoBusca =
-          `${m.titulo || ""} ${m.autor || ""} ${m.momento_missa || ""} ${m.conteudo || ""}`.toLowerCase();
-        return conteudoBusca.includes(termo);
+    // ✨ Extrai só as linhas de LETRA (descarta as de acorde), juntando-as
+    // num fluxo contínuo — assim um trecho que está em linhas diferentes é encontrado
+    function extrairLetraParaBusca(html) {
+      if (!html) return "";
+      let temp = String(html)
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<\/(p|div|h[1-6]|li)>/gi, "\n")
+        .replace(/<[^>]+>/g, "");
+      if (temp.indexOf("&") !== -1) {
+        const ta = document.createElement("textarea");
+        ta.innerHTML = temp;
+        temp = ta.value;
+      }
+      const letras = [];
+      temp.split("\n").forEach((linha) => {
+        const texto = linha.trim();
+        if (!texto) return;
+        let m,
+          total = 0;
+        regexAcorde.lastIndex = 0;
+        while ((m = regexAcorde.exec(texto)) !== null) total += m[2].length;
+        const semEspaco = texto.replace(/\s/g, "");
+        const isAcorde = semEspaco.length > 0 && total / semEspaco.length > 0.4;
+        if (!isAcorde) letras.push(texto);
       });
+      return letras.join(" ");
+    }
 
-      // Redesenha a tela instantaneamente só com o que achou
+    // ✨ Indexa cada música uma vez (no carregamento) p/ busca rápida e tolerante
+    function construirIndiceBusca() {
+      acervoGlobal.forEach((m) => {
+        m._busca = normalizarTexto(
+          `${m.titulo || ""} ${m.autor || ""} ${m.momento_missa || ""} ${extrairLetraParaBusca(m.conteudo)} ${m.conteudo || ""}`,
+        );
+      });
+    }
+
+    // ✨ O "Cérebro" da Busca Inteligente (título, autor, momento e letra entre linhas)
+    function filtrarAcervo() {
+      const termo = normalizarTexto(
+        document.getElementById("acervo-busca").value,
+      );
+      const filtradas = acervoGlobal.filter((m) => {
+        const alvo = m._busca != null ? m._busca : normalizarTexto(
+          `${m.titulo || ""} ${m.autor || ""} ${m.momento_missa || ""} ${extrairLetraParaBusca(m.conteudo)} ${m.conteudo || ""}`,
+        );
+        return alvo.includes(termo);
+      });
       renderizarAcervo(filtradas);
     }
 
@@ -2556,11 +2716,11 @@
       if (!divDisp || !divSeq) return;
 
       // Render disponíveis
-      const termo = (document.getElementById("rep-busca-musica").value || "").toLowerCase();
+      const termo = normalizarTexto(document.getElementById("rep-busca-musica").value || "");
       divDisp.innerHTML = "";
       acervoGlobal.forEach(m => {
         if (termo) {
-          const conteudo = `${m.titulo} ${m.autor || ""} ${m.conteudo || ""}`.toLowerCase();
+          const conteudo = normalizarTexto(`${m.titulo} ${m.autor || ""} ${m.conteudo || ""}`);
           if (!conteudo.includes(termo)) return;
         }
         divDisp.innerHTML += `<div class="item-selecao" style="justify-content: space-between;">
@@ -3289,8 +3449,30 @@
         12,
         Math.min(36, tamanhoFonteAtual + delta),
       );
+      localStorage.setItem("gerecifras_fonte_tamanho", String(tamanhoFonteAtual));
       document.getElementById("render-cifra").style.fontSize =
         tamanhoFonteAtual + "px";
+    }
+
+    // ✨ Troca a fonte da cifra (mantém monoespaçada p/ preservar o alinhamento dos acordes)
+    function mudarFonte(valor) {
+      fonteAtual = valor;
+      localStorage.setItem("gerecifras_fonte", valor);
+      document.getElementById("render-cifra").style.fontFamily = valor;
+    }
+
+    // ✨ Remove fonte/tamanho/espaçamento embutidos no editor p/ padronizar todas as músicas
+    function limparEstiloFonte(raiz) {
+      if (!raiz) return;
+      raiz.querySelectorAll("*").forEach((el) => {
+        if (el.style) {
+          el.style.removeProperty("font-family");
+          el.style.removeProperty("font-size");
+          el.style.removeProperty("line-height");
+        }
+        el.removeAttribute("face");
+        el.removeAttribute("size");
+      });
     }
 
     // ✨ FUNÇÃO MODO ESCURO GERAL
@@ -3351,6 +3533,7 @@
       const visor = document.getElementById("render-cifra");
       visor.innerHTML = "";
       visor.style.fontSize = tamanhoFonteAtual + "px";
+      visor.style.fontFamily = fonteAtual;
       document.getElementById("visor-tom").textContent = transporNota(
         musicaSelecionada.tom_original,
         semitonsAcumulados,
@@ -3385,6 +3568,7 @@
         const block = document.createElement("p");
         block.innerHTML = lineHtml;
         block.style.margin = "0";
+        limparEstiloFonte(block);
         const textContent = block.textContent || "";
         const textoSemEspaco = textContent.replace(/\s/g, "");
 
@@ -3430,27 +3614,68 @@
         childrenProcessados.push(block);
       }
 
+      let estrofe = null;
+      let quebraProxima = false;
+      const fecharEstrofe = () => {
+        if (estrofe && estrofe.children.length > 0) {
+          const txtEstrofe = (estrofe.textContent || "").trim();
+          // Cabeçalho de seção sozinho ([Refrão], [Intro]...) gruda no verso seguinte
+          if (estrofe.children.length === 1 && /^\[.*\]$/.test(txtEstrofe)) {
+            estrofe.classList.add("colar-proxima");
+          }
+          visor.appendChild(estrofe);
+        }
+        estrofe = null;
+      };
+
       for (let i = 0; i < childrenProcessados.length; i++) {
         const block = childrenProcessados[i];
-        if (block.classList.contains("linha-acorde")) {
-          const wrapper = document.createElement("div");
-          wrapper.className = "bloco-linha";
-          wrapper.appendChild(block);
-          if (i + 1 < childrenProcessados.length) {
-            const nextBlock = childrenProcessados[i + 1];
-            if (!nextBlock.classList.contains("linha-acorde") && nextBlock.textContent.trim().length > 0) {
-              wrapper.appendChild(nextBlock);
-              i++;
-            }
-          }
-          visor.appendChild(wrapper);
-        } else {
-          const wrapper = document.createElement("div");
-          wrapper.className = "bloco-linha";
-          wrapper.appendChild(block);
-          visor.appendChild(wrapper);
+        const txt = (block.textContent || "").trim();
+
+        // Quebra de coluna manual: linha só com --- ou ===
+        if (/^[-=]{3,}$/.test(txt)) {
+          fecharEstrofe();
+          quebraProxima = true;
+          continue;
         }
+
+        // Linha em branco: encerra a estrofe (fronteira segura p/ trocar de coluna)
+        if (txt === "") {
+          fecharEstrofe();
+          continue;
+        }
+
+        if (!estrofe) {
+          estrofe = document.createElement("div");
+          estrofe.className = "estrofe-bloco";
+          if (quebraProxima) {
+            estrofe.classList.add("quebra-antes");
+            quebraProxima = false;
+          }
+        }
+
+        // Agrupa acorde + letra (ou linha única) p/ preservar o respiro do verso
+        const grupo = document.createElement("div");
+        grupo.className = "linha-grupo";
+        grupo.appendChild(block);
+        if (
+          block.classList.contains("linha-acorde") &&
+          i + 1 < childrenProcessados.length
+        ) {
+          const prox = childrenProcessados[i + 1];
+          const proxTxt = (prox.textContent || "").trim();
+          if (
+            !prox.classList.contains("linha-acorde") &&
+            proxTxt !== "" &&
+            !/^[-=]{3,}$/.test(proxTxt)
+          ) {
+            grupo.appendChild(prox);
+            i++;
+          }
+        }
+        estrofe.appendChild(grupo);
       }
+      fecharEstrofe();
     }
 
     function alternarMenu() {
