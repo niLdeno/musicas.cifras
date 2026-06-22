@@ -1813,6 +1813,24 @@
       border-radius: 999px;
       z-index: 35;
     }
+
+    /* =========================================
+       ✨ CONTROLE DE ACESSO (MODO EDITOR)
+       Esconde todos os controles de criar/editar/excluir
+       enquanto o usuário não estiver autenticado como editor.
+       A segurança real é garantida no Supabase (RLS); isto é
+       apenas a interface que acompanha o estado de login.
+       ========================================= */
+    body:not(.modo-editor) .action-more,
+    body:not(.modo-editor) .btn-nova-musica-desktop,
+    body:not(.modo-editor) .fab,
+    body:not(.modo-editor) .editor-only {
+      display: none !important;
+    }
+
+    /* Indicador de status do editor no rodapé do menu */
+    .profile-role.status-editor { color: #4ade80; }
+    .profile-role.status-leitura { color: #94a3b8; }
   </style>
 </head>
 
@@ -1855,13 +1873,13 @@
         <i class="fa-solid fa-gear"></i><span>Configurações</span>
       </button>
 
-      <div class="sidebar-profile" style="cursor: pointer; transition: 0.2s" onclick="abrirModalConfig()"
+      <div class="sidebar-profile" id="sidebar-profile" style="cursor: pointer; transition: 0.2s" onclick="toggleEditorLogin()"
         onmouseover="this.style.background = 'rgba(255,255,255,0.01)'"
-        onmouseout="this.style.background = 'transparent'">
-        <div class="profile-avatar"><i class="fa-solid fa-user"></i></div>
+        onmouseout="this.style.background = 'transparent'" title="Entrar como editor">
+        <div class="profile-avatar" id="profile-avatar"><i class="fa-solid fa-lock"></i></div>
         <div class="profile-info">
-          <span class="profile-name">Ministério de Música</span>
-          <span class="profile-role">Administrador</span>
+          <span class="profile-name" id="profile-name">Ministério de Música</span>
+          <span class="profile-role status-leitura" id="profile-role">Somente leitura</span>
         </div>
       </div>
     </nav>
@@ -2074,6 +2092,28 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="modal-login">
+    <div class="modal-content" style="max-width: 420px;">
+      <div class="modal-header">
+        <h2><i class="fa-solid fa-lock" style="margin-right:8px; color: var(--primary);"></i>Acesso de Editor</h2>
+        <button class="close-btn" onclick="fecharModal('modal-login')">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <p style="color: var(--text-muted); font-size: 14px; margin: 0 0 18px;">
+        Digite a senha de editor para liberar a criação, edição e exclusão de músicas, repertórios e acordes. Sem a senha, o sistema fica em modo somente leitura.
+      </p>
+      <div class="form-group" style="margin-bottom: 18px;">
+        <label for="login-senha">Senha</label>
+        <input type="password" id="login-senha" placeholder="••••••••"
+          onkeydown="if(event.key==='Enter') entrarComoEditor()" />
+      </div>
+      <button class="btn" style="width: 100%; justify-content: center" onclick="entrarComoEditor()">
+        <i class="fa-solid fa-right-to-bracket"></i> Entrar
+      </button>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="modal-cadastro-musica">
     <div class="modal-content" style="max-width: 900px;">
       <div class="modal-header">
@@ -2270,6 +2310,13 @@
     // === ESTADO GLOBAL ===
     let supabaseClient = null;
     let _carregandoCount = 0;
+
+    // === CONTROLE DE ACESSO (EDITOR) ===
+    // E-mail do usuário "editor" cadastrado no Supabase (Authentication > Users).
+    // A senha NÃO fica no código: é verificada pelo Supabase no login.
+    // Para usar outro e-mail, basta criar o usuário no painel e trocar a linha abaixo.
+    const EDITOR_EMAIL = "nildeno.aragao@gmail.com";
+    let ehEditor = false;
     let ambienteAtual = "acervo";
     let acervoGlobal = [];
     let repertoriosGlobal = [];
@@ -2378,6 +2425,10 @@
 
       conectarSupabase(url, key);
 
+      // ✨ CONTROLE DE ACESSO: começa em somente leitura e restaura sessão se houver
+      atualizarUIEditor();
+      verificarSessaoEditor();
+
       // LÓGICA DE CONFIGURAÇÕES
       const showFret =
         localStorage.getItem("gerecifras_show_fret_numbers") === "1";
@@ -2418,6 +2469,97 @@
       localStorage.setItem("gerecifras_show_finger_numbers", showFinger);
       fecharModal("modal-config");
       mostrarToast("Configurações salvas!", "sucesso");
+    }
+
+    // =========================================
+    // ✨ CONTROLE DE ACESSO (EDITOR)
+    // =========================================
+    // Atualiza a interface conforme o usuário estiver ou não logado como editor.
+    function atualizarUIEditor() {
+      document.body.classList.toggle("modo-editor", ehEditor);
+      const role = document.getElementById("profile-role");
+      const name = document.getElementById("profile-name");
+      const avatar = document.getElementById("profile-avatar");
+      const profile = document.getElementById("sidebar-profile");
+      if (ehEditor) {
+        if (role) { role.textContent = "Editor conectado (sair)"; role.className = "profile-role status-editor"; }
+        if (name) name.textContent = "Modo Edição";
+        if (avatar) avatar.innerHTML = '<i class="fa-solid fa-unlock"></i>';
+        if (profile) profile.title = "Sair do modo editor";
+      } else {
+        if (role) { role.textContent = "Somente leitura"; role.className = "profile-role status-leitura"; }
+        if (name) name.textContent = "Ministério de Música";
+        if (avatar) avatar.innerHTML = '<i class="fa-solid fa-lock"></i>';
+        if (profile) profile.title = "Entrar como editor";
+      }
+    }
+
+    // Clique no bloco de perfil: entra (se leitura) ou sai (se editor).
+    function toggleEditorLogin() {
+      if (ehEditor) {
+        sairEditor();
+      } else {
+        abrirModalLogin();
+      }
+    }
+
+    function abrirModalLogin() {
+      const campo = document.getElementById("login-senha");
+      if (campo) campo.value = "";
+      document.getElementById("modal-login").style.display = "flex";
+      setTimeout(() => { if (campo) campo.focus(); }, 100);
+    }
+
+    async function entrarComoEditor() {
+      if (!supabaseClient) { mostrarToast("Banco de dados não conectado.", "erro"); return; }
+      const senha = document.getElementById("login-senha").value;
+      if (!senha) { mostrarToast("Digite a senha.", "erro"); return; }
+      mostrarCarregando();
+      const { error } = await supabaseClient.auth.signInWithPassword({
+        email: EDITOR_EMAIL,
+        password: senha,
+      });
+      esconderCarregando();
+      if (error) {
+        mostrarToast("Senha incorreta.", "erro");
+        return;
+      }
+      ehEditor = true;
+      atualizarUIEditor();
+      fecharModal("modal-login");
+      mostrarToast("Modo edição liberado!", "sucesso");
+      // Recarrega os dados já no contexto autenticado (permite gravar via RLS).
+      carregarAcervo();
+      carregarRepertorios();
+      carregarDicionario();
+    }
+
+    async function sairEditor() {
+      if (supabaseClient) await supabaseClient.auth.signOut();
+      ehEditor = false;
+      atualizarUIEditor();
+      mostrarToast("Modo somente leitura ativado.", "info");
+    }
+
+    // Bloqueia ações de escrita quando não há editor logado (defesa extra;
+    // a regra que realmente protege os dados é o RLS no Supabase).
+    function exigirEditor() {
+      if (ehEditor) return true;
+      mostrarToast("Entre como editor para fazer alterações.", "erro");
+      abrirModalLogin();
+      return false;
+    }
+
+    // Restaura a sessão de editor caso já exista (ex.: recarregou a página).
+    async function verificarSessaoEditor() {
+      if (!supabaseClient) return;
+      try {
+        const { data } = await supabaseClient.auth.getSession();
+        ehEditor = !!(data && data.session);
+      } catch (e) {
+        ehEditor = false;
+      }
+      atualizarUIEditor();
     }
 
     function conectarSupabase(url, key) {
@@ -2486,6 +2628,7 @@
     }
 
     function abrirModalCadastroMusica() {
+      if (!exigirEditor()) return;
       idEdicaoAtual = null;
       document.getElementById("modal-titulo-musica").textContent =
         "Nova Música";
@@ -2500,6 +2643,7 @@
       document.getElementById("modal-cadastro-musica").style.display = "flex";
     }
     function abrirEdicaoMusica(index) {
+      if (!exigirEditor()) return;
       const m = acervoGlobal[index];
       idEdicaoAtual = m.id;
       document.getElementById("modal-titulo-musica").textContent =
@@ -2523,6 +2667,7 @@
       document.getElementById("modal-cadastro-musica").style.display = "flex";
     }
     async function salvarMusica() {
+      if (!exigirEditor()) return;
       const conteudoInput = tinymce.get("cad-conteudo")
         ? tinymce.get("cad-conteudo").getContent()
         : document.getElementById("cad-conteudo").value;
@@ -2792,6 +2937,7 @@
     }
 
     function abrirModalCadastroRepertorio() {
+      if (!exigirEditor()) return;
       idEdicaoRepertorioAtual = null;
       const tituloEl = document.getElementById("modal-titulo-repertorio");
       if (tituloEl) tituloEl.textContent = "Novo Repertório";
@@ -2808,6 +2954,7 @@
     }
 
     function abrirEdicaoRepertorio(index) {
+      if (!exigirEditor()) return;
       const rep = repertoriosGlobal[index];
       idEdicaoRepertorioAtual = rep.id;
 
@@ -2833,6 +2980,7 @@
     }
 
     async function salvarRepertorio() {
+      if (!exigirEditor()) return;
       const nome = document.getElementById("rep-nome").value.trim();
       const data_evento = document.getElementById("rep-data").value || null;
 
@@ -2887,13 +3035,14 @@
           <td><span class="tag-pill">${qtd} música${qtd !== 1 ? "s" : ""}</span></td>
           <td style="text-align: right; white-space: nowrap;">
             <button class="btn" style="padding: 6px 12px;" onclick="tocarRepertorio(${i})"><i class="fa-solid fa-play"></i> Iniciar</button>
-            <button class="btn btn-secondary" style="padding: 6px 10px; margin-left: 6px;" onclick="abrirEdicaoRepertorio(${i})" title="Editar"><i class="fa-solid fa-pen"></i></button>
-            <button class="btn btn-secondary" style="padding:6px 10px; margin-left:6px; background:#ef4444; border-color:transparent; color:#fff;" onclick="excluirRepertorio('${r.id}')" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+            <button class="btn btn-secondary editor-only" style="padding: 6px 10px; margin-left: 6px;" onclick="abrirEdicaoRepertorio(${i})" title="Editar"><i class="fa-solid fa-pen"></i></button>
+            <button class="btn btn-secondary editor-only" style="padding:6px 10px; margin-left:6px; background:#ef4444; border-color:transparent; color:#fff;" onclick="excluirRepertorio('${r.id}')" title="Excluir"><i class="fa-solid fa-trash"></i></button>
           </td></tr>`;
       });
     }
 
     function abrirModalCadastroAcorde() {
+      if (!exigirEditor()) return;
       idEdicaoAcordeAtual = null;
       const h2 = document.querySelector("#modal-cadastro-acorde .modal-header h2");
       if (h2) h2.textContent = "Novo Acorde";
@@ -2909,6 +3058,7 @@
     }
 
     function abrirEdicaoAcorde(id) {
+      if (!exigirEditor()) return;
       const acorde = dicionarioGlobal.find((a) => a.id === id);
       if (!acorde) return;
       idEdicaoAcordeAtual = acorde.id;
@@ -3001,6 +3151,7 @@
     }
 
     async function salvarAcorde() {
+      if (!exigirEditor()) return;
       const nome = document.getElementById("cad-acorde-nome").value.trim();
       if (!nome) return mostrarToast("Dê um nome ao acorde.", "erro");
       if (!supabaseClient) return mostrarToast("Sem conexão.", "erro");
@@ -3077,13 +3228,14 @@
           },
           { width: 280, height: 160, numCasas: v.num_casas || 5 },
         );
-        containerEl.innerHTML += `<div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: var(--card-shadow); display: flex; flex-direction: column; align-items: center; gap: 16px;"><span class="tag-pill">Formato ${index + 1}</span>${svgHtml}<div style="display: flex; gap: 8px; width: 100%; justify-content: center; margin-top: auto;"><button class="btn btn-secondary" style="padding: 8px 16px;" onclick="abrirEdicaoAcorde(${v.id})" title="Editar formato"><i class="fa-solid fa-pen"></i></button><button class="btn btn-secondary" style="padding: 8px 16px; color: #ef4444;" onclick="excluirAcordeUnico(${v.id}, '${nome}')" title="Excluir formato"><i class="fa-solid fa-trash"></i></button></div></div>`;
+        containerEl.innerHTML += `<div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: var(--card-shadow); display: flex; flex-direction: column; align-items: center; gap: 16px;"><span class="tag-pill">Formato ${index + 1}</span>${svgHtml}<div class="editor-only" style="display: flex; gap: 8px; width: 100%; justify-content: center; margin-top: auto;"><button class="btn btn-secondary" style="padding: 8px 16px;" onclick="abrirEdicaoAcorde(${v.id})" title="Editar formato"><i class="fa-solid fa-pen"></i></button><button class="btn btn-secondary" style="padding: 8px 16px; color: #ef4444;" onclick="excluirAcordeUnico(${v.id}, '${nome}')" title="Excluir formato"><i class="fa-solid fa-trash"></i></button></div></div>`;
       });
       document.getElementById("modal-visualizar-acorde").style.display =
         "flex";
     }
 
     async function excluirAcordeUnico(id, nome) {
+      if (!exigirEditor()) return;
       if (!confirm("Deseja excluir este formato específico?")) return;
       if (!supabaseClient) return;
       mostrarCarregando();
@@ -3111,6 +3263,7 @@
       mostrarAcorde(fakeEvent, nome);
     }
     async function excluirMusica(id) {
+      if (!exigirEditor()) return;
       if (!confirm("Excluir esta música? A ação é irreversível.")) return;
       if (!supabaseClient) return mostrarToast("Sem conexão.", "erro");
       mostrarCarregando();
@@ -3121,6 +3274,7 @@
       carregarAcervo();
     }
     async function excluirRepertorio(id) {
+      if (!exigirEditor()) return;
       if (!confirm("Excluir este repertório? A ação é irreversível.")) return;
       if (!supabaseClient) return mostrarToast("Sem conexão.", "erro");
       mostrarCarregando();
