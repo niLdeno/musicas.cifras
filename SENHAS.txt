@@ -1,5 +1,0 @@
-senha de criação SUPABASE: 6qaTFb59L1bGv6oi
-
-Project URL: https://azscmfqhqarpudwjcgky.supabase.co
-
-anon public: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6c2NtZnFocWFycHVkd2pjZ2t5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMTg3MDcsImV4cCI6MjA5NjU5NDcwN30.uZdkWQ0hONUfU9gjadxRh8nCWboVX-lseoF2CLBn9_4
