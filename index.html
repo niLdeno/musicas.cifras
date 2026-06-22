@@ -3668,6 +3668,7 @@
 
     function transporNota(notaCompleta, semitons) {
       return notaCompleta.replace(/([A-G][#b]?)/g, (match) => {
+        if (semitons === 0) return match;
         let nota = match;
         if (nota === "Db") nota = "C#";
         if (nota === "Eb") nota = "D#";
