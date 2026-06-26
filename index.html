@@ -903,7 +903,24 @@
       -webkit-column-break-inside: avoid;
       display: block;
       width: 100%;
+      max-width: 100%;
       margin-bottom: 18px;
+      overflow-x: auto;
+      white-space: pre;
+      padding-bottom: 4px;
+    }
+
+    .estrofe-bloco::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .estrofe-bloco::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .estrofe-bloco::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 6px;
     }
 
     /* Par acorde+letra: mantém o respiro entre as linhas do verso */
