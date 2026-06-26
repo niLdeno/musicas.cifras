@@ -2448,7 +2448,7 @@
 
       // LÓGICA DE CONFIGURAÇÕES
       const showFret =
-        localStorage.getItem("gerecifras_show_fret_numbers") === "1";
+        localStorage.getItem("gerecifras_show_fret_numbers") !== "0";
       const startFret = localStorage.getItem("gerecifras_start_fret") || "1";
       const showFinger =
         localStorage.getItem("gerecifras_show_finger_numbers") === "1";
@@ -3337,7 +3337,7 @@
         posicoes = data.posicoes;
         dedos = data.dedos || null;
       }
-      const showFret = localStorage.getItem("gerecifras_show_fret_numbers") === "1";
+      const showFret = localStorage.getItem("gerecifras_show_fret_numbers") !== "0";
       const globalStartFret = parseInt(localStorage.getItem("gerecifras_start_fret") || "1");
       const showFinger = localStorage.getItem("gerecifras_show_finger_numbers") === "1";
       let computedNumCasas = data && data.num_casas ? parseInt(data.num_casas) : (opts && opts.numCasas) || 5;
