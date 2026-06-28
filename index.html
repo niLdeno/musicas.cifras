@@ -907,13 +907,8 @@
       margin-bottom: 20px;
     }
 
-    /* Estrofe = unidade que NUNCA é dividida entre colunas */
+    /* Estrofe: em 1 coluna não quebra; em multi-coluna pode quebrar */
     .estrofe-bloco {
-      break-inside: avoid;
-      break-inside: avoid-column;
-      page-break-inside: avoid;
-      -webkit-column-break-inside: avoid;
-      -webkit-break-inside: avoid-column;
       display: block;
       width: 100%;
       max-width: 100%;
@@ -925,6 +920,17 @@
       padding-right: 8px;
       overflow-wrap: break-word;
       word-wrap: break-word;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      -webkit-column-break-inside: avoid;
+    }
+
+    /* Em multi-coluna, permite estrofes quebrarem entre colunas */
+    .layout-2-colunas .estrofe-bloco,
+    .layout-3-colunas .estrofe-bloco {
+      break-inside: auto;
+      page-break-inside: auto;
+      -webkit-column-break-inside: auto;
     }
 
     .estrofe-bloco::-webkit-scrollbar {
@@ -940,13 +946,16 @@
       border-radius: 6px;
     }
 
-    /* Par acorde+letra: mantém o respiro entre as linhas do verso */
+    /* Par acorde+letra: NUNCA quebra entre colunas */
     .linha-grupo {
       margin-bottom: 16px;
       display: block;
       width: 100%;
       min-width: 0;
       overflow: hidden;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      -webkit-column-break-inside: avoid;
     }
 
     .linha-grupo p {
