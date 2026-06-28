@@ -3721,6 +3721,36 @@
       }
     }
 
+    function balancearColunas() {
+      const rc = document.getElementById("render-cifra");
+      if (qtdColunas === 1) return;
+
+      setTimeout(() => {
+        const estrofes = rc.querySelectorAll(".estrofe-bloco");
+        if (estrofes.length === 0) return;
+
+        const alturaContainer = rc.offsetHeight;
+        const numColunas = qtdColunas;
+        const alturaAlvo = alturaContainer / numColunas;
+
+        let alturAcumulada = 0;
+        let colunasInseridas = 0;
+
+        estrofes.forEach((estrofe, idx) => {
+          if (colunasInseridas >= numColunas - 1) return;
+
+          const alturaEstrofe = estrofe.offsetHeight;
+          alturAcumulada += alturaEstrofe;
+
+          if (alturAcumulada > alturaAlvo * (colunasInseridas + 1)) {
+            estrofe.classList.add("quebra-antes");
+            colunasInseridas++;
+            alturAcumulada = alturaEstrofe;
+          }
+        });
+      }, 50);
+    }
+
     function toggleColunas() {
       qtdColunas++;
       if (qtdColunas > 3) {
@@ -3742,6 +3772,7 @@
         btn.innerHTML = '<i class="fa-solid fa-table-columns"></i> 3 Colunas';
       }
       renderizarTextoTransposto();
+      balancearColunas();
     }
 
     function transporNota(notaCompleta, semitons) {
@@ -3909,6 +3940,7 @@
         estrofe.appendChild(grupo);
       }
       fecharEstrofe();
+      balancearColunas();
     }
 
     function alternarMenu() {
