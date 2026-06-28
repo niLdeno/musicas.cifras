@@ -853,7 +853,8 @@
       font-size: 16px;
       font-weight: 500;
       color: var(--text-main);
-      overflow-x: auto;
+      overflow-x: hidden;
+      overflow-y: auto;
       line-height: 1.6;
       box-shadow: var(--card-shadow);
       border: 1px solid var(--border);
@@ -866,6 +867,8 @@
       white-space: pre-wrap;
       position: relative;
       letter-spacing: 0.02em;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
     }
 
     .layout-2-colunas {
@@ -911,10 +914,13 @@
       width: 100%;
       max-width: 100%;
       margin-bottom: 22px;
-      overflow-x: auto;
-      white-space: pre;
+      overflow-x: hidden;
+      overflow-y: visible;
+      white-space: pre-wrap;
       padding-bottom: 6px;
       padding-right: 8px;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
     }
 
     .estrofe-bloco::-webkit-scrollbar {
@@ -935,6 +941,14 @@
       margin-bottom: 16px;
       display: block;
       width: 100%;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .linha-grupo p {
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      min-width: 0;
     }
 
     .linha-grupo p:first-child {
@@ -969,6 +983,8 @@
       line-height: 1.7;
       letter-spacing: 0.01em;
       word-spacing: 0.2em;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
     }
 
     .linha-acorde {
@@ -978,6 +994,9 @@
       line-height: 1.4;
       letter-spacing: 0.05em;
       word-spacing: 0.4em;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      word-break: break-all;
     }
 
     .acorde-clicavel {
@@ -1724,9 +1743,12 @@
         font-size: 14px;
         line-height: 1.5;
         letter-spacing: 0.02em;
+        overflow-x: hidden;
       }
       .linha-acorde {
         word-spacing: 0.3em;
+        overflow-wrap: break-word;
+        word-wrap: break-word;
       }
       .layout-2-colunas,
       .layout-3-colunas {
