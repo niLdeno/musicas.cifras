@@ -874,12 +874,14 @@
     .layout-2-colunas {
       column-count: 2;
       column-gap: 40px;
+      column-fill: balance;
       width: 100%;
     }
 
     .layout-3-colunas {
       column-count: 3;
       column-gap: 28px;
+      column-fill: balance;
       width: 100%;
     }
 
@@ -1558,8 +1560,8 @@
         word-break: break-word;
         white-space: pre-wrap;
       }
-      .layout-2-colunas { column-gap: 30px; }
-      .layout-3-colunas { column-count: 2 !important; column-gap: 30px; }
+      .layout-2-colunas { column-gap: 30px; column-fill: balance; }
+      .layout-3-colunas { column-count: 2 !important; column-gap: 30px; column-fill: balance; }
 
       /* Toast fica acima do normal, não sobrepõe nada */
       #toast-container { bottom: 20px; right: 20px; }
