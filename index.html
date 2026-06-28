@@ -872,23 +872,17 @@
     }
 
     .layout-2-colunas {
-      column-count: 2;
+      columns: 2;
       column-gap: 40px;
       column-fill: balance;
-      -webkit-column-fill: balance;
       width: 100%;
-      columns: 2;
-      -webkit-columns: 2;
     }
 
     .layout-3-colunas {
-      column-count: 3;
+      columns: 3;
       column-gap: 28px;
       column-fill: balance;
-      -webkit-column-fill: balance;
       width: 100%;
-      columns: 3;
-      -webkit-columns: 3;
     }
 
     #render-cifra.layout-2-colunas {
@@ -953,16 +947,13 @@
       width: 100%;
       min-width: 0;
       overflow: hidden;
-      break-inside: avoid;
-      break-inside: avoid-column;
-      -webkit-column-break-inside: avoid;
-      -webkit-break-inside: avoid-column;
     }
 
     .linha-grupo p {
       overflow-wrap: break-word;
       word-wrap: break-word;
       min-width: 0;
+      margin: 0;
     }
 
     .linha-grupo p:first-child {
@@ -1572,8 +1563,8 @@
         word-break: break-word;
         white-space: pre-wrap;
       }
-      .layout-2-colunas { column-gap: 30px; column-fill: balance; }
-      .layout-3-colunas { column-count: 2 !important; column-gap: 30px; column-fill: balance; }
+      .layout-2-colunas { column-gap: 30px; columns: 2; }
+      .layout-3-colunas { columns: 2 !important; column-gap: 30px; }
 
       /* Toast fica acima do normal, não sobrepõe nada */
       #toast-container { bottom: 20px; right: 20px; }
