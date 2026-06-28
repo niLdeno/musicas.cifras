@@ -875,14 +875,20 @@
       column-count: 2;
       column-gap: 40px;
       column-fill: balance;
+      -webkit-column-fill: balance;
       width: 100%;
+      columns: 2;
+      -webkit-columns: 2;
     }
 
     .layout-3-colunas {
       column-count: 3;
       column-gap: 28px;
       column-fill: balance;
+      -webkit-column-fill: balance;
       width: 100%;
+      columns: 3;
+      -webkit-columns: 3;
     }
 
     #render-cifra.layout-2-colunas {
@@ -910,8 +916,10 @@
     /* Estrofe = unidade que NUNCA é dividida entre colunas */
     .estrofe-bloco {
       break-inside: avoid;
+      break-inside: avoid-column;
       page-break-inside: avoid;
       -webkit-column-break-inside: avoid;
+      -webkit-break-inside: avoid-column;
       display: block;
       width: 100%;
       max-width: 100%;
@@ -945,6 +953,10 @@
       width: 100%;
       min-width: 0;
       overflow: hidden;
+      break-inside: avoid;
+      break-inside: avoid-column;
+      -webkit-column-break-inside: avoid;
+      -webkit-break-inside: avoid-column;
     }
 
     .linha-grupo p {
