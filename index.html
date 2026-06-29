@@ -871,18 +871,21 @@
       word-wrap: break-word;
     }
 
-    .layout-2-colunas {
-      columns: 2;
-      column-gap: 30px;
-      column-fill: balance;
+    .layout-2-colunas,
+    .layout-3-colunas {
+      display: flex;
+      gap: 30px;
       width: 100%;
+      align-items: flex-start;
     }
 
     .layout-3-colunas {
-      columns: 3;
-      column-gap: 20px;
-      column-fill: balance;
-      width: 100%;
+      gap: 20px;
+    }
+
+    .coluna-cifra {
+      flex: 1;
+      min-width: 0;
     }
 
     #render-cifra.layout-2-colunas {
@@ -934,13 +937,7 @@
       -webkit-column-break-inside: avoid;
     }
 
-    /* Em multi-coluna, permite estrofes quebrarem entre colunas */
-    .layout-2-colunas .estrofe-bloco,
-    .layout-3-colunas .estrofe-bloco {
-      break-inside: auto;
-      page-break-inside: auto;
-      -webkit-column-break-inside: auto;
-    }
+    /* Em multi-coluna, estrofes ficam dentro de .coluna-cifra */
 
     .estrofe-bloco::-webkit-scrollbar {
       height: 6px;
@@ -983,15 +980,7 @@
 
     /* Cabeçalho de seção ([Refrão] etc.) gruda no verso seguinte */
     .colar-proxima {
-      break-after: avoid;
-      -webkit-column-break-after: avoid;
       margin-bottom: 6px;
-    }
-
-    /* Quebra de coluna manual (linha com --- ou ===) */
-    .quebra-antes {
-      break-before: column;
-      -webkit-column-break-before: always;
     }
 
     .estrofe {
@@ -1558,7 +1547,7 @@
       #render-cifra.layout-2-colunas { font-size: 13px; }
       #render-cifra.layout-3-colunas { font-size: 12px; }
       .linha-acorde { word-spacing: 0.2em; }
-      .layout-3-colunas { column-count: 2 !important; column-gap: 24px !important; }
+      .layout-3-colunas { gap: 16px !important; }
     }
 
     /* ===== TABLET (769px - 1024px) ===== */
@@ -1579,8 +1568,8 @@
         word-break: break-word;
         white-space: pre-wrap;
       }
-      .layout-2-colunas { column-gap: 24px; columns: 2; }
-      .layout-3-colunas { columns: 2 !important; column-gap: 20px; }
+      .layout-2-colunas { gap: 20px; }
+      .layout-3-colunas { gap: 16px; }
 
       /* Toast fica acima do normal, não sobrepõe nada */
       #toast-container { bottom: 20px; right: 20px; }
@@ -1773,7 +1762,7 @@
       }
       .layout-2-colunas,
       .layout-3-colunas {
-        column-count: 1 !important;
+        flex-direction: column !important;
       }
 
       /* --- Construtor de acorde --- */
@@ -3756,50 +3745,63 @@
       const numColunas = qtdColunas;
 
       setTimeout(() => {
-        const estrofes = rc.querySelectorAll(".estrofe-bloco");
-        if (estrofes.length === 0) return;
+        const blocos = Array.from(rc.querySelectorAll(".estrofe-bloco"));
+        if (blocos.length === 0) return;
 
-        estrofes.forEach(e => e.classList.remove("quebra-antes"));
-
-        const classLayout = numColunas === 2 ? "layout-2-colunas" : "layout-3-colunas";
-        rc.classList.remove(classLayout);
-        rc.offsetHeight;
-
-        const alturas = [];
-        let alturaTotal = 0;
-        estrofes.forEach(est => {
-          const h = est.offsetHeight + parseFloat(getComputedStyle(est).marginBottom || 0);
-          alturas.push(h);
-          alturaTotal += h;
-        });
-
-        rc.classList.add(classLayout);
-
-        const alturaAlvo = alturaTotal / numColunas;
-        let acumulado = 0;
-        let colunasInseridas = 0;
-
-        for (let i = 0; i < estrofes.length; i++) {
-          if (colunasInseridas >= numColunas - 1) break;
-
-          acumulado += alturas[i];
-
-          const limiteColuna = alturaAlvo * (colunasInseridas + 1);
-          const excesso = acumulado - limiteColuna;
-          const faltaSemEste = limiteColuna - (acumulado - alturas[i]);
-
-          if (excesso > 0 && i > 0) {
-            if (excesso < faltaSemEste) {
-              if (i + 1 < estrofes.length) {
-                estrofes[i + 1].classList.add("quebra-antes");
-              }
-            } else {
-              estrofes[i].classList.add("quebra-antes");
-              acumulado = alturas[i];
-            }
-            colunasInseridas++;
+        const itens = [];
+        let i = 0;
+        while (i < blocos.length) {
+          const bloco = blocos[i];
+          if (bloco.classList.contains("colar-proxima") && i + 1 < blocos.length) {
+            const grupo = [bloco, blocos[i + 1]];
+            const h = grupo.reduce((s, el) => s + el.offsetHeight + parseFloat(getComputedStyle(el).marginBottom || 0), 0);
+            itens.push({ els: grupo, h });
+            i += 2;
+          } else {
+            const h = bloco.offsetHeight + parseFloat(getComputedStyle(bloco).marginBottom || 0);
+            itens.push({ els: [bloco], h });
+            i++;
           }
         }
+
+        const alturaTotal = itens.reduce((s, it) => s + it.h, 0);
+        const alturaAlvo = alturaTotal / numColunas;
+
+        const colunas = Array.from({ length: numColunas }, () => ({ els: [], h: 0 }));
+        let colAtual = 0;
+
+        for (let j = 0; j < itens.length; j++) {
+          const item = itens[j];
+
+          if (colAtual < numColunas - 1 && colunas[colAtual].h > 0) {
+            const hComEste = colunas[colAtual].h + item.h;
+            const excesso = hComEste - alturaAlvo;
+
+            if (excesso > 0) {
+              const faltaSemEste = alturaAlvo - colunas[colAtual].h;
+              if (excesso > faltaSemEste) {
+                colAtual++;
+              }
+            }
+          }
+
+          colunas[colAtual].els.push(...item.els);
+          colunas[colAtual].h += item.h;
+        }
+
+        rc.querySelectorAll(".coluna-cifra").forEach(c => c.remove());
+
+        const colDivs = colunas.map(() => {
+          const div = document.createElement("div");
+          div.className = "coluna-cifra";
+          return div;
+        });
+
+        colunas.forEach((col, idx) => {
+          col.els.forEach(el => colDivs[idx].appendChild(el));
+        });
+
+        colDivs.forEach(div => rc.appendChild(div));
       }, 60);
     }
 
@@ -3808,23 +3810,18 @@
       if (qtdColunas > 3) {
         qtdColunas = 1;
       }
-      const rc = document.getElementById("render-cifra");
       const btn = document.getElementById("btn-colunas");
-      rc.classList.remove("layout-2-colunas", "layout-3-colunas");
       if (qtdColunas === 1) {
         btn.classList.remove("ativo");
         btn.innerHTML = '<i class="fa-solid fa-columns"></i> 1 Coluna';
       } else if (qtdColunas === 2) {
-        rc.classList.add("layout-2-colunas");
         btn.classList.add("ativo");
         btn.innerHTML = '<i class="fa-solid fa-columns"></i> 2 Colunas';
       } else if (qtdColunas === 3) {
-        rc.classList.add("layout-3-colunas");
         btn.classList.add("ativo");
         btn.innerHTML = '<i class="fa-solid fa-table-columns"></i> 3 Colunas';
       }
       renderizarTextoTransposto();
-      balancearColunas();
     }
 
     function transporNota(notaCompleta, semitons) {
@@ -3855,8 +3852,6 @@
         semitonsAcumulados,
       );
       visor.className = "";
-      if (qtdColunas === 2) visor.classList.add("layout-2-colunas");
-      if (qtdColunas === 3) visor.classList.add("layout-3-colunas");
 
       let htmlContent = musicaSelecionada.conteudo;
       if (!/<[a-z][\s\S]*>/i.test(htmlContent)) {
@@ -3964,10 +3959,7 @@
         if (!estrofe) {
           estrofe = document.createElement("div");
           estrofe.className = "estrofe-bloco";
-          if (quebraProxima) {
-            estrofe.classList.add("quebra-antes");
-            quebraProxima = false;
-          }
+          quebraProxima = false;
         }
 
         // Agrupa acorde + letra (ou linha única) p/ preservar o respiro do verso
@@ -3992,6 +3984,9 @@
         estrofe.appendChild(grupo);
       }
       fecharEstrofe();
+
+      if (qtdColunas === 2) visor.classList.add("layout-2-colunas");
+      if (qtdColunas === 3) visor.classList.add("layout-3-colunas");
       balancearColunas();
     }
 
