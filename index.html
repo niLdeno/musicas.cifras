@@ -874,12 +874,14 @@
     .layout-2-colunas {
       columns: 2;
       column-gap: 30px;
+      column-fill: balance;
       width: 100%;
     }
 
     .layout-3-colunas {
       columns: 3;
       column-gap: 20px;
+      column-fill: balance;
       width: 100%;
     }
 
@@ -3751,34 +3753,54 @@
       const rc = document.getElementById("render-cifra");
       if (qtdColunas === 1) return;
 
+      const numColunas = qtdColunas;
+
       setTimeout(() => {
         const estrofes = rc.querySelectorAll(".estrofe-bloco");
         if (estrofes.length === 0) return;
 
         estrofes.forEach(e => e.classList.remove("quebra-antes"));
 
-        requestAnimationFrame(() => {
-          const alturaContainer = rc.scrollHeight;
-          const numColunas = qtdColunas;
-          const alturaAlvo = alturaContainer / numColunas;
+        const classLayout = numColunas === 2 ? "layout-2-colunas" : "layout-3-colunas";
+        rc.classList.remove(classLayout);
+        rc.offsetHeight;
 
-          let alturAcumulada = 0;
-          let colunasInseridas = 0;
-
-          estrofes.forEach((estrofe) => {
-            if (colunasInseridas >= numColunas - 1) return;
-
-            const alturaEstrofe = estrofe.offsetHeight;
-            alturAcumulada += alturaEstrofe;
-
-            if (alturAcumulada > alturaAlvo * (colunasInseridas + 1)) {
-              estrofe.classList.add("quebra-antes");
-              colunasInseridas++;
-              alturAcumulada = alturaEstrofe;
-            }
-          });
+        const alturas = [];
+        let alturaTotal = 0;
+        estrofes.forEach(est => {
+          const h = est.offsetHeight + parseFloat(getComputedStyle(est).marginBottom || 0);
+          alturas.push(h);
+          alturaTotal += h;
         });
-      }, 80);
+
+        rc.classList.add(classLayout);
+
+        const alturaAlvo = alturaTotal / numColunas;
+        let acumulado = 0;
+        let colunasInseridas = 0;
+
+        for (let i = 0; i < estrofes.length; i++) {
+          if (colunasInseridas >= numColunas - 1) break;
+
+          acumulado += alturas[i];
+
+          const limiteColuna = alturaAlvo * (colunasInseridas + 1);
+          const excesso = acumulado - limiteColuna;
+          const faltaSemEste = limiteColuna - (acumulado - alturas[i]);
+
+          if (excesso > 0 && i > 0) {
+            if (excesso < faltaSemEste) {
+              if (i + 1 < estrofes.length) {
+                estrofes[i + 1].classList.add("quebra-antes");
+              }
+            } else {
+              estrofes[i].classList.add("quebra-antes");
+              acumulado = alturas[i];
+            }
+            colunasInseridas++;
+          }
+        }
+      }, 60);
     }
 
     function toggleColunas() {
