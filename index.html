@@ -2218,17 +2218,23 @@
           style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
           <!-- Lado Esquerdo: Busca e Acervo -->
           <div class="builder-acervo">
-            <label>Adicionar Músicas:</label>
-            <input type="text" id="rep-busca-musica" placeholder="Buscar no acervo..."
-              oninput="filtrarMusicasDisponiveisRepertorio()"
-              style="margin-bottom: 12px; width: 100%; box-sizing: border-box;" />
+            <label style="margin-bottom: 8px; display: block;">Adicionar Músicas:</label>
+            <div style="position: relative; margin-bottom: 12px; width: 100%; box-sizing: border-box;">
+              <input type="text" id="rep-busca-musica" placeholder="Buscar no acervo..."
+                oninput="filtrarMusicasDisponiveisRepertorio(); toggleLimparBusca()"
+                style="width: 100%; box-sizing: border-box; padding-right: 36px;" />
+              <button id="btn-limpar-busca" onclick="limparBuscaRepertorio()" title="Limpar busca"
+                style="display: none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-secondary, #aaa); cursor: pointer; font-size: 16px; padding: 4px; line-height: 1;">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
             <div class="lista-selecao-musicas" id="lista-disponiveis-repertorio"
               style="height: 350px; max-height: 350px;">
             </div>
           </div>
           <!-- Lado Direito: Sequência -->
           <div class="builder-sequencia">
-            <label>Sequência do Repertório:</label>
+            <label style="margin-bottom: 8px; display: block;">Sequência do Repertório:</label>
             <div class="lista-selecao-musicas" id="lista-sequencia-repertorio"
               style="height: 396px; max-height: 396px; background: var(--bg-color); border: 1px dashed var(--border);">
             </div>
@@ -2922,6 +2928,20 @@
 
     function filtrarMusicasDisponiveisRepertorio() {
       renderizarConstrutorRepertorio();
+    }
+
+    function toggleLimparBusca() {
+      const input = document.getElementById('rep-busca-musica');
+      const btn = document.getElementById('btn-limpar-busca');
+      btn.style.display = input.value.length > 0 ? 'block' : 'none';
+    }
+
+    function limparBuscaRepertorio() {
+      const input = document.getElementById('rep-busca-musica');
+      input.value = '';
+      input.focus();
+      toggleLimparBusca();
+      filtrarMusicasDisponiveisRepertorio();
     }
 
     function adicionarMusicaRepertorio(idMusica) {
