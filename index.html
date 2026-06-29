@@ -853,8 +853,9 @@
       font-size: 16px;
       font-weight: 500;
       color: var(--text-main);
-      overflow-x: auto;
-      line-height: 1.3;
+      overflow-x: hidden;
+      overflow-y: auto;
+      line-height: 1.6;
       box-shadow: var(--card-shadow);
       border: 1px solid var(--border);
       max-width: 100%;
@@ -865,26 +866,34 @@
       word-break: break-word;
       white-space: pre-wrap;
       position: relative;
+      letter-spacing: 0.02em;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
     }
 
     .layout-2-colunas {
-      column-count: 2;
-      column-gap: 32px;
+      columns: 2;
+      column-gap: 40px;
       width: 100%;
     }
 
     .layout-3-colunas {
-      column-count: 3;
+      columns: 3;
       column-gap: 20px;
       width: 100%;
     }
 
     #render-cifra.layout-2-colunas {
-      padding: 44px 38px;
+      padding: 44px 40px;
     }
 
     #render-cifra.layout-3-colunas {
-      padding: 40px 30px;
+      padding: 40px 24px;
+    }
+
+    #render-cifra.layout-2-colunas .linha-acorde,
+    #render-cifra.layout-3-colunas .linha-acorde {
+      word-spacing: 0.35em;
     }
 
     .bloco-linha {
@@ -896,18 +905,30 @@
       margin-bottom: 20px;
     }
 
-    /* Estrofe = unidade que NUNCA é dividida entre colunas */
+    /* Estrofe: em 1 coluna não quebra; em multi-coluna pode quebrar */
     .estrofe-bloco {
-      break-inside: avoid;
-      page-break-inside: avoid;
-      -webkit-column-break-inside: avoid;
       display: block;
       width: 100%;
       max-width: 100%;
-      margin-bottom: 18px;
-      overflow-x: auto;
-      white-space: pre;
-      padding-bottom: 4px;
+      margin-bottom: 22px;
+      overflow-x: hidden;
+      overflow-y: visible;
+      white-space: pre-wrap;
+      padding-bottom: 6px;
+      padding-right: 8px;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      -webkit-column-break-inside: avoid;
+    }
+
+    /* Em multi-coluna, permite estrofes quebrarem entre colunas */
+    .layout-2-colunas .estrofe-bloco,
+    .layout-3-colunas .estrofe-bloco {
+      break-inside: auto;
+      page-break-inside: auto;
+      -webkit-column-break-inside: auto;
     }
 
     .estrofe-bloco::-webkit-scrollbar {
@@ -923,9 +944,27 @@
       border-radius: 6px;
     }
 
-    /* Par acorde+letra: mantém o respiro entre as linhas do verso */
+    /* Par acorde+letra: NUNCA quebra entre colunas */
     .linha-grupo {
-      margin-bottom: 14px;
+      margin-bottom: 16px;
+      display: block;
+      width: 100%;
+      min-width: 0;
+      overflow: hidden;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      -webkit-column-break-inside: avoid;
+    }
+
+    .linha-grupo p {
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      min-width: 0;
+      margin: 0;
+    }
+
+    .linha-grupo p:first-child {
+      margin-bottom: 2px;
     }
 
     .estrofe-bloco .linha-grupo:last-child {
@@ -953,16 +992,23 @@
     .linha-letra {
       color: var(--text-main);
       margin: 0;
-      line-height: 1.5;
-      letter-spacing: 0.005em;
+      line-height: 1.7;
+      letter-spacing: 0.01em;
+      word-spacing: 0.2em;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
     }
 
     .linha-acorde {
       font-weight: 700;
       color: var(--chord-color);
-      margin: 0 0 1px 0;
-      line-height: 1.2;
-      letter-spacing: 0.01em;
+      margin: 0 0 2px 0;
+      line-height: 1.4;
+      letter-spacing: 0.05em;
+      word-spacing: 0.4em;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      word-break: break-all;
     }
 
     .acorde-clicavel {
@@ -970,14 +1016,19 @@
       cursor: pointer;
       border-bottom: 2px solid transparent;
       border-radius: 4px;
-      transition: background 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+      transition: all 0.15s ease;
       font-weight: 700;
+      padding: 1px 2px;
+      display: inline-block;
+      min-width: 1.8em;
+      text-align: center;
     }
 
     .acorde-clicavel:hover {
       border-bottom-color: var(--chord-color);
       background: var(--chord-bg);
       box-shadow: 0 0 0 3px var(--chord-bg);
+      transform: translateY(-1px);
     }
 
 
@@ -1496,8 +1547,9 @@
     /* ===== TELAS MÉDIAS (< 1024px) ===== */
     @media (max-width: 1024px) {
       .main-area { padding: 28px 24px; }
-      #render-cifra { padding: 28px 32px; }
-      .layout-3-colunas { column-count: 2 !important; column-gap: 30px !important; }
+      #render-cifra { padding: 28px 32px; font-size: 15px; }
+      .linha-acorde { word-spacing: 0.35em; }
+      .layout-3-colunas { column-count: 2 !important; column-gap: 35px !important; }
     }
 
     /* ===== TABLET (769px - 1024px) ===== */
@@ -1518,8 +1570,8 @@
         word-break: break-word;
         white-space: pre-wrap;
       }
-      .layout-2-colunas { column-gap: 30px; }
-      .layout-3-colunas { column-count: 2 !important; column-gap: 30px; }
+      .layout-2-colunas { column-gap: 30px; columns: 2; }
+      .layout-3-colunas { columns: 2 !important; column-gap: 30px; }
 
       /* Toast fica acima do normal, não sobrepõe nada */
       #toast-container { bottom: 20px; right: 20px; }
@@ -1698,10 +1750,17 @@
         order: -1;
       }
       #render-cifra {
-        padding: 18px 14px;
+        padding: 20px 16px;
         border-radius: 12px;
         font-size: 14px;
-        line-height: 1.4;
+        line-height: 1.5;
+        letter-spacing: 0.02em;
+        overflow-x: hidden;
+      }
+      .linha-acorde {
+        word-spacing: 0.3em;
+        overflow-wrap: break-word;
+        word-wrap: break-word;
       }
       .layout-2-colunas,
       .layout-3-colunas {
@@ -3680,6 +3739,36 @@
       }
     }
 
+    function balancearColunas() {
+      const rc = document.getElementById("render-cifra");
+      if (qtdColunas === 1) return;
+
+      setTimeout(() => {
+        const estrofes = rc.querySelectorAll(".estrofe-bloco");
+        if (estrofes.length === 0) return;
+
+        const alturaContainer = rc.offsetHeight;
+        const numColunas = qtdColunas;
+        const alturaAlvo = alturaContainer / numColunas;
+
+        let alturAcumulada = 0;
+        let colunasInseridas = 0;
+
+        estrofes.forEach((estrofe, idx) => {
+          if (colunasInseridas >= numColunas - 1) return;
+
+          const alturaEstrofe = estrofe.offsetHeight;
+          alturAcumulada += alturaEstrofe;
+
+          if (alturAcumulada > alturaAlvo * (colunasInseridas + 1)) {
+            estrofe.classList.add("quebra-antes");
+            colunasInseridas++;
+            alturAcumulada = alturaEstrofe;
+          }
+        });
+      }, 50);
+    }
+
     function toggleColunas() {
       qtdColunas++;
       if (qtdColunas > 3) {
@@ -3701,6 +3790,7 @@
         btn.innerHTML = '<i class="fa-solid fa-table-columns"></i> 3 Colunas';
       }
       renderizarTextoTransposto();
+      balancearColunas();
     }
 
     function transporNota(notaCompleta, semitons) {
@@ -3868,6 +3958,7 @@
         estrofe.appendChild(grupo);
       }
       fecharEstrofe();
+      balancearColunas();
     }
 
     function alternarMenu() {
