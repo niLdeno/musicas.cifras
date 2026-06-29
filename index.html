@@ -871,16 +871,21 @@
       word-wrap: break-word;
     }
 
-    .layout-2-colunas {
-      columns: 2;
-      column-gap: 30px;
+    .layout-2-colunas,
+    .layout-3-colunas {
+      display: flex;
+      gap: 30px;
       width: 100%;
+      align-items: flex-start;
     }
 
     .layout-3-colunas {
-      columns: 3;
-      column-gap: 20px;
-      width: 100%;
+      gap: 20px;
+    }
+
+    .coluna-cifra {
+      flex: 1;
+      min-width: 0;
     }
 
     #render-cifra.layout-2-colunas {
@@ -932,13 +937,7 @@
       -webkit-column-break-inside: avoid;
     }
 
-    /* Em multi-coluna, permite estrofes quebrarem entre colunas */
-    .layout-2-colunas .estrofe-bloco,
-    .layout-3-colunas .estrofe-bloco {
-      break-inside: auto;
-      page-break-inside: auto;
-      -webkit-column-break-inside: auto;
-    }
+    /* Em multi-coluna, estrofes ficam dentro de .coluna-cifra */
 
     .estrofe-bloco::-webkit-scrollbar {
       height: 6px;
@@ -981,15 +980,7 @@
 
     /* Cabeçalho de seção ([Refrão] etc.) gruda no verso seguinte */
     .colar-proxima {
-      break-after: avoid;
-      -webkit-column-break-after: avoid;
       margin-bottom: 6px;
-    }
-
-    /* Quebra de coluna manual (linha com --- ou ===) */
-    .quebra-antes {
-      break-before: column;
-      -webkit-column-break-before: always;
     }
 
     .estrofe {
@@ -1556,7 +1547,7 @@
       #render-cifra.layout-2-colunas { font-size: 13px; }
       #render-cifra.layout-3-colunas { font-size: 12px; }
       .linha-acorde { word-spacing: 0.2em; }
-      .layout-3-colunas { column-count: 2 !important; column-gap: 24px !important; }
+      .layout-3-colunas { gap: 16px !important; }
     }
 
     /* ===== TABLET (769px - 1024px) ===== */
@@ -1577,8 +1568,8 @@
         word-break: break-word;
         white-space: pre-wrap;
       }
-      .layout-2-colunas { column-gap: 24px; columns: 2; }
-      .layout-3-colunas { columns: 2 !important; column-gap: 20px; }
+      .layout-2-colunas { gap: 20px; }
+      .layout-3-colunas { gap: 16px; }
 
       /* Toast fica acima do normal, não sobrepõe nada */
       #toast-container { bottom: 20px; right: 20px; }
@@ -1771,7 +1762,7 @@
       }
       .layout-2-colunas,
       .layout-3-colunas {
-        column-count: 1 !important;
+        flex-direction: column !important;
       }
 
       /* --- Construtor de acorde --- */
@@ -3751,34 +3742,109 @@
       const rc = document.getElementById("render-cifra");
       if (qtdColunas === 1) return;
 
+      const numColunas = qtdColunas;
+
       setTimeout(() => {
-        const estrofes = rc.querySelectorAll(".estrofe-bloco");
+        const estrofes = Array.from(rc.querySelectorAll(".estrofe-bloco"));
         if (estrofes.length === 0) return;
 
-        estrofes.forEach(e => e.classList.remove("quebra-antes"));
+        const unidades = [];
+        let estIdx = 0;
+        while (estIdx < estrofes.length) {
+          const est = estrofes[estIdx];
+          const isColar = est.classList.contains("colar-proxima");
+          const grupos = Array.from(est.querySelectorAll(".linha-grupo"));
 
-        requestAnimationFrame(() => {
-          const alturaContainer = rc.scrollHeight;
-          const numColunas = qtdColunas;
-          const alturaAlvo = alturaContainer / numColunas;
+          if (isColar && estIdx + 1 < estrofes.length) {
+            const proxEst = estrofes[estIdx + 1];
+            const proxGrupos = Array.from(proxEst.querySelectorAll(".linha-grupo"));
+            const todos = grupos.concat(proxGrupos);
+            todos.forEach(g => unidades.push({ el: g, estId: estIdx, colar: true }));
+            estIdx += 2;
+          } else {
+            grupos.forEach(g => unidades.push({ el: g, estId: estIdx, colar: false }));
+            estIdx++;
+          }
 
-          let alturAcumulada = 0;
-          let colunasInseridas = 0;
+          unidades.push({ type: "break", estId: estIdx - 1 });
+        }
+        if (unidades.length > 0 && unidades[unidades.length - 1].type === "break") {
+          unidades.pop();
+        }
 
-          estrofes.forEach((estrofe) => {
-            if (colunasInseridas >= numColunas - 1) return;
+        const totalGrupos = unidades.filter(u => u.type !== "break").length;
+        const base = Math.floor(totalGrupos / numColunas);
+        const resto = totalGrupos % numColunas;
 
-            const alturaEstrofe = estrofe.offsetHeight;
-            alturAcumulada += alturaEstrofe;
+        const limites = [];
+        for (let c = 0; c < numColunas; c++) {
+          limites.push(base + (c < resto ? 1 : 0));
+        }
 
-            if (alturAcumulada > alturaAlvo * (colunasInseridas + 1)) {
-              estrofe.classList.add("quebra-antes");
-              colunasInseridas++;
-              alturAcumulada = alturaEstrofe;
+        const colunasItens = Array.from({ length: numColunas }, () => []);
+        let colAtual = 0;
+        let gruposNaCol = 0;
+
+        for (let i = 0; i < unidades.length; i++) {
+          const u = unidades[i];
+
+          if (u.type === "break") {
+            colunasItens[colAtual].push(u);
+            continue;
+          }
+
+          if (colAtual < numColunas - 1 && gruposNaCol >= limites[colAtual]) {
+            const ultimoNaCol = colunasItens[colAtual][colunasItens[colAtual].length - 1];
+            if (ultimoNaCol && ultimoNaCol.type === "break") {
+              colAtual++;
+              gruposNaCol = 0;
+            } else {
+              let temBreakAFrente = false;
+              for (let k = i; k < unidades.length; k++) {
+                if (unidades[k].type === "break") { temBreakAFrente = true; break; }
+                if (k > i + 2) break;
+              }
+              if (!temBreakAFrente) {
+                colAtual++;
+                gruposNaCol = 0;
+              }
             }
+          }
+
+          colunasItens[colAtual].push(u);
+          gruposNaCol++;
+        }
+
+        estrofes.forEach(e => e.remove());
+        rc.querySelectorAll(".coluna-cifra").forEach(c => c.remove());
+
+        colunasItens.forEach(colItens => {
+          const colDiv = document.createElement("div");
+          colDiv.className = "coluna-cifra";
+
+          let estAtual = null;
+          let ultimoEstId = null;
+
+          colItens.forEach(item => {
+            if (item.type === "break") {
+              if (estAtual) { colDiv.appendChild(estAtual); estAtual = null; }
+              ultimoEstId = null;
+              return;
+            }
+
+            if (!estAtual || item.estId !== ultimoEstId) {
+              if (estAtual) colDiv.appendChild(estAtual);
+              estAtual = document.createElement("div");
+              estAtual.className = "estrofe-bloco";
+            }
+            estAtual.appendChild(item.el);
+            ultimoEstId = item.estId;
           });
+
+          if (estAtual) colDiv.appendChild(estAtual);
+          if (colDiv.children.length > 0) rc.appendChild(colDiv);
         });
-      }, 80);
+      }, 60);
     }
 
     function toggleColunas() {
@@ -3786,23 +3852,18 @@
       if (qtdColunas > 3) {
         qtdColunas = 1;
       }
-      const rc = document.getElementById("render-cifra");
       const btn = document.getElementById("btn-colunas");
-      rc.classList.remove("layout-2-colunas", "layout-3-colunas");
       if (qtdColunas === 1) {
         btn.classList.remove("ativo");
         btn.innerHTML = '<i class="fa-solid fa-columns"></i> 1 Coluna';
       } else if (qtdColunas === 2) {
-        rc.classList.add("layout-2-colunas");
         btn.classList.add("ativo");
         btn.innerHTML = '<i class="fa-solid fa-columns"></i> 2 Colunas';
       } else if (qtdColunas === 3) {
-        rc.classList.add("layout-3-colunas");
         btn.classList.add("ativo");
         btn.innerHTML = '<i class="fa-solid fa-table-columns"></i> 3 Colunas';
       }
       renderizarTextoTransposto();
-      balancearColunas();
     }
 
     function transporNota(notaCompleta, semitons) {
@@ -3833,8 +3894,6 @@
         semitonsAcumulados,
       );
       visor.className = "";
-      if (qtdColunas === 2) visor.classList.add("layout-2-colunas");
-      if (qtdColunas === 3) visor.classList.add("layout-3-colunas");
 
       let htmlContent = musicaSelecionada.conteudo;
       if (!/<[a-z][\s\S]*>/i.test(htmlContent)) {
@@ -3942,10 +4001,7 @@
         if (!estrofe) {
           estrofe = document.createElement("div");
           estrofe.className = "estrofe-bloco";
-          if (quebraProxima) {
-            estrofe.classList.add("quebra-antes");
-            quebraProxima = false;
-          }
+          quebraProxima = false;
         }
 
         // Agrupa acorde + letra (ou linha única) p/ preservar o respiro do verso
@@ -3970,6 +4026,9 @@
         estrofe.appendChild(grupo);
       }
       fecharEstrofe();
+
+      if (qtdColunas === 2) visor.classList.add("layout-2-colunas");
+      if (qtdColunas === 3) visor.classList.add("layout-3-colunas");
       balancearColunas();
     }
 
