@@ -847,15 +847,15 @@
 
     #render-cifra {
       background: var(--surface);
-      padding: 52px 60px;
+      padding: 40px 48px;
       border-radius: 20px;
       font-family: var(--font-mono);
       font-size: 16px;
       font-weight: 500;
       color: var(--text-main);
-      overflow-x: hidden;
+      overflow-x: auto;
       overflow-y: auto;
-      line-height: 1.6;
+      line-height: 1.5;
       box-shadow: var(--card-shadow);
       border: 1px solid var(--border);
       max-width: 100%;
@@ -873,7 +873,7 @@
 
     .layout-2-colunas {
       columns: 2;
-      column-gap: 40px;
+      column-gap: 30px;
       width: 100%;
     }
 
@@ -884,16 +884,28 @@
     }
 
     #render-cifra.layout-2-colunas {
-      padding: 44px 40px;
+      padding: 36px 30px;
+      font-size: 14px;
     }
 
     #render-cifra.layout-3-colunas {
-      padding: 40px 24px;
+      padding: 30px 20px;
+      font-size: 13px;
     }
 
     #render-cifra.layout-2-colunas .linha-acorde,
     #render-cifra.layout-3-colunas .linha-acorde {
-      word-spacing: 0.35em;
+      word-spacing: 0.25em;
+    }
+
+    #render-cifra.layout-2-colunas .linha-grupo,
+    #render-cifra.layout-3-colunas .linha-grupo {
+      margin-bottom: 6px;
+    }
+
+    #render-cifra.layout-2-colunas .estrofe-bloco,
+    #render-cifra.layout-3-colunas .estrofe-bloco {
+      margin-bottom: 14px;
     }
 
     .bloco-linha {
@@ -902,7 +914,7 @@
       -webkit-column-break-inside: avoid;
       display: block;
       width: 100%;
-      margin-bottom: 20px;
+      margin-bottom: 14px;
     }
 
     /* Estrofe: em 1 coluna não quebra; em multi-coluna pode quebrar */
@@ -910,12 +922,9 @@
       display: block;
       width: 100%;
       max-width: 100%;
-      margin-bottom: 22px;
-      overflow-x: hidden;
-      overflow-y: visible;
+      margin-bottom: 18px;
       white-space: pre-wrap;
-      padding-bottom: 6px;
-      padding-right: 8px;
+      padding-bottom: 4px;
       overflow-wrap: break-word;
       word-wrap: break-word;
       break-inside: avoid;
@@ -946,11 +955,10 @@
 
     /* Par acorde+letra: NUNCA quebra entre colunas */
     .linha-grupo {
-      margin-bottom: 16px;
+      margin-bottom: 10px;
       display: block;
       width: 100%;
       min-width: 0;
-      overflow: hidden;
       break-inside: avoid;
       page-break-inside: avoid;
       -webkit-column-break-inside: avoid;
@@ -964,7 +972,7 @@
     }
 
     .linha-grupo p:first-child {
-      margin-bottom: 2px;
+      margin-bottom: 0;
     }
 
     .estrofe-bloco .linha-grupo:last-child {
@@ -992,9 +1000,9 @@
     .linha-letra {
       color: var(--text-main);
       margin: 0;
-      line-height: 1.7;
+      line-height: 1.5;
       letter-spacing: 0.01em;
-      word-spacing: 0.2em;
+      word-spacing: 0.15em;
       overflow-wrap: break-word;
       word-wrap: break-word;
     }
@@ -1002,13 +1010,12 @@
     .linha-acorde {
       font-weight: 700;
       color: var(--chord-color);
-      margin: 0 0 2px 0;
-      line-height: 1.4;
-      letter-spacing: 0.05em;
-      word-spacing: 0.4em;
+      margin: 0 0 1px 0;
+      line-height: 1.3;
+      letter-spacing: 0.03em;
+      word-spacing: 0.3em;
       overflow-wrap: break-word;
       word-wrap: break-word;
-      word-break: break-all;
     }
 
     .acorde-clicavel {
@@ -1018,10 +1025,8 @@
       border-radius: 4px;
       transition: all 0.15s ease;
       font-weight: 700;
-      padding: 1px 2px;
-      display: inline-block;
-      min-width: 1.8em;
-      text-align: center;
+      padding: 1px 1px;
+      display: inline;
     }
 
     .acorde-clicavel:hover {
@@ -1547,9 +1552,11 @@
     /* ===== TELAS MÉDIAS (< 1024px) ===== */
     @media (max-width: 1024px) {
       .main-area { padding: 28px 24px; }
-      #render-cifra { padding: 28px 32px; font-size: 15px; }
-      .linha-acorde { word-spacing: 0.35em; }
-      .layout-3-colunas { column-count: 2 !important; column-gap: 35px !important; }
+      #render-cifra { padding: 28px 28px; font-size: 15px; }
+      #render-cifra.layout-2-colunas { font-size: 13px; }
+      #render-cifra.layout-3-colunas { font-size: 12px; }
+      .linha-acorde { word-spacing: 0.2em; }
+      .layout-3-colunas { column-count: 2 !important; column-gap: 24px !important; }
     }
 
     /* ===== TABLET (769px - 1024px) ===== */
@@ -1566,12 +1573,12 @@
       .builder-container { grid-template-columns: 1fr 1fr !important; }
 
       #render-cifra {
-        padding: 24px;
+        padding: 22px 20px;
         word-break: break-word;
         white-space: pre-wrap;
       }
-      .layout-2-colunas { column-gap: 30px; columns: 2; }
-      .layout-3-colunas { columns: 2 !important; column-gap: 30px; }
+      .layout-2-colunas { column-gap: 24px; columns: 2; }
+      .layout-3-colunas { columns: 2 !important; column-gap: 20px; }
 
       /* Toast fica acima do normal, não sobrepõe nada */
       #toast-container { bottom: 20px; right: 20px; }
@@ -3696,12 +3703,13 @@
     }
     function mudarTamanhoFonte(delta) {
       tamanhoFonteAtual = Math.max(
-        12,
+        10,
         Math.min(36, tamanhoFonteAtual + delta),
       );
       localStorage.setItem("gerecifras_fonte_tamanho", String(tamanhoFonteAtual));
       document.getElementById("render-cifra").style.fontSize =
         tamanhoFonteAtual + "px";
+      balancearColunas();
     }
 
     // ✨ Troca a fonte da cifra (mantém monoespaçada p/ preservar o alinhamento dos acordes)
@@ -3747,26 +3755,30 @@
         const estrofes = rc.querySelectorAll(".estrofe-bloco");
         if (estrofes.length === 0) return;
 
-        const alturaContainer = rc.offsetHeight;
-        const numColunas = qtdColunas;
-        const alturaAlvo = alturaContainer / numColunas;
+        estrofes.forEach(e => e.classList.remove("quebra-antes"));
 
-        let alturAcumulada = 0;
-        let colunasInseridas = 0;
+        requestAnimationFrame(() => {
+          const alturaContainer = rc.scrollHeight;
+          const numColunas = qtdColunas;
+          const alturaAlvo = alturaContainer / numColunas;
 
-        estrofes.forEach((estrofe, idx) => {
-          if (colunasInseridas >= numColunas - 1) return;
+          let alturAcumulada = 0;
+          let colunasInseridas = 0;
 
-          const alturaEstrofe = estrofe.offsetHeight;
-          alturAcumulada += alturaEstrofe;
+          estrofes.forEach((estrofe) => {
+            if (colunasInseridas >= numColunas - 1) return;
 
-          if (alturAcumulada > alturaAlvo * (colunasInseridas + 1)) {
-            estrofe.classList.add("quebra-antes");
-            colunasInseridas++;
-            alturAcumulada = alturaEstrofe;
-          }
+            const alturaEstrofe = estrofe.offsetHeight;
+            alturAcumulada += alturaEstrofe;
+
+            if (alturAcumulada > alturaAlvo * (colunasInseridas + 1)) {
+              estrofe.classList.add("quebra-antes");
+              colunasInseridas++;
+              alturAcumulada = alturaEstrofe;
+            }
+          });
         });
-      }, 50);
+      }, 80);
     }
 
     function toggleColunas() {
