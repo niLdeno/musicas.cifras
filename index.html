@@ -886,16 +886,25 @@
     .coluna-cifra {
       flex: 1;
       min-width: 0;
+      overflow: hidden;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      word-break: break-word;
     }
 
     #render-cifra.layout-2-colunas {
       padding: 36px 30px;
       font-size: 14px;
+      white-space: normal;
+      overflow-x: hidden;
     }
 
     #render-cifra.layout-3-colunas {
       padding: 30px 20px;
       font-size: 13px;
+      white-space: normal;
+      overflow-x: hidden;
     }
 
     #render-cifra.layout-2-colunas .linha-acorde,
