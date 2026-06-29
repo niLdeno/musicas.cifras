@@ -3745,63 +3745,105 @@
       const numColunas = qtdColunas;
 
       setTimeout(() => {
-        const blocos = Array.from(rc.querySelectorAll(".estrofe-bloco"));
-        if (blocos.length === 0) return;
+        const estrofes = Array.from(rc.querySelectorAll(".estrofe-bloco"));
+        if (estrofes.length === 0) return;
 
-        const itens = [];
-        let i = 0;
-        while (i < blocos.length) {
-          const bloco = blocos[i];
-          if (bloco.classList.contains("colar-proxima") && i + 1 < blocos.length) {
-            const grupo = [bloco, blocos[i + 1]];
-            const h = grupo.reduce((s, el) => s + el.offsetHeight + parseFloat(getComputedStyle(el).marginBottom || 0), 0);
-            itens.push({ els: grupo, h });
-            i += 2;
+        const unidades = [];
+        let estIdx = 0;
+        while (estIdx < estrofes.length) {
+          const est = estrofes[estIdx];
+          const isColar = est.classList.contains("colar-proxima");
+          const grupos = Array.from(est.querySelectorAll(".linha-grupo"));
+
+          if (isColar && estIdx + 1 < estrofes.length) {
+            const proxEst = estrofes[estIdx + 1];
+            const proxGrupos = Array.from(proxEst.querySelectorAll(".linha-grupo"));
+            const todos = grupos.concat(proxGrupos);
+            todos.forEach(g => unidades.push({ el: g, estId: estIdx, colar: true }));
+            estIdx += 2;
           } else {
-            const h = bloco.offsetHeight + parseFloat(getComputedStyle(bloco).marginBottom || 0);
-            itens.push({ els: [bloco], h });
-            i++;
+            grupos.forEach(g => unidades.push({ el: g, estId: estIdx, colar: false }));
+            estIdx++;
           }
+
+          unidades.push({ type: "break", estId: estIdx - 1 });
+        }
+        if (unidades.length > 0 && unidades[unidades.length - 1].type === "break") {
+          unidades.pop();
         }
 
-        const alturaTotal = itens.reduce((s, it) => s + it.h, 0);
-        const alturaAlvo = alturaTotal / numColunas;
+        const totalGrupos = unidades.filter(u => u.type !== "break").length;
+        const base = Math.floor(totalGrupos / numColunas);
+        const resto = totalGrupos % numColunas;
 
-        const colunas = Array.from({ length: numColunas }, () => ({ els: [], h: 0 }));
+        const limites = [];
+        for (let c = 0; c < numColunas; c++) {
+          limites.push(base + (c < resto ? 1 : 0));
+        }
+
+        const colunasItens = Array.from({ length: numColunas }, () => []);
         let colAtual = 0;
+        let gruposNaCol = 0;
 
-        for (let j = 0; j < itens.length; j++) {
-          const item = itens[j];
+        for (let i = 0; i < unidades.length; i++) {
+          const u = unidades[i];
 
-          if (colAtual < numColunas - 1 && colunas[colAtual].h > 0) {
-            const hComEste = colunas[colAtual].h + item.h;
-            const excesso = hComEste - alturaAlvo;
+          if (u.type === "break") {
+            colunasItens[colAtual].push(u);
+            continue;
+          }
 
-            if (excesso > 0) {
-              const faltaSemEste = alturaAlvo - colunas[colAtual].h;
-              if (excesso > faltaSemEste) {
+          if (colAtual < numColunas - 1 && gruposNaCol >= limites[colAtual]) {
+            const ultimoNaCol = colunasItens[colAtual][colunasItens[colAtual].length - 1];
+            if (ultimoNaCol && ultimoNaCol.type === "break") {
+              colAtual++;
+              gruposNaCol = 0;
+            } else {
+              let temBreakAFrente = false;
+              for (let k = i; k < unidades.length; k++) {
+                if (unidades[k].type === "break") { temBreakAFrente = true; break; }
+                if (k > i + 2) break;
+              }
+              if (!temBreakAFrente) {
                 colAtual++;
+                gruposNaCol = 0;
               }
             }
           }
 
-          colunas[colAtual].els.push(...item.els);
-          colunas[colAtual].h += item.h;
+          colunasItens[colAtual].push(u);
+          gruposNaCol++;
         }
 
+        estrofes.forEach(e => e.remove());
         rc.querySelectorAll(".coluna-cifra").forEach(c => c.remove());
 
-        const colDivs = colunas.map(() => {
-          const div = document.createElement("div");
-          div.className = "coluna-cifra";
-          return div;
-        });
+        colunasItens.forEach(colItens => {
+          const colDiv = document.createElement("div");
+          colDiv.className = "coluna-cifra";
 
-        colunas.forEach((col, idx) => {
-          col.els.forEach(el => colDivs[idx].appendChild(el));
-        });
+          let estAtual = null;
+          let ultimoEstId = null;
 
-        colDivs.forEach(div => rc.appendChild(div));
+          colItens.forEach(item => {
+            if (item.type === "break") {
+              if (estAtual) { colDiv.appendChild(estAtual); estAtual = null; }
+              ultimoEstId = null;
+              return;
+            }
+
+            if (!estAtual || item.estId !== ultimoEstId) {
+              if (estAtual) colDiv.appendChild(estAtual);
+              estAtual = document.createElement("div");
+              estAtual.className = "estrofe-bloco";
+            }
+            estAtual.appendChild(item.el);
+            ultimoEstId = item.estId;
+          });
+
+          if (estAtual) colDiv.appendChild(estAtual);
+          if (colDiv.children.length > 0) rc.appendChild(colDiv);
+        });
       }, 60);
     }
 
