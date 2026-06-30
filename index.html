@@ -2291,28 +2291,28 @@
         </div>
 
         <div class="form-group full-width builder-container"
-          style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; min-height: 0; flex: 1;">
+          style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; min-height: 0; min-width: 0; flex: 1;">
           <!-- Lado Esquerdo: Busca e Acervo -->
-          <div class="builder-acervo" style="display: flex; flex-direction: column; min-height: 0;">
+          <div class="builder-acervo" style="display: flex; flex-direction: column; min-height: 0; min-width: 0;">
             <label style="margin-bottom: 8px; display: block;">Adicionar Músicas:</label>
             <div style="position: relative; margin-bottom: 12px; width: 100%; box-sizing: border-box; display: flex; gap: 8px; align-items: center;">
               <input type="text" id="rep-busca-musica" placeholder="Buscar no acervo..."
                 oninput="toggleLimparBusca(); debounceFiltroRepertorio()"
-                style="flex: 1; box-sizing: border-box;" />
+                style="flex: 1; min-width: 0; box-sizing: border-box;" />
               <button id="btn-limpar-busca-rep" onclick="limparBuscaRepertorio()" title="Limpar busca"
                 style="display: none; width: 40px; height: 40px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-muted); cursor: pointer; font-size: 15px; flex-shrink: 0; align-items: center; justify-content: center; transition: all 0.2s;">
                 <i class="fa-solid fa-delete-left"></i>
               </button>
             </div>
             <div class="lista-selecao-musicas" id="lista-disponiveis-repertorio"
-              style="flex: 1; min-height: 120px; overflow-y: auto;">
+              style="flex: 1; min-height: 120px; min-width: 0; overflow-y: auto; overflow-x: hidden;">
             </div>
           </div>
           <!-- Lado Direito: Sequência -->
-          <div class="builder-sequencia" style="display: flex; flex-direction: column; min-height: 0;">
+          <div class="builder-sequencia" style="display: flex; flex-direction: column; min-height: 0; min-width: 0;">
             <label style="margin-bottom: 8px; display: block;">Sequência do Repertório:</label>
             <div class="lista-selecao-musicas" id="lista-sequencia-repertorio"
-              style="flex: 1; min-height: 120px; overflow-y: auto; background: var(--bg-color); border: 1px dashed var(--border);">
+              style="flex: 1; min-height: 120px; min-width: 0; overflow-y: auto; overflow-x: hidden; background: var(--bg-color); border: 1px dashed var(--border);">
             </div>
           </div>
         </div>
