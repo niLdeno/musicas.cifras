@@ -11,6 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;700&family=Source+Code+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script src="dicionario_br.js"></script>
+  <script src="dicionario_teclado.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js" referrerpolicy="origin"></script>
 
   <style>
@@ -2115,6 +2116,9 @@
               <button class="btn-ferramenta" id="btn-colunas" onclick="toggleColunas()">
                 <i class="fa-solid fa-columns"></i> 1 Coluna
               </button>
+              <button class="btn-ferramenta" id="btn-instrumento" onclick="alternarInstrumento()" title="Instrumento dos diagramas de acorde">
+                <i class="fa-solid fa-guitar"></i> Violão
+              </button>
             </div>
 
             <div class="controles-tom">
@@ -2166,6 +2170,14 @@
           ">
         <input type="checkbox" id="cfg-show-finger-numbers" />
         <label for="cfg-show-finger-numbers" style="margin: 0">Exibir numeração dos dedos nos diagramas</label>
+      </div>
+      <div class="form-group" style="margin-bottom: 20px;">
+        <label for="cfg-instrumento" style="margin-bottom: 8px;">Instrumento dos diagramas de acorde</label>
+        <select id="cfg-instrumento">
+          <option value="violao">🎸 Violão / Guitarra (braço)</option>
+          <option value="teclado">🎹 Teclado / Piano (notas)</option>
+        </select>
+        <small style="color: var(--text-muted); margin-top: 4px;">Define como os acordes aparecem ao clicar neles na cifra.</small>
       </div>
       <button class="btn" style="width: 100%; justify-content: center" onclick="salvarConfiguracao()">
         Salvar Configurações
@@ -2418,6 +2430,7 @@
     let tamanhoFonteAtual = 18;
     let fonteAtual = "'JetBrains Mono', monospace";
     let qtdColunas = 1;
+    let instrumentoAtual = localStorage.getItem("gerecifras_instrumento") || "violao";
 
     let idEdicaoAcordeAtual = null;
     let cordasAcordeAtual = [0, 0, 0, 0, 0, 0];
@@ -2529,6 +2542,10 @@
       if (elStart) elStart.value = startFret;
       if (elShowFinger) elShowFinger.checked = showFinger;
 
+      const elInstrumento = document.getElementById("cfg-instrumento");
+      if (elInstrumento) elInstrumento.value = instrumentoAtual;
+      atualizarBotaoInstrumento();
+
       // ✨ LÓGICA DO MODO ESCURO (Lembra da preferência do usuário)
       if (localStorage.getItem("gerecifras_dark_visor") === "1") {
         document.body.classList.add("dark-mode");
@@ -2554,8 +2571,39 @@
       localStorage.setItem("gerecifras_show_fret_numbers", showFret);
       localStorage.setItem("gerecifras_start_fret", startFret);
       localStorage.setItem("gerecifras_show_finger_numbers", showFinger);
+      const elInstrumento = document.getElementById("cfg-instrumento");
+      if (elInstrumento) {
+        instrumentoAtual = elInstrumento.value;
+        localStorage.setItem("gerecifras_instrumento", instrumentoAtual);
+        atualizarBotaoInstrumento();
+      }
       fecharModal("modal-config");
       mostrarToast("Configurações salvas!", "sucesso");
+    }
+
+    // Alterna rapidamente o instrumento dos diagramas (botão no visor)
+    function alternarInstrumento() {
+      instrumentoAtual = instrumentoAtual === "violao" ? "teclado" : "violao";
+      localStorage.setItem("gerecifras_instrumento", instrumentoAtual);
+      atualizarBotaoInstrumento();
+      const elInstrumento = document.getElementById("cfg-instrumento");
+      if (elInstrumento) elInstrumento.value = instrumentoAtual;
+      fecharTooltip();
+      mostrarToast(
+        instrumentoAtual === "teclado" ? "Diagramas: Teclado 🎹" : "Diagramas: Violão 🎸",
+        "info",
+        1800,
+      );
+    }
+
+    function atualizarBotaoInstrumento() {
+      const btn = document.getElementById("btn-instrumento");
+      if (!btn) return;
+      if (instrumentoAtual === "teclado") {
+        btn.innerHTML = '<i class="fa-solid fa-keyboard"></i> Teclado';
+      } else {
+        btn.innerHTML = '<i class="fa-solid fa-guitar"></i> Violão';
+      }
     }
 
     // =========================================
@@ -3632,6 +3680,19 @@
       event.stopPropagation();
       const tooltip = document.getElementById("tooltip-acorde");
 
+      // Modo TECLADO: gera o diagrama do piano a partir da teoria musical
+      if (instrumentoAtual === "teclado" && typeof gerarHtmlTeclado === "function") {
+        tooltip.innerHTML = gerarHtmlTeclado(acorde);
+        tooltip.style.left = (event.pageX - 160) + "px";
+        tooltip.style.top = (event.pageY + 20) + "px";
+        tooltip.style.display = "block";
+        setTimeout(() => {
+          document.addEventListener("click", fecharTooltip);
+        }, 10);
+        return;
+      }
+
+      // Modo VIOLÃO (padrão)
       // 1. Pega todas as formas de tocar e guarda na memória
       tooltipVariacoesAtuais = obterTodasPosicoesAcorde(acorde);
       tooltipNomeAcordeAtual = acorde;
