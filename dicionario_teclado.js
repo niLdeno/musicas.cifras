@@ -125,16 +125,19 @@
     }
 
     const OCTAVES = 2;
-    const W = opts.whiteWidth || 22; // largura tecla branca
+    const W = opts.whiteWidth || 26; // largura tecla branca
     const totalWhite = 7 * OCTAVES;
+    const pad = 10; // moldura lateral/inferior do "case"
+    const topBar = 9; // feltro superior
+    const whiteH = 120;
+    const blackW = Math.round(W * 0.6);
+    const blackH = 74;
     const kbWidth = totalWhite * W;
-    const whiteH = 100;
-    const blackW = Math.round(W * 0.62);
-    const blackH = 62;
-    const topBar = 7;
+    const caseW = kbWidth + pad * 2;
+    const caseH = topBar + whiteH + pad;
 
-    const COR_ROOT = "#d92d20"; // vermelho (fundamental)
-    const COR_TOM = "#e8821e"; // laranja (demais notas)
+    const COR_ROOT = "#e23b2e"; // vermelho (fundamental)
+    const COR_TOM = "#f59331"; // laranja (demais notas)
 
     // Define a oitava de cada nota mantendo a fundamental na oitava de baixo
     // e empilhando as demais ascendentemente (encaixotando em 2 oitavas).
@@ -160,62 +163,101 @@
       return oct * 7 + WHITE_MAP[s];
     }
 
-    // SVG
-    const svgH = topBar + whiteH;
-    let svg = `<svg width="${kbWidth}" height="${svgH}" viewBox="0 0 ${kbWidth} ${svgH}" xmlns="http://www.w3.org/2000/svg" style="display:block; border-radius:4px; box-shadow:0 6px 14px rgba(0,0,0,0.25);">`;
+    // id único p/ evitar colisão de gradientes quando há vários teclados na tela
+    const uid = "kb" + (gerarHtmlTeclado._n = (gerarHtmlTeclado._n || 0) + 1);
 
-    // Barra superior (feltro/madeira) como no material de referência
-    svg += `<rect x="0" y="0" width="${kbWidth}" height="${topBar}" fill="#7a1f1f"/>`;
+    // helper: tecla com canto inferior arredondado
+    const ox = pad; // deslocamento horizontal das teclas dentro do case
+    const oy = topBar; // topo das teclas
+    function teclaPath(x, y, w, h, r) {
+      return `M${x},${y} L${x + w},${y} L${x + w},${y + h - r} Q${x + w},${y + h} ${x + w - r},${y + h} L${x + r},${y + h} Q${x},${y + h} ${x},${y + h - r} Z`;
+    }
+
+    let svg = `<svg width="${caseW}" height="${caseH}" viewBox="0 0 ${caseW} ${caseH}" xmlns="http://www.w3.org/2000/svg" style="display:block; margin:0 auto; filter:drop-shadow(0 10px 18px rgba(0,0,0,0.35));">`;
+
+    svg += `<defs>
+      <linearGradient id="${uid}-felt" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#9a2b22"/><stop offset="1" stop-color="#641812"/>
+      </linearGradient>
+      <linearGradient id="${uid}-case" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#2b2b33"/><stop offset="1" stop-color="#15151b"/>
+      </linearGradient>
+      <linearGradient id="${uid}-white" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#ffffff"/><stop offset="0.85" stop-color="#f4f5f7"/><stop offset="1" stop-color="#e2e5ea"/>
+      </linearGradient>
+      <linearGradient id="${uid}-black" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#4a4a52"/><stop offset="0.12" stop-color="#26262c"/><stop offset="0.7" stop-color="#141418"/><stop offset="1" stop-color="#050507"/>
+      </linearGradient>
+      <radialGradient id="${uid}-root" cx="0.35" cy="0.3" r="0.85">
+        <stop offset="0" stop-color="#ff7a6e"/><stop offset="0.55" stop-color="${COR_ROOT}"/><stop offset="1" stop-color="#a81d14"/>
+      </radialGradient>
+      <radialGradient id="${uid}-tom" cx="0.35" cy="0.3" r="0.85">
+        <stop offset="0" stop-color="#ffc173"/><stop offset="0.55" stop-color="${COR_TOM}"/><stop offset="1" stop-color="#c4640f"/>
+      </radialGradient>
+      <filter id="${uid}-dot" x="-50%" y="-50%" width="200%" height="200%">
+        <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" flood-color="#000" flood-opacity="0.45"/>
+      </filter>
+    </defs>`;
+
+    // Case (moldura) e feltro superior
+    svg += `<rect x="0" y="0" width="${caseW}" height="${caseH}" rx="10" fill="url(#${uid}-case)"/>`;
+    svg += `<rect x="${ox}" y="0" width="${kbWidth}" height="${topBar + 4}" fill="url(#${uid}-felt)"/>`;
 
     // Teclas brancas
     for (let i = 0; i < totalWhite; i++) {
-      const x = i * W;
-      svg += `<rect x="${x}" y="${topBar}" width="${W}" height="${whiteH}" fill="#fbfbfb" stroke="#9aa0aa" stroke-width="1"/>`;
+      const x = ox + i * W;
+      svg += `<path d="${teclaPath(x, oy, W, whiteH, 4)}" fill="url(#${uid}-white)" stroke="#c4c8d0" stroke-width="0.75"/>`;
     }
+    // brilho suave no topo das brancas
+    svg += `<rect x="${ox}" y="${oy}" width="${kbWidth}" height="10" fill="#ffffff" opacity="0.5"/>`;
 
-    // Teclas pretas (desenhadas por cima)
+    // Teclas pretas (com gloss)
     for (let oct = 0; oct < OCTAVES; oct++) {
       for (const s in BLACK_AFTER) {
         const aw = oct * 7 + BLACK_AFTER[s];
-        const x = (aw + 1) * W - blackW / 2;
-        svg += `<rect x="${x}" y="${topBar}" width="${blackW}" height="${blackH}" rx="2" fill="#181818"/>`;
+        const x = ox + (aw + 1) * W - blackW / 2;
+        svg += `<path d="${teclaPath(x, oy, blackW, blackH, 2.5)}" fill="url(#${uid}-black)"/>`;
+        // reflexo lateral
+        svg += `<rect x="${x + 1.5}" y="${oy + 3}" width="${blackW - 3}" height="${blackH - 14}" rx="2" fill="#ffffff" opacity="0.06"/>`;
       }
     }
 
     // Marcadores (bolinhas) nas teclas do acorde
     teclasMarcadas.forEach((t) => {
       const s = t.keyIndex % 12;
+      const grad = t.cor === COR_ROOT ? `url(#${uid}-root)` : `url(#${uid}-tom)`;
       let cx, cy, r;
       if (IS_BLACK[s]) {
         const oct = Math.floor(t.keyIndex / 12);
         const aw = oct * 7 + BLACK_AFTER[s];
-        cx = (aw + 1) * W;
-        cy = topBar + blackH - 12;
-        r = Math.min(8, blackW / 2 - 1);
-        svg += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${t.cor}" stroke="#fff" stroke-width="1.5"/>`;
+        cx = ox + (aw + 1) * W;
+        cy = oy + blackH - 13;
+        r = Math.min(8, blackW / 2 - 0.5);
       } else {
         const wg = whiteGlobalIndex(t.keyIndex);
-        cx = wg * W + W / 2;
-        cy = topBar + whiteH - 16;
-        r = Math.min(9, W / 2 - 2);
-        svg += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${t.cor}" stroke="#fff" stroke-width="1.5"/>`;
+        cx = ox + wg * W + W / 2;
+        cy = oy + whiteH - 18;
+        r = Math.min(10, W / 2 - 2);
       }
+      svg += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${grad}" stroke="#ffffff" stroke-width="1.5" filter="url(#${uid}-dot)"/>`;
+      // brilho especular
+      svg += `<circle cx="${cx - r * 0.3}" cy="${cy - r * 0.35}" r="${r * 0.3}" fill="#ffffff" opacity="0.55"/>`;
     });
 
     svg += `</svg>`;
 
-    const width = opts.width || kbWidth;
+    const width = opts.width || caseW;
     let html = `<div style="width:${width}px; font-family:sans-serif; margin:0 auto;">`;
-    html += `<div style="text-align:center; font-weight:bold; font-size:18px; margin-bottom:12px; color:var(--text-main);">${info.nome}</div>`;
+    html += `<div style="text-align:center; font-weight:800; font-size:19px; margin-bottom:12px; color:var(--text-main); letter-spacing:-0.01em;">${info.nome}</div>`;
     html += svg;
-    // Lista de notas do acorde
+    // Lista de notas do acorde (pílulas)
     const listaNotas = info.nomes
       .map((n, idx) => {
         const cor = idx === 0 ? COR_ROOT : COR_TOM;
-        return `<span style="color:${cor}; font-weight:700;">${n}</span>`;
+        return `<span style="display:inline-flex; align-items:center; gap:5px; background:${cor}1a; color:${cor}; font-weight:700; font-size:13px; padding:3px 9px; border-radius:20px; border:1px solid ${cor}40;"><span style="width:7px; height:7px; border-radius:50%; background:${cor};"></span>${n}</span>`;
       })
-      .join('<span style="color:var(--text-muted);"> · </span>');
-    html += `<div style="text-align:center; margin-top:10px; font-size:14px; letter-spacing:0.02em;">${listaNotas}</div>`;
+      .join("");
+    html += `<div style="display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-top:14px;">${listaNotas}</div>`;
     html += `</div>`;
     return html;
   }
