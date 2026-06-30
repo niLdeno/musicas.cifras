@@ -1008,7 +1008,6 @@
     }
 
     .linha-acorde {
-      font-weight: 700;
       color: var(--chord-color);
       margin: 0 0 1px 0;
       line-height: 1.3;
@@ -1025,7 +1024,7 @@
       border-radius: 4px;
       transition: all 0.15s ease;
       font-weight: 700;
-      padding: 1px 1px;
+      padding: 0;
       display: inline;
     }
 
@@ -1033,7 +1032,6 @@
       border-bottom-color: var(--chord-color);
       background: var(--chord-bg);
       box-shadow: 0 0 0 3px var(--chord-bg);
-      transform: translateY(-1px);
     }
 
 
@@ -2505,7 +2503,7 @@
         height: 600,
         lineheight_formats: '1 1.1 1.2 1.3 1.4 1.5 1.6 1.8 2 2.5 3',
         content_style:
-          "body { margin: 0; padding: 16px; box-sizing: border-box; font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 16px; line-height: 1.5; }",
+          "body { margin: 0; padding: 16px; box-sizing: border-box; font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 16px; line-height: 1.5; white-space: pre-wrap; }",
       });
 
       // LÓGICA DE CONEXÃO
