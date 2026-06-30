@@ -3683,9 +3683,13 @@
       // Modo TECLADO: gera o diagrama do piano a partir da teoria musical
       if (instrumentoAtual === "teclado" && typeof gerarHtmlTeclado === "function") {
         tooltip.innerHTML = gerarHtmlTeclado(acorde);
-        tooltip.style.left = (event.pageX - 160) + "px";
-        tooltip.style.top = (event.pageY + 20) + "px";
         tooltip.style.display = "block";
+        // centraliza horizontalmente no clique, respeitando as bordas da tela
+        const larguraTip = tooltip.offsetWidth || 384;
+        let left = event.pageX - larguraTip / 2;
+        left = Math.max(8, Math.min(left, window.innerWidth - larguraTip - 8));
+        tooltip.style.left = left + "px";
+        tooltip.style.top = (event.pageY + 20) + "px";
         setTimeout(() => {
           document.addEventListener("click", fecharTooltip);
         }, 10);
