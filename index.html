@@ -2285,7 +2285,7 @@
             <label style="margin-bottom: 8px; display: block;">Adicionar Músicas:</label>
             <div style="position: relative; margin-bottom: 12px; width: 100%; box-sizing: border-box; display: flex; gap: 8px; align-items: center;">
               <input type="text" id="rep-busca-musica" placeholder="Buscar no acervo..."
-                oninput="filtrarMusicasDisponiveisRepertorio(); toggleLimparBusca()"
+                oninput="toggleLimparBusca(); debounceFiltroRepertorio()"
                 style="flex: 1; box-sizing: border-box;" />
               <button id="btn-limpar-busca-rep" onclick="limparBuscaRepertorio()" title="Limpar busca"
                 style="display: none; width: 40px; height: 40px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-muted); cursor: pointer; font-size: 15px; flex-shrink: 0; align-items: center; justify-content: center; transition: all 0.2s;">
@@ -2943,55 +2943,70 @@
     }
 
     function renderizarConstrutorRepertorio() {
-      const divDisp = document.getElementById("lista-disponiveis-repertorio");
-      const divSeq = document.getElementById("lista-sequencia-repertorio");
-      if (!divDisp || !divSeq) return;
+      renderizarListaDisponiveis();
+      renderizarListaSequencia();
+    }
 
-      // Render disponíveis
+    function renderizarListaDisponiveis() {
+      const divDisp = document.getElementById("lista-disponiveis-repertorio");
+      if (!divDisp) return;
+
       const termo = normalizarTexto(document.getElementById("rep-busca-musica").value || "");
-      divDisp.innerHTML = "";
+      const partes = [];
       acervoGlobal.forEach(m => {
         if (termo) {
-          const conteudo = normalizarTexto(`${m.titulo} ${m.autor || ""} ${m.conteudo || ""}`);
-          if (!conteudo.includes(termo)) return;
+          const campos = normalizarTexto(`${m.titulo} ${m.autor || ""}`);
+          if (!campos.includes(termo)) return;
         }
-        divDisp.innerHTML += `<div class="item-selecao" style="justify-content: space-between;">
+        partes.push(`<div class="item-selecao" style="justify-content: space-between;">
              <div style="flex: 1; min-width: 0;">
                 <strong style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;">${m.titulo}</strong>
                 <small style="color:var(--text-muted); display: block;">${m.momento_missa || "Geral"}</small>
              </div>
              <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px; flex-shrink: 0;" onclick="adicionarMusicaRepertorio(${m.id})" title="Adicionar ao Repertório"><i class="fa-solid fa-plus"></i></button>
-          </div>`;
+          </div>`);
       });
+      divDisp.innerHTML = partes.join("");
+    }
 
-      // Render sequência
-      divSeq.innerHTML = "";
+    function renderizarListaSequencia() {
+      const divSeq = document.getElementById("lista-sequencia-repertorio");
+      if (!divSeq) return;
+
       if (musicasRepertorioAtual.length === 0) {
         divSeq.innerHTML = `<div style="text-align: center; color: var(--text-muted); margin-top: 40px;">Nenhuma música adicionada.<br><small>Use o painel ao lado para adicionar.</small></div>`;
-      } else {
-        musicasRepertorioAtual.forEach((item, index) => {
-          const m = acervoGlobal.find(x => x.id === item.id);
-          if (!m) return;
-          divSeq.innerHTML += `<div class="item-selecao" style="flex-direction: column; align-items: stretch; gap: 8px; background: var(--surface); border: 1px solid var(--border); margin-bottom: 8px; border-radius: 8px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
-                   <div style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                      <span style="font-weight: bold; color: var(--primary); margin-right: 8px;">${index + 1}.</span> 
-                      <strong>${m.titulo}</strong>
-                   </div>
-                   <div style="display: flex; gap: 4px; flex-shrink: 0;">
-                      <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;" onclick="moverMusicaRepertorio(${index}, -1)" ${index === 0 ? "disabled" : ""} title="Subir"><i class="fa-solid fa-chevron-up"></i></button>
-                      <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;" onclick="moverMusicaRepertorio(${index}, 1)" ${index === musicasRepertorioAtual.length - 1 ? "disabled" : ""} title="Descer"><i class="fa-solid fa-chevron-down"></i></button>
-                      <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px; color: #ef4444;" onclick="removerMusicaRepertorio(${index})" title="Remover"><i class="fa-solid fa-xmark"></i></button>
-                   </div>
-                </div>
-                <input type="text" placeholder="Momento (ex: Entrada)" list="datalist-momentos" value="${item.momento || ""}" onchange="atualizarMomentoRepertorio(${index}, this.value)" style="padding: 6px 10px; font-size: 13px; width: 100%; box-sizing: border-box;" />
-             </div>`;
-        });
+        return;
       }
+      const partes = [];
+      musicasRepertorioAtual.forEach((item, index) => {
+        const m = acervoGlobal.find(x => x.id === item.id);
+        if (!m) return;
+        partes.push(`<div class="item-selecao" style="flex-direction: column; align-items: stretch; gap: 8px; background: var(--surface); border: 1px solid var(--border); margin-bottom: 8px; border-radius: 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                 <div style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    <span style="font-weight: bold; color: var(--primary); margin-right: 8px;">${index + 1}.</span>
+                    <strong>${m.titulo}</strong>
+                 </div>
+                 <div style="display: flex; gap: 4px; flex-shrink: 0;">
+                    <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;" onclick="moverMusicaRepertorio(${index}, -1)" ${index === 0 ? "disabled" : ""} title="Subir"><i class="fa-solid fa-chevron-up"></i></button>
+                    <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;" onclick="moverMusicaRepertorio(${index}, 1)" ${index === musicasRepertorioAtual.length - 1 ? "disabled" : ""} title="Descer"><i class="fa-solid fa-chevron-down"></i></button>
+                    <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px; color: #ef4444;" onclick="removerMusicaRepertorio(${index})" title="Remover"><i class="fa-solid fa-xmark"></i></button>
+                 </div>
+              </div>
+              <input type="text" placeholder="Momento (ex: Entrada)" list="datalist-momentos" value="${item.momento || ""}" onchange="atualizarMomentoRepertorio(${index}, this.value)" style="padding: 6px 10px; font-size: 13px; width: 100%; box-sizing: border-box;" />
+           </div>`);
+      });
+      divSeq.innerHTML = partes.join("");
+    }
+
+    let _timerFiltroRep = null;
+    function debounceFiltroRepertorio() {
+      clearTimeout(_timerFiltroRep);
+      _timerFiltroRep = setTimeout(filtrarMusicasDisponiveisRepertorio, 150);
     }
 
     function filtrarMusicasDisponiveisRepertorio() {
-      renderizarConstrutorRepertorio();
+      renderizarListaDisponiveis();
     }
 
     function toggleLimparBusca() {
