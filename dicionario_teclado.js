@@ -117,18 +117,24 @@
   const BLACK_AFTER = { 1: 0, 3: 1, 6: 3, 8: 4, 10: 5 };
   const IS_BLACK = { 1: true, 3: true, 6: true, 8: true, 10: true };
 
-  function gerarHtmlTeclado(nomeAcorde, opts) {
-    opts = opts || {};
-    const info = obterNotasAcordeTeclado(nomeAcorde);
-    if (!info) {
-      return `<div style="text-align:center; font-family:sans-serif; font-size:13px; color:var(--text-muted);">Acorde <b>${nomeAcorde}</b><br>não reconhecido.</div>`;
-    }
+  const COR_ROOT = "#e23b2e"; // vermelho (fundamental)
+  const COR_TOM = "#f59331"; // laranja (demais notas)
 
+  function whiteGlobalIndex(keyIndex) {
+    const oct = Math.floor(keyIndex / 12);
+    const s = keyIndex % 12;
+    return oct * 7 + WHITE_MAP[s];
+  }
+
+  // Desenha o teclado (SVG) a partir de teclas explícitas já marcadas.
+  // teclasMarcadas: [{ keyIndex (0..23), cor }]; nomes: pílulas [{nome, cor}]
+  function desenharPianoSVG(nomeExibir, teclasMarcadas, nomes, opts) {
+    opts = opts || {};
     const OCTAVES = 2;
-    const W = opts.whiteWidth || 26; // largura tecla branca
+    const W = opts.whiteWidth || 26;
     const totalWhite = 7 * OCTAVES;
-    const pad = 10; // moldura lateral/inferior do "case"
-    const topBar = 9; // feltro superior
+    const pad = 10;
+    const topBar = 9;
     const whiteH = 120;
     const blackW = Math.round(W * 0.6);
     const blackH = 74;
@@ -136,95 +142,40 @@
     const caseW = kbWidth + pad * 2;
     const caseH = topBar + whiteH + pad;
 
-    const COR_ROOT = "#e23b2e"; // vermelho (fundamental)
-    const COR_TOM = "#f59331"; // laranja (demais notas)
-
-    // Define a oitava de cada nota mantendo a fundamental na oitava de baixo
-    // e empilhando as demais ascendentemente (encaixotando em 2 oitavas).
-    const teclasMarcadas = []; // { keyIndex, cor }
-    info.intervalos.forEach((iv) => {
-      let keyIndex = info.rootPc + iv; // semitom a partir do C da 1ª oitava
-      while (keyIndex >= 12 * OCTAVES) keyIndex -= 12;
-      const cor = iv === 0 ? COR_ROOT : COR_TOM;
-      teclasMarcadas.push({ keyIndex, cor });
-    });
-
-    // Baixo invertido: destaca a tecla do baixo em vermelho e a fundamental vira laranja
-    if (info.baixoPc !== null && info.baixoPc !== info.rootPc) {
-      teclasMarcadas.forEach((t) => {
-        if (t.cor === COR_ROOT) t.cor = COR_TOM;
-      });
-      teclasMarcadas.push({ keyIndex: info.baixoPc, cor: COR_ROOT });
-    }
-
-    function whiteGlobalIndex(keyIndex) {
-      const oct = Math.floor(keyIndex / 12);
-      const s = keyIndex % 12;
-      return oct * 7 + WHITE_MAP[s];
-    }
-
-    // id único p/ evitar colisão de gradientes quando há vários teclados na tela
-    const uid = "kb" + (gerarHtmlTeclado._n = (gerarHtmlTeclado._n || 0) + 1);
-
-    // helper: tecla com canto inferior arredondado
-    const ox = pad; // deslocamento horizontal das teclas dentro do case
-    const oy = topBar; // topo das teclas
+    const uid = "kb" + (desenharPianoSVG._n = (desenharPianoSVG._n || 0) + 1);
+    const ox = pad;
+    const oy = topBar;
     function teclaPath(x, y, w, h, r) {
       return `M${x},${y} L${x + w},${y} L${x + w},${y + h - r} Q${x + w},${y + h} ${x + w - r},${y + h} L${x + r},${y + h} Q${x},${y + h} ${x},${y + h - r} Z`;
     }
 
     let svg = `<svg width="${caseW}" height="${caseH}" viewBox="0 0 ${caseW} ${caseH}" xmlns="http://www.w3.org/2000/svg" style="display:block; margin:0 auto; filter:drop-shadow(0 10px 18px rgba(0,0,0,0.35));">`;
-
     svg += `<defs>
-      <linearGradient id="${uid}-felt" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#9a2b22"/><stop offset="1" stop-color="#641812"/>
-      </linearGradient>
-      <linearGradient id="${uid}-case" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#2b2b33"/><stop offset="1" stop-color="#15151b"/>
-      </linearGradient>
-      <linearGradient id="${uid}-white" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#ffffff"/><stop offset="0.85" stop-color="#f4f5f7"/><stop offset="1" stop-color="#e2e5ea"/>
-      </linearGradient>
-      <linearGradient id="${uid}-black" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#4a4a52"/><stop offset="0.12" stop-color="#26262c"/><stop offset="0.7" stop-color="#141418"/><stop offset="1" stop-color="#050507"/>
-      </linearGradient>
-      <radialGradient id="${uid}-root" cx="0.35" cy="0.3" r="0.85">
-        <stop offset="0" stop-color="#ff7a6e"/><stop offset="0.55" stop-color="${COR_ROOT}"/><stop offset="1" stop-color="#a81d14"/>
-      </radialGradient>
-      <radialGradient id="${uid}-tom" cx="0.35" cy="0.3" r="0.85">
-        <stop offset="0" stop-color="#ffc173"/><stop offset="0.55" stop-color="${COR_TOM}"/><stop offset="1" stop-color="#c4640f"/>
-      </radialGradient>
-      <filter id="${uid}-dot" x="-50%" y="-50%" width="200%" height="200%">
-        <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" flood-color="#000" flood-opacity="0.45"/>
-      </filter>
+      <linearGradient id="${uid}-felt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9a2b22"/><stop offset="1" stop-color="#641812"/></linearGradient>
+      <linearGradient id="${uid}-case" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b2b33"/><stop offset="1" stop-color="#15151b"/></linearGradient>
+      <linearGradient id="${uid}-white" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="0.85" stop-color="#f4f5f7"/><stop offset="1" stop-color="#e2e5ea"/></linearGradient>
+      <linearGradient id="${uid}-black" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a4a52"/><stop offset="0.12" stop-color="#26262c"/><stop offset="0.7" stop-color="#141418"/><stop offset="1" stop-color="#050507"/></linearGradient>
+      <radialGradient id="${uid}-root" cx="0.35" cy="0.3" r="0.85"><stop offset="0" stop-color="#ff7a6e"/><stop offset="0.55" stop-color="${COR_ROOT}"/><stop offset="1" stop-color="#a81d14"/></radialGradient>
+      <radialGradient id="${uid}-tom" cx="0.35" cy="0.3" r="0.85"><stop offset="0" stop-color="#ffc173"/><stop offset="0.55" stop-color="${COR_TOM}"/><stop offset="1" stop-color="#c4640f"/></radialGradient>
+      <filter id="${uid}-dot" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="1.5" stdDeviation="1.5" flood-color="#000" flood-opacity="0.45"/></filter>
     </defs>`;
-
-    // Case (moldura) e feltro superior
     svg += `<rect x="0" y="0" width="${caseW}" height="${caseH}" rx="10" fill="url(#${uid}-case)"/>`;
     svg += `<rect x="${ox}" y="0" width="${kbWidth}" height="${topBar + 4}" fill="url(#${uid}-felt)"/>`;
-
-    // Teclas brancas
     for (let i = 0; i < totalWhite; i++) {
       const x = ox + i * W;
       svg += `<path d="${teclaPath(x, oy, W, whiteH, 4)}" fill="url(#${uid}-white)" stroke="#c4c8d0" stroke-width="0.75"/>`;
     }
-    // brilho suave no topo das brancas
     svg += `<rect x="${ox}" y="${oy}" width="${kbWidth}" height="10" fill="#ffffff" opacity="0.5"/>`;
-
-    // Teclas pretas (com gloss)
     for (let oct = 0; oct < OCTAVES; oct++) {
       for (const s in BLACK_AFTER) {
         const aw = oct * 7 + BLACK_AFTER[s];
         const x = ox + (aw + 1) * W - blackW / 2;
         svg += `<path d="${teclaPath(x, oy, blackW, blackH, 2.5)}" fill="url(#${uid}-black)"/>`;
-        // reflexo lateral
         svg += `<rect x="${x + 1.5}" y="${oy + 3}" width="${blackW - 3}" height="${blackH - 14}" rx="2" fill="#ffffff" opacity="0.06"/>`;
       }
     }
-
-    // Marcadores (bolinhas) nas teclas do acorde
     teclasMarcadas.forEach((t) => {
-      const s = t.keyIndex % 12;
+      const s = ((t.keyIndex % 12) + 12) % 12;
       const grad = t.cor === COR_ROOT ? `url(#${uid}-root)` : `url(#${uid}-tom)`;
       let cx, cy, r;
       if (IS_BLACK[s]) {
@@ -240,28 +191,68 @@
         r = Math.min(10, W / 2 - 2);
       }
       svg += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${grad}" stroke="#ffffff" stroke-width="1.5" filter="url(#${uid}-dot)"/>`;
-      // brilho especular
       svg += `<circle cx="${cx - r * 0.3}" cy="${cy - r * 0.35}" r="${r * 0.3}" fill="#ffffff" opacity="0.55"/>`;
     });
-
     svg += `</svg>`;
 
     const width = opts.width || caseW;
     let html = `<div style="width:${width}px; font-family:sans-serif; margin:0 auto;">`;
-    html += `<div style="text-align:center; font-weight:800; font-size:19px; margin-bottom:12px; color:var(--text-main); letter-spacing:-0.01em;">${info.nome}</div>`;
+    html += `<div style="text-align:center; font-weight:800; font-size:19px; margin-bottom:12px; color:var(--text-main); letter-spacing:-0.01em;">${nomeExibir}</div>`;
     html += svg;
-    // Lista de notas do acorde (pílulas)
-    const listaNotas = info.nomes
-      .map((n, idx) => {
-        const cor = idx === 0 ? COR_ROOT : COR_TOM;
-        return `<span style="display:inline-flex; align-items:center; gap:5px; background:${cor}1a; color:${cor}; font-weight:700; font-size:13px; padding:3px 9px; border-radius:20px; border:1px solid ${cor}40;"><span style="width:7px; height:7px; border-radius:50%; background:${cor};"></span>${n}</span>`;
-      })
-      .join("");
-    html += `<div style="display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-top:14px;">${listaNotas}</div>`;
+    if (nomes && nomes.length) {
+      const listaNotas = nomes
+        .map((n) => `<span style="display:inline-flex; align-items:center; gap:5px; background:${n.cor}1a; color:${n.cor}; font-weight:700; font-size:13px; padding:3px 9px; border-radius:20px; border:1px solid ${n.cor}40;"><span style="width:7px; height:7px; border-radius:50%; background:${n.cor};"></span>${n.nome}</span>`)
+        .join("");
+      html += `<div style="display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-top:14px;">${listaNotas}</div>`;
+    }
     html += `</div>`;
     return html;
   }
 
+  // A partir do NOME do acorde (gera pela teoria musical)
+  function gerarHtmlTeclado(nomeAcorde, opts) {
+    const info = obterNotasAcordeTeclado(nomeAcorde);
+    if (!info) {
+      return `<div style="text-align:center; font-family:sans-serif; font-size:13px; color:var(--text-muted);">Acorde <b>${nomeAcorde}</b><br>não reconhecido.</div>`;
+    }
+    const OCTAVES = 2;
+    const teclasMarcadas = [];
+    info.intervalos.forEach((iv) => {
+      let keyIndex = info.rootPc + iv;
+      while (keyIndex >= 12 * OCTAVES) keyIndex -= 12;
+      teclasMarcadas.push({ keyIndex, cor: iv === 0 ? COR_ROOT : COR_TOM });
+    });
+    if (info.baixoPc !== null && info.baixoPc !== info.rootPc) {
+      teclasMarcadas.forEach((t) => { if (t.cor === COR_ROOT) t.cor = COR_TOM; });
+      teclasMarcadas.push({ keyIndex: info.baixoPc, cor: COR_ROOT });
+    }
+    const nomes = info.nomes.map((n, idx) => ({ nome: n, cor: idx === 0 ? COR_ROOT : COR_TOM }));
+    return desenharPianoSVG(info.nome, teclasMarcadas, nomes, opts);
+  }
+
+  // A partir de TECLAS explícitas (voicing personalizado salvo no banco)
+  // teclas: array de índices 0..23; rootIndex: índice da fundamental (ou -1/null)
+  function gerarHtmlTecladoDeTeclas(nomeExibir, teclas, rootIndex, opts) {
+    if (!Array.isArray(teclas) || teclas.length === 0) {
+      return `<div style="text-align:center; font-family:sans-serif; font-size:13px; color:var(--text-muted);">Sem teclas para <b>${nomeExibir}</b>.</div>`;
+    }
+    const ordenadas = teclas.slice().sort((a, b) => a - b);
+    const teclasMarcadas = ordenadas.map((k) => ({
+      keyIndex: k,
+      cor: k === rootIndex ? COR_ROOT : COR_TOM,
+    }));
+    // nomes das notas: fundamental primeiro
+    const comRoot = rootIndex !== null && rootIndex !== undefined && rootIndex >= 0;
+    const nomesArr = [];
+    if (comRoot) nomesArr.push({ nome: NOTAS_LABEL[((rootIndex % 12) + 12) % 12], cor: COR_ROOT });
+    ordenadas.forEach((k) => {
+      if (comRoot && k === rootIndex) return;
+      nomesArr.push({ nome: NOTAS_LABEL[((k % 12) + 12) % 12], cor: COR_TOM });
+    });
+    return desenharPianoSVG(nomeExibir, teclasMarcadas, nomesArr, opts);
+  }
+
   global.obterNotasAcordeTeclado = obterNotasAcordeTeclado;
   global.gerarHtmlTeclado = gerarHtmlTeclado;
+  global.gerarHtmlTecladoDeTeclas = gerarHtmlTecladoDeTeclas;
 })(typeof window !== "undefined" ? window : this);
