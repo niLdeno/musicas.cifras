@@ -2440,15 +2440,7 @@
               " />
         </div>
 
-        <div class="braco-container">
-          <div class="cordas-header">
-            <div>6ª(E)</div>
-            <div>5ª(A)</div>
-            <div>4ª(D)</div>
-            <div>3ª(G)</div>
-            <div>2ª(B)</div>
-            <div>1ª(e)</div>
-          </div>
+        <div style="max-width: 360px; margin: 0 auto;">
           <div id="braco-interativo-render"></div>
         </div>
       </div>
@@ -3416,45 +3408,119 @@
       renderizarTecladoInterativo();
     }
 
+    // Braço realista e INTERATIVO (mesmo visual dos "Detalhes")
     function renderizarBracoInterativo() {
       const container = document.getElementById("braco-interativo-render");
+      if (!container) return;
       const startEl = document.getElementById("cad-start-fret");
       const numEl = document.getElementById("cad-num-casas");
-      braco_start_fret = startEl
-        ? parseInt(startEl.value || "1")
-        : braco_start_fret;
-      braco_num_casas = numEl
-        ? parseInt(numEl.value || "5")
-        : braco_num_casas;
-      let html = '<div class="status-header">';
+      braco_start_fret = startEl ? parseInt(startEl.value || "1") : braco_start_fret;
+      braco_num_casas = numEl ? parseInt(numEl.value || "5") : braco_num_casas;
+      const startFret = braco_start_fret;
+      const numCasas = braco_num_casas;
+      const posicoes = cordasAcordeAtual;
+      const dedos = dedosAcordeAtual;
+
+      const positionsY = [12, 27.6, 43.2, 58.8, 74.4, 90];
+      const stringNames = ['E', 'A', 'D', 'G', 'B', 'e'];
+      const fw = 100 / numCasas;
+      const getX = (fret) => 100 - ((fret - startFret) * fw + fw / 2);
+
+      // Pestanas (barras) a partir dos dedos repetidos
+      let pestanas = [];
+      let pestanaMap = {};
       for (let i = 0; i < 6; i++) {
-        let status = "";
-        if (cordasAcordeAtual[i] === -1) {
-          status = '<span style="color: #ef4444;">X</span>';
-        } else if (cordasAcordeAtual[i] === 0) {
-          status =
-            '<span style="border: 2px solid var(--text-main); width: 14px; height: 14px; border-radius: 50%; display: inline-block;"></span>';
+        if (posicoes[i] > 0 && dedos[i]) {
+          const key = posicoes[i] + "_" + dedos[i];
+          if (!pestanaMap[key]) pestanaMap[key] = { fret: posicoes[i], minStr: i, maxStr: i };
+          else {
+            pestanaMap[key].minStr = Math.min(pestanaMap[key].minStr, i);
+            pestanaMap[key].maxStr = Math.max(pestanaMap[key].maxStr, i);
+          }
         }
-        html += `<div class="status-item" onclick="toggleStatusCorda(${i})">${status}</div>`;
       }
-      html += '</div>';
-      if (braco_start_fret === 1) {
-        html += '<div class="pestana"></div>';
+      pestanas = Object.values(pestanaMap).filter(p => p.maxStr > p.minStr);
+
+      let html = `<div style="width: 100%; font-family: sans-serif; margin: 0 auto;">`;
+      html += `<div style="position: relative; display: flex; flex-direction: row-reverse; height: 130px; border-radius: 8px; box-shadow: 0 10px 20px rgba(0,0,0,0.15);">`;
+
+      // Cabeçote (headstock) com O/X clicáveis
+      if (startFret === 1) {
+        html += `<div style="width: 40px; height: 100%; flex-shrink: 0; border-top: 3px solid #1a0f0a; border-bottom: 3px solid #1a0f0a; border-right: 3px solid #1a0f0a; border-radius: 0 8px 8px 0; background: linear-gradient(to left, #2a1610, #4a2a18); position: relative; overflow: hidden; z-index: 10;">`;
+        for (let i = 0; i < 6; i++) {
+          const p = posicoes[i];
+          const sinal = p === -1 ? '<span style="color:#ef4444; font-weight:bold; font-size:13px;">✕</span>' : (p === 0 ? '<span style="color:#22c55e; font-weight:bold; font-size:13px;">○</span>' : '<span style="color:rgba(255,255,255,0.25); font-size:11px;">○</span>');
+          html += `<div onclick="toggleStatusCorda(${i})" title="Solta (O) / Mutada (X)" style="position: absolute; width: 100%; top: ${positionsY[i]}%; transform: translateY(-50%); display: flex; flex-direction: row-reverse; justify-content: space-between; padding: 0 5px; box-sizing: border-box; align-items: center; cursor: pointer; height: 16px;">
+              <span style="color: rgba(255,255,255,0.35); font-size: 9px; font-family: monospace;">${stringNames[i]}</span>${sinal}
+          </div>`;
+        }
+        html += `</div>`;
+        html += `<div style="width: 6px; height: 100%; flex-shrink: 0; background: linear-gradient(to left, #f0e6d2, #d1c5b0); border-left: 1px solid #8a7c66; box-shadow: -2px 0 4px rgba(0,0,0,0.4); z-index: 30;"></div>`;
       } else {
-        html += `<div style="width: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; color: var(--text-main); border-right: 2px solid var(--border);">${braco_start_fret}ª</div>`;
+        html += `<div style="width: 40px; height: 100%; flex-shrink: 0; position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10;">`;
+        html += `<div style="font-weight: bold; font-size: 15px; color: var(--text-main); margin-bottom: 8px;">${startFret}ª</div>`;
+        for (let i = 0; i < 6; i++) {
+          const p = posicoes[i];
+          const sinal = p === -1 ? '<span style="color:#ef4444; font-weight:bold; font-size:13px;">✕</span>' : (p === 0 ? '<span style="color:#22c55e; font-weight:bold; font-size:13px;">○</span>' : '<span style="color:var(--text-muted); font-size:11px;">○</span>');
+          html += `<div onclick="toggleStatusCorda(${i})" title="Solta (O) / Mutada (X)" style="position: absolute; width: 100%; top: ${positionsY[i]}%; transform: translateY(-50%); display: flex; justify-content: center; align-items: center; padding-right: 4px; cursor: pointer; height: 16px;">${sinal}</div>`;
+        }
+        html += `</div>`;
+        html += `<div style="width: 2px; height: 100%; flex-shrink: 0; background: #b8c6cb; z-index: 30; box-shadow: -1px 0 2px rgba(255, 255, 255, 0.6), 1px 0 2px rgba(0, 0, 0, 0.6);"></div>`;
       }
-      html += '<div class="braco-grid"><div class="cordas-linhas">';
-      for (let i = 0; i < 6; i++) html += "<div></div>";
-      html += "</div>";
-      for (let idx = 0; idx < braco_num_casas; idx++) {
-        const casaAbs = braco_start_fret + idx;
+
+      // Braço (fretboard)
+      html += `<div class="fretboard-realista" style="flex-grow: 1; display: flex; flex-direction: row-reverse; position: relative;">`;
+      for (let i = 0; i < 6; i++) {
+        html += `<div class="string-realista string-r${6 - i}" style="top: ${positionsY[i]}%;"></div>`;
+      }
+      for (let i = 0; i < numCasas; i++) {
+        html += `<div class="fret-realista" style="flex: 1; position: relative; display: flex; justify-content: center; align-items: center;">`;
+        const casaAbs = startFret + i;
+        if ([3, 5, 7, 9, 12, 15, 17].includes(casaAbs)) {
+          html += `<div class="inlay-realista" style="width: 12px; height: 12px;"></div>`;
+        }
+        html += `</div>`;
+      }
+
+      // Camada de marcadores (visual, sem cliques)
+      html += `<div style="position: absolute; inset: 0; z-index: 40; pointer-events: none;">`;
+      pestanas.forEach(barre => {
+        const xPos = getX(barre.fret);
+        const topY = Math.min(positionsY[barre.minStr], positionsY[barre.maxStr]);
+        const bottomY = Math.max(positionsY[barre.minStr], positionsY[barre.maxStr]);
+        html += `<div class="barre-marker-realista" style="position: absolute; left: calc(${xPos}% - 8px); width: 16px; top: calc(${topY}% - 8px); height: calc(${bottomY - topY}% + 16px);"></div>`;
+      });
+      for (let i = 0; i < 6; i++) {
+        const casa = posicoes[i];
+        if (casa <= 0) continue;
+        if (pestanas.some(p => p.fret === casa && i >= p.minStr && i <= p.maxStr)) continue;
+        const xPos = getX(casa);
+        const numDedo = dedos[i] ? dedos[i] : '';
+        html += `<div class="finger-marker-realista" style="position: absolute; left: calc(${xPos}% - 10px); top: calc(${positionsY[i]}% - 10px); width: 20px; height: 20px; display: flex; justify-content: center; align-items: center; color: white; font-weight: bold; font-size: 11px;">${numDedo}</div>`;
+      }
+      html += `</div>`;
+
+      // Camada CLICÁVEL (transparente) por cima do braço
+      html += `<div style="position: absolute; inset: 0; z-index: 50;">`;
+      for (let idx = 0; idx < numCasas; idx++) {
+        const casaAbs = startFret + idx;
+        const xPos = getX(casaAbs);
         for (let corda = 0; corda < 6; corda++) {
-          let temDedo = cordasAcordeAtual[corda] === casaAbs;
-          let dedoNum = dedosAcordeAtual[corda];
-          html += `<div class="celula-casa" onclick="marcarCasa(${corda}, ${idx})">${temDedo ? `<div class="dedo-press">${dedoNum ? dedoNum : ""}</div>` : ""}</div>`;
+          html += `<div onclick="marcarCasa(${corda}, ${idx})" style="position: absolute; left: ${xPos - fw / 2}%; width: ${fw}%; top: ${positionsY[corda] - 7.8}%; height: 15.6%; cursor: pointer;"></div>`;
         }
       }
-      html += "</div>";
+      html += `</div>`;
+
+      html += `</div></div>`; // fecha fretboard + board
+
+      // Numeração das casas
+      html += `<div style="display: flex; flex-direction: row-reverse; margin-top: 6px; padding-right: 46px;">`;
+      for (let i = 0; i < numCasas; i++) {
+        html += `<div style="flex: 1; text-align: center; color: var(--text-muted); font-size: 11px; font-weight: bold;">${startFret + i}ª</div>`;
+      }
+      html += `</div>`;
+
+      html += `</div>`;
       container.innerHTML = html;
     }
 
