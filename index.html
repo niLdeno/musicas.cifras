@@ -1041,6 +1041,76 @@
       margin-bottom: 8px;
     }
 
+    /* ===== Piano picker (cadastro de acorde de teclado) ===== */
+    .piano-picker {
+      position: relative;
+      width: 100%;
+      max-width: 448px;
+      height: 150px;
+      margin: 0 auto;
+      user-select: none;
+      border-radius: 0 0 8px 8px;
+    }
+
+    .piano-whites {
+      display: flex;
+      height: 100%;
+      gap: 0;
+    }
+
+    .piano-white {
+      flex: 1;
+      height: 100%;
+      background: linear-gradient(to bottom, #ffffff, #eef0f3);
+      border: 1px solid #b8bdc7;
+      border-radius: 0 0 6px 6px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+
+    .piano-white:hover { background: linear-gradient(to bottom, #f4f6ff, #e4e8f5); }
+
+    .piano-blacks {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 62%;
+      pointer-events: none;
+    }
+
+    .piano-black {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      background: linear-gradient(to bottom, #333, #0b0b0f);
+      border-radius: 0 0 4px 4px;
+      cursor: pointer;
+      pointer-events: auto;
+      box-shadow: 0 3px 5px rgba(0, 0, 0, 0.5);
+      transition: background 0.12s;
+    }
+
+    .piano-black:hover { background: linear-gradient(to bottom, #4a4a55, #16161c); }
+
+    .piano-dot {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+      pointer-events: none;
+    }
+
+    .piano-white .piano-dot { bottom: 12px; }
+    .piano-black .piano-dot { bottom: 8px; width: 14px; height: 14px; }
+    .piano-dot.nota { background: #f59331; }
+    .piano-dot.root { background: #e23b2e; }
+
     .braco-grid {
       display: grid;
       grid-template-columns: repeat(6, 1fr);
@@ -2047,12 +2117,21 @@
             <i class="fa-solid fa-plus"></i> Novo Acorde
           </button>
         </div>
+        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 16px; max-width: 420px;">
+          <input type="text" id="dic-busca" placeholder="Buscar acorde (ex: D9, Am7)..."
+            oninput="renderizarTabelaDicionario()"
+            style="flex: 1; min-width: 0; box-sizing: border-box;" />
+          <button class="btn btn-secondary" onclick="limparBuscaDicionario()" title="Limpar busca"
+            style="width: 44px; height: 44px; padding: 0; flex-shrink: 0; justify-content: center;">
+            <i class="fa-solid fa-delete-left"></i>
+          </button>
+        </div>
         <div class="card-table">
           <table>
             <thead>
               <tr>
                 <th>Nome do Acorde</th>
-                <th>Posição (E A D G B e)</th>
+                <th>Formatos</th>
                 <th style="text-align: right">Ações</th>
               </tr>
             </thead>
@@ -2308,12 +2387,26 @@
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
-      <div class="form-group" style="margin-bottom: 20px">
+      <div class="form-group" style="margin-bottom: 16px">
         <label>Nome do Acorde (Ex: A9, D/F#) *</label>
         <input type="text" id="cad-acorde-nome" placeholder="Nome exato como aparece na cifra" />
       </div>
 
-      <div class="form-group full-width" style="margin-bottom: 25px">
+      <!-- Seletor de instrumento -->
+      <div class="form-group full-width" style="margin-bottom: 18px">
+        <label style="margin-bottom: 8px; display: block;">Instrumento</label>
+        <div style="display: flex; gap: 10px;">
+          <button type="button" id="btn-cad-violao" class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="selecionarInstrumentoCadastro('violao')">
+            <i class="fa-solid fa-guitar"></i> Violão
+          </button>
+          <button type="button" id="btn-cad-teclado" class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="selecionarInstrumentoCadastro('teclado')">
+            <i class="fa-solid fa-keyboard"></i> Teclado
+          </button>
+        </div>
+      </div>
+
+      <!-- Construtor VIOLÃO -->
+      <div id="builder-violao" class="form-group full-width" style="margin-bottom: 25px">
         <label style="
               margin-bottom: 15px;
               display: block;
@@ -2358,6 +2451,15 @@
           </div>
           <div id="braco-interativo-render"></div>
         </div>
+      </div>
+
+      <!-- Construtor TECLADO -->
+      <div id="builder-teclado" class="form-group full-width" style="margin-bottom: 25px; display: none;">
+        <label style="margin-bottom: 12px; display: block; text-align: center; color: var(--text-main);">
+          Clique nas teclas para montar o acorde. 1º clique = nota (laranja);
+          clicar de novo = fundamental (vermelha); mais um = remove.
+        </label>
+        <div id="piano-interativo-render"></div>
       </div>
       <button class="btn" style="width: 100%; justify-content: center" onclick="salvarAcorde()">
         <i class="fa-solid fa-check"></i> Salvar Acorde
@@ -2414,6 +2516,11 @@
     let dedosAcordeAtual = [null, null, null, null, null, null];
     let braco_start_fret = 1;
     let braco_num_casas = 5;
+
+    // Estado do cadastro de acorde de TECLADO
+    let instrumentoCadastro = "violao";
+    let tecladoSelecao = new Set(); // índices 0..23 marcados
+    let tecladoRoot = null;         // índice da fundamental (vermelha)
 
     const NOTAS = [
       "C",
@@ -3188,7 +3295,10 @@
         document.getElementById("cad-start-fret").value = 1;
       if (document.getElementById("cad-num-casas"))
         document.getElementById("cad-num-casas").value = 5;
+      tecladoSelecao = new Set();
+      tecladoRoot = null;
       renderizarBracoInterativo();
+      selecionarInstrumentoCadastro("violao");
       document.getElementById("modal-cadastro-acorde").style.display = "flex";
     }
 
@@ -3200,18 +3310,110 @@
       const h2 = document.querySelector("#modal-cadastro-acorde .modal-header h2");
       if (h2) h2.textContent = "Editar Acorde";
       document.getElementById("cad-acorde-nome").value = acorde.nome;
-      document.getElementById("cad-start-fret").value =
-        acorde.start_fret || 1;
-      document.getElementById("cad-num-casas").value = acorde.num_casas || 5;
-      cordasAcordeAtual = [...acorde.posicoes];
-      while (cordasAcordeAtual.length < 6) cordasAcordeAtual.push(0);
-      dedosAcordeAtual = acorde.dedos
-        ? [...acorde.dedos]
-        : [null, null, null, null, null, null];
-      while (dedosAcordeAtual.length < 6) dedosAcordeAtual.push(null);
+
+      const inst = acorde.instrumento === "teclado" ? "teclado" : "violao";
+
+      if (inst === "teclado") {
+        // posicoes = teclas marcadas; start_fret = índice da fundamental
+        tecladoSelecao = new Set((acorde.posicoes || []).map(Number));
+        tecladoRoot = (acorde.start_fret === null || acorde.start_fret === undefined || acorde.start_fret < 0)
+          ? null : Number(acorde.start_fret);
+        // reseta o construtor de violão para um estado limpo
+        cordasAcordeAtual = [0, 0, 0, 0, 0, 0];
+        dedosAcordeAtual = [null, null, null, null, null, null];
+      } else {
+        document.getElementById("cad-start-fret").value = acorde.start_fret || 1;
+        document.getElementById("cad-num-casas").value = acorde.num_casas || 5;
+        cordasAcordeAtual = [...acorde.posicoes];
+        while (cordasAcordeAtual.length < 6) cordasAcordeAtual.push(0);
+        dedosAcordeAtual = acorde.dedos
+          ? [...acorde.dedos]
+          : [null, null, null, null, null, null];
+        while (dedosAcordeAtual.length < 6) dedosAcordeAtual.push(null);
+        tecladoSelecao = new Set();
+        tecladoRoot = null;
+      }
       fecharModal("modal-visualizar-acorde");
       renderizarBracoInterativo();
+      selecionarInstrumentoCadastro(inst);
       document.getElementById("modal-cadastro-acorde").style.display = "flex";
+    }
+
+    // ===== Construtor de acorde de TECLADO =====
+    function selecionarInstrumentoCadastro(inst) {
+      instrumentoCadastro = inst === "teclado" ? "teclado" : "violao";
+      const bV = document.getElementById("builder-violao");
+      const bT = document.getElementById("builder-teclado");
+      const btnV = document.getElementById("btn-cad-violao");
+      const btnT = document.getElementById("btn-cad-teclado");
+      const ehTeclado = instrumentoCadastro === "teclado";
+      if (bV) bV.style.display = ehTeclado ? "none" : "block";
+      if (bT) bT.style.display = ehTeclado ? "block" : "none";
+      if (btnV) btnV.classList.toggle("btn-primary", !ehTeclado);
+      if (btnT) btnT.classList.toggle("btn-primary", ehTeclado);
+      if (ehTeclado) renderizarTecladoInterativo();
+    }
+
+    const _PIANO_WHITE_MAP = { 0: 0, 2: 1, 4: 2, 5: 3, 7: 4, 9: 5, 11: 6 };
+    const _PIANO_BLACK_AFTER = { 1: 0, 3: 1, 6: 3, 8: 4, 10: 5 };
+    const _PIANO_IS_BLACK = { 1: 1, 3: 1, 6: 1, 8: 1, 10: 1 };
+
+    function renderizarTecladoInterativo() {
+      const container = document.getElementById("piano-interativo-render");
+      if (!container) return;
+      const OCTAVES = 2;
+      const totalWhite = 7 * OCTAVES;
+
+      // Teclas brancas
+      let whites = '<div class="piano-whites">';
+      for (let wi = 0; wi < totalWhite; wi++) {
+        const oct = Math.floor(wi / 7);
+        const posInOct = wi % 7;
+        // semitom da branca
+        const semi = [0, 2, 4, 5, 7, 9, 11][posInOct];
+        const keyIndex = oct * 12 + semi;
+        let dot = "";
+        if (tecladoSelecao.has(keyIndex)) {
+          const cls = keyIndex === tecladoRoot ? "root" : "nota";
+          dot = `<div class="piano-dot ${cls}"></div>`;
+        }
+        whites += `<div class="piano-white" onclick="togglePianoTecla(${keyIndex})">${dot}</div>`;
+      }
+      whites += "</div>";
+
+      // Teclas pretas (posicionadas em %)
+      let blacks = '<div class="piano-blacks">';
+      const blackWpct = (1 / totalWhite) * 0.62 * 100;
+      for (let oct = 0; oct < OCTAVES; oct++) {
+        for (const s in _PIANO_BLACK_AFTER) {
+          const aw = oct * 7 + _PIANO_BLACK_AFTER[s];
+          const centerPct = ((aw + 1) / totalWhite) * 100;
+          const leftPct = centerPct - blackWpct / 2;
+          const keyIndex = oct * 12 + parseInt(s);
+          let dot = "";
+          if (tecladoSelecao.has(keyIndex)) {
+            const cls = keyIndex === tecladoRoot ? "root" : "nota";
+            dot = `<div class="piano-dot ${cls}"></div>`;
+          }
+          blacks += `<div class="piano-black" style="left:${leftPct}%; width:${blackWpct}%;" onclick="togglePianoTecla(${keyIndex})">${dot}</div>`;
+        }
+      }
+      blacks += "</div>";
+
+      container.innerHTML = `<div class="piano-picker">${whites}${blacks}</div>`;
+    }
+
+    // Ciclo: vazio -> nota (laranja) -> fundamental (vermelha) -> remove
+    function togglePianoTecla(keyIndex) {
+      if (!tecladoSelecao.has(keyIndex)) {
+        tecladoSelecao.add(keyIndex);
+      } else if (tecladoRoot !== keyIndex) {
+        tecladoRoot = keyIndex; // vira fundamental (a antiga continua como nota)
+      } else {
+        tecladoSelecao.delete(keyIndex);
+        tecladoRoot = null;
+      }
+      renderizarTecladoInterativo();
     }
 
     function renderizarBracoInterativo() {
@@ -3290,14 +3492,32 @@
       const nome = document.getElementById("cad-acorde-nome").value.trim();
       if (!nome) return mostrarToast("Dê um nome ao acorde.", "erro");
       if (!supabaseClient) return mostrarToast("Sem conexão.", "erro");
-      const posicoes = [...cordasAcordeAtual];
-      const dedos = [...dedosAcordeAtual];
-      while (posicoes.length < 6) posicoes.push(0);
-      while (dedos.length < 6) dedos.push(null);
-      try {
+
+      let payload;
+      if (instrumentoCadastro === "teclado") {
+        if (tecladoSelecao.size === 0)
+          return mostrarToast("Clique nas teclas para montar o acorde.", "erro");
+        const teclas = Array.from(tecladoSelecao).sort((a, b) => a - b);
+        // Reusa colunas: posicoes = teclas; start_fret = índice da fundamental (-1 se nenhuma)
+        payload = {
+          nome,
+          instrumento: "teclado",
+          posicoes: teclas,
+          dedos: null,
+          start_fret: tecladoRoot === null ? -1 : tecladoRoot,
+          num_casas: null,
+        };
+      } else {
+        const posicoes = [...cordasAcordeAtual];
+        const dedos = [...dedosAcordeAtual];
+        while (posicoes.length < 6) posicoes.push(0);
+        while (dedos.length < 6) dedos.push(null);
         const startFretToSave = parseInt(document.getElementById("cad-start-fret")?.value || 1);
-        const numCasasToSave  = parseInt(document.getElementById("cad-num-casas")?.value || 5);
-        const payload = { nome, posicoes, dedos, start_fret: startFretToSave, num_casas: numCasasToSave };
+        const numCasasToSave = parseInt(document.getElementById("cad-num-casas")?.value || 5);
+        payload = { nome, instrumento: "violao", posicoes, dedos, start_fret: startFretToSave, num_casas: numCasasToSave };
+      }
+
+      try {
         mostrarCarregando();
         let error;
         if (idEdicaoAcordeAtual) {
@@ -3314,7 +3534,10 @@
         carregarDicionario();
       } catch (err) {
         esconderCarregando();
-        mostrarToast("Erro ao salvar o acorde. Tente novamente.", "erro");
+        const msg = (err && err.message && /instrumento/i.test(err.message))
+          ? "Falta a coluna 'instrumento' na tabela. Rode o SQL indicado no Supabase."
+          : "Erro ao salvar o acorde. Tente novamente.";
+        mostrarToast(msg, "erro");
       }
     }
 
@@ -3325,21 +3548,47 @@
         .select("*")
         .order("nome");
       dicionarioGlobal = data || [];
+      renderizarTabelaDicionario();
+    }
+
+    function renderizarTabelaDicionario() {
+      const tbody = document.getElementById("tabela-dicionario-body");
+      if (!tbody) return;
+      const termo = normalizarTexto(
+        (document.getElementById("dic-busca")?.value || "").trim(),
+      );
+
       const agrupados = {};
       dicionarioGlobal.forEach((a) => {
         if (!agrupados[a.nome]) agrupados[a.nome] = [];
         agrupados[a.nome].push(a);
       });
-      const tbody = document.getElementById("tabela-dicionario-body");
+
+      const nomes = Object.keys(agrupados).filter(
+        (nome) => !termo || normalizarTexto(nome).includes(termo),
+      );
+
       tbody.innerHTML = "";
-      Object.keys(agrupados).forEach((nome) => {
+      if (nomes.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:32px; color:var(--text-muted);">Nenhum acorde encontrado.</td></tr>`;
+        return;
+      }
+
+      nomes.forEach((nome) => {
         const variacoes = agrupados[nome];
-        const resumo =
-          variacoes.length === 1
-            ? "1 formato"
-            : `${variacoes.length} formatos`;
-        tbody.innerHTML += `<tr><td style="font-weight: bold; color: var(--primary); font-size: 16px;">${nome}</td><td style="color: var(--text-muted); font-weight: 600;">${resumo}</td><td style="text-align: right;"><button class="btn btn-secondary" style="padding:8px 14px;" onclick="abrirModalVisualizarAgrupado('${nome}')"><i class="fa-solid fa-eye" style="margin-right: 6px;"></i> Detalhes</button></td></tr>`;
+        const qtdViolao = variacoes.filter((v) => v.instrumento !== "teclado").length;
+        const qtdTeclado = variacoes.filter((v) => v.instrumento === "teclado").length;
+        const tags = [];
+        if (qtdViolao) tags.push(`<span class="tag-pill"><i class="fa-solid fa-guitar"></i> ${qtdViolao}</span>`);
+        if (qtdTeclado) tags.push(`<span class="tag-pill"><i class="fa-solid fa-keyboard"></i> ${qtdTeclado}</span>`);
+        tbody.innerHTML += `<tr><td style="font-weight: bold; color: var(--primary); font-size: 16px;">${nome}</td><td><span style="display:inline-flex; gap:6px;">${tags.join("")}</span></td><td style="text-align: right;"><button class="btn btn-secondary" style="padding:8px 14px;" onclick="abrirModalVisualizarAgrupado('${nome}')"><i class="fa-solid fa-eye" style="margin-right: 6px;"></i> Detalhes</button></td></tr>`;
       });
+    }
+
+    function limparBuscaDicionario() {
+      const input = document.getElementById("dic-busca");
+      if (input) input.value = "";
+      renderizarTabelaDicionario();
     }
 
     function abrirModalVisualizarAgrupado(nome) {
@@ -3352,18 +3601,30 @@
       if (!tituloEl || !containerEl) return;
       tituloEl.textContent = `Formatos para: ${nome}`;
       containerEl.innerHTML = "";
-      variacoes.forEach((v, index) => {
-        const svgHtml = gerarHtmlAcordeRealista(
-          nome,
-          {
-            posicoes: v.posicoes,
-            dedos: v.dedos,
-            start_fret: v.start_fret,
-            num_casas: v.num_casas,
-          },
-          { width: 280, height: 160, numCasas: v.num_casas || 5 },
-        );
-        containerEl.innerHTML += `<div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: var(--card-shadow); display: flex; flex-direction: column; align-items: center; gap: 16px;"><span class="tag-pill">Formato ${index + 1}</span>${svgHtml}<div class="editor-only" style="display: flex; gap: 8px; width: 100%; justify-content: center; margin-top: auto;"><button class="btn btn-secondary" style="padding: 8px 16px;" onclick="abrirEdicaoAcorde(${v.id})" title="Editar formato"><i class="fa-solid fa-pen"></i></button><button class="btn btn-secondary" style="padding: 8px 16px; color: #ef4444;" onclick="excluirAcordeUnico(${v.id}, '${nome}')" title="Excluir formato"><i class="fa-solid fa-trash"></i></button></div></div>`;
+      // Violão primeiro, depois teclado
+      const ordenadas = variacoes.slice().sort((a, b) => {
+        const ia = a.instrumento === "teclado" ? 1 : 0;
+        const ib = b.instrumento === "teclado" ? 1 : 0;
+        return ia - ib;
+      });
+      ordenadas.forEach((v, index) => {
+        const ehTeclado = v.instrumento === "teclado";
+        let diagramaHtml;
+        if (ehTeclado && typeof gerarHtmlTecladoDeTeclas === "function") {
+          const root = (v.start_fret === null || v.start_fret === undefined || v.start_fret < 0)
+            ? null : Number(v.start_fret);
+          diagramaHtml = gerarHtmlTecladoDeTeclas(nome, (v.posicoes || []).map(Number), root, { whiteWidth: 20 });
+        } else {
+          diagramaHtml = gerarHtmlAcordeRealista(
+            nome,
+            { posicoes: v.posicoes, dedos: v.dedos, start_fret: v.start_fret, num_casas: v.num_casas },
+            { width: 280, height: 160, numCasas: v.num_casas || 5 },
+          );
+        }
+        const chip = ehTeclado
+          ? '<span class="tag-pill" style="background: rgba(226,59,46,0.12); color:#e23b2e; border-color: rgba(226,59,46,0.3);"><i class="fa-solid fa-keyboard"></i> Teclado</span>'
+          : '<span class="tag-pill" style="background: rgba(109,93,252,0.12); color: var(--primary); border-color: rgba(109,93,252,0.3);"><i class="fa-solid fa-guitar"></i> Violão</span>';
+        containerEl.innerHTML += `<div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: var(--card-shadow); display: flex; flex-direction: column; align-items: center; gap: 16px;">${chip}${diagramaHtml}<div class="editor-only" style="display: flex; gap: 8px; width: 100%; justify-content: center; margin-top: auto;"><button class="btn btn-secondary" style="padding: 8px 16px;" onclick="abrirEdicaoAcorde(${v.id})" title="Editar formato"><i class="fa-solid fa-pen"></i></button><button class="btn btn-secondary" style="padding: 8px 16px; color: #ef4444;" onclick="excluirAcordeUnico(${v.id}, '${nome}')" title="Excluir formato"><i class="fa-solid fa-trash"></i></button></div></div>`;
       });
       document.getElementById("modal-visualizar-acorde").style.display =
         "flex";
