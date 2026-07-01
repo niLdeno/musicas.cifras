@@ -2090,12 +2090,6 @@
               <button class="btn-ferramenta" onclick="mudarTamanhoFonte(2)">
                 A+
               </button>
-              <select class="btn-ferramenta select-fonte" id="seletor-fonte" title="Fonte da cifra" onchange="mudarFonte(this.value)">
-                <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
-                <option value="'Roboto Mono', monospace">Roboto Mono</option>
-                <option value="'Source Code Pro', monospace">Source Code Pro</option>
-                <option value="'Courier New', Courier, monospace">Courier</option>
-              </select>
               <button class="btn-ferramenta" id="btn-colunas" onclick="toggleColunas()">
                 <i class="fa-solid fa-columns"></i> 1 Coluna
               </button>
@@ -2411,7 +2405,7 @@
     let indexPlaylist = 0;
     let semitonsAcumulados = 0;
     let tamanhoFonteAtual = 18;
-    let fonteAtual = "'JetBrains Mono', monospace";
+    let fonteAtual = "'Courier New', Courier, monospace";
     let qtdColunas = 1;
     let instrumentoAtual = localStorage.getItem("gerecifras_instrumento") || "violao";
 
@@ -2536,13 +2530,7 @@
         if (btnDark) btnDark.innerHTML = '<i class="fa-solid fa-sun"></i><span>Modo Claro</span>';
       }
 
-      // ✨ PREFERÊNCIAS DE FONTE E TAMANHO DA CIFRA
-      const fonteSalva = localStorage.getItem("gerecifras_fonte");
-      if (fonteSalva) {
-        fonteAtual = fonteSalva;
-        const selFonte = document.getElementById("seletor-fonte");
-        if (selFonte) selFonte.value = fonteSalva;
-      }
+      // ✨ PREFERÊNCIA DE TAMANHO DA CIFRA (fonte fixa: Courier)
       const tamanhoSalvo = parseInt(localStorage.getItem("gerecifras_fonte_tamanho") || "");
       if (!isNaN(tamanhoSalvo)) tamanhoFonteAtual = tamanhoSalvo;
     };
@@ -3771,13 +3759,6 @@
       document.getElementById("render-cifra").style.fontSize =
         tamanhoFonteAtual + "px";
       balancearColunas();
-    }
-
-    // ✨ Troca a fonte da cifra (mantém monoespaçada p/ preservar o alinhamento dos acordes)
-    function mudarFonte(valor) {
-      fonteAtual = valor;
-      localStorage.setItem("gerecifras_fonte", valor);
-      document.getElementById("render-cifra").style.fontFamily = valor;
     }
 
     // ✨ Remove fonte/tamanho/espaçamento embutidos no editor p/ padronizar todas as músicas
