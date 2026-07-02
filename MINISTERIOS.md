@@ -6,10 +6,10 @@ próprio, mais uma **fila de solicitações** para inserir/ajustar músicas.
 
 Como fica:
 
-| | Visitante | Ministério (login próprio) | Administrador (você) |
+| | Visitante (sem login) | Ministério (login próprio) | Administrador (você) |
 |---|---|---|---|
-| Ver músicas, repertórios, acordes | ✅ | ✅ | ✅ |
-| Tocar / transpor / imprimir | ✅ | ✅ | ✅ |
+| Ver músicas, repertórios, acordes | ❌ | ✅ | ✅ |
+| Tocar / transpor / imprimir | ❌ | ✅ | ✅ |
 | Criar/editar/excluir **seus próprios** repertórios | ❌ | ✅ | ✅ (qualquer um) |
 | Ver/editar repertório de **outro** ministério | ❌ | ❌ | ✅ |
 | Inserir música nova / ajustar música existente | ❌ | ✅ (vira **solicitação pendente**) | ✅ (direto, sem aprovação) |
@@ -264,6 +264,66 @@ sistema. Se quiser removê-la de vez, apague manualmente em
 ⚠️ Se o ministério trocar de e-mail depois (você editar o cadastro dele no
 sistema), quem já estava logado precisa **sair e entrar de novo** — o login
 antigo continua "lembrando" o e-mail anterior até relogar.
+
+---
+
+## Passo 5 — Bloquear a leitura para quem não tem cadastro
+
+Até aqui, **qualquer visitante** (sem login algum) ainda conseguia **ver**
+músicas, repertórios e o dicionário de acordes — só a escrita é que exigia
+login. Este passo fecha isso: só quem tem cadastro aprovado (admin ou
+ministério) consegue ver qualquer coisa no sistema. Visitantes sem login
+passam a ver só a tela pedindo para entrar ou se cadastrar.
+
+No **SQL Editor**, rode:
+
+```sql
+-- ---------- Remove a leitura pública antiga ----------
+drop policy if exists "leitura publica musicas" on public.musicas;
+drop policy if exists "leitura publica repertorios" on public.repertorios;
+drop policy if exists "leitura publica dicionario" on public.dicionario_acordes;
+
+-- ---------- Só quem está cadastrado (admin ou ministério aprovado) lê ----------
+create policy "leitura somente cadastrados musicas"
+  on public.musicas for select
+  to authenticated
+  using (
+    lower(auth.jwt() ->> 'email') = lower('nildeno.aragao@gmail.com')
+    or exists (select 1 from public.ministerios where lower(email) = lower(auth.jwt() ->> 'email'))
+  );
+
+create policy "leitura somente cadastrados repertorios"
+  on public.repertorios for select
+  to authenticated
+  using (
+    lower(auth.jwt() ->> 'email') = lower('nildeno.aragao@gmail.com')
+    or exists (select 1 from public.ministerios where lower(email) = lower(auth.jwt() ->> 'email'))
+  );
+
+create policy "leitura somente cadastrados dicionario"
+  on public.dicionario_acordes for select
+  to authenticated
+  using (
+    lower(auth.jwt() ->> 'email') = lower('nildeno.aragao@gmail.com')
+    or exists (select 1 from public.ministerios where lower(email) = lower(auth.jwt() ->> 'email'))
+  );
+
+-- ---------- Aproveita e fecha uma folga que ficou aberta desde o SEGURANCA.md:
+--            a escrita no dicionário ainda liberava para QUALQUER autenticado,
+--            não só o admin. Agora fica igual à de músicas. ----------
+drop policy if exists "escrita autenticada dicionario" on public.dicionario_acordes;
+create policy "escrita somente admin dicionario"
+  on public.dicionario_acordes for all
+  to authenticated
+  using (lower(auth.jwt() ->> 'email') = lower('nildeno.aragao@gmail.com'))
+  with check (lower(auth.jwt() ->> 'email') = lower('nildeno.aragao@gmail.com'));
+```
+
+⚠️ Um ministério com cadastro **pendente** (ainda não aprovado) tecnicamente
+já tem uma conta de login válida no Supabase (criada no auto-cadastro), mas
+essa política de leitura também bloqueia ele — só entra quem está de fato
+na tabela `ministerios` (ou seja, já aprovado). Isso é proposital: "ter
+conta" e "estar aprovado" são coisas diferentes aqui.
 
 ---
 
