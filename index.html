@@ -1950,21 +1950,21 @@
     }
 
     /* =========================================
-       ✨ CONTROLE DE ACESSO (MODO EDITOR)
-       Esconde todos os controles de criar/editar/excluir
-       enquanto o usuário não estiver autenticado como editor.
+       ✨ CONTROLE DE ACESSO (ADMIN / MINISTÉRIO)
+       Esconde controles de escrita conforme o papel do usuário:
+       - .logado-only  → visível para qualquer ministério ou admin
+       - .admin-only   → visível só para o administrador
        A segurança real é garantida no Supabase (RLS); isto é
        apenas a interface que acompanha o estado de login.
        ========================================= */
-    body:not(.modo-editor) .action-more,
-    body:not(.modo-editor) .btn-nova-musica-desktop,
-    body:not(.modo-editor) .fab,
-    body:not(.modo-editor) .editor-only {
+    body:not(.modo-logado) .logado-only,
+    body:not(.modo-admin) .admin-only {
       display: none !important;
     }
 
-    /* Indicador de status do editor no rodapé do menu */
+    /* Indicador de status no rodapé do menu */
     .profile-role.status-editor { color: #4ade80; }
+    .profile-role.status-ministerio { color: #4ade80; }
     .profile-role.status-leitura { color: #94a3b8; }
   </style>
 </head>
@@ -2000,6 +2000,10 @@
       <button id="nav-dicionario" class="nav-item" onclick="mudarAmbiente('dicionario')">
         <i class="fa-solid fa-book"></i><span>Dicionário</span>
       </button>
+      <button id="nav-solicitacoes" class="nav-item logado-only" onclick="mudarAmbiente('solicitacoes')">
+        <i class="fa-solid fa-inbox"></i><span>Solicitações</span>
+        <span id="badge-solicitacoes-pendentes" style="display:none; margin-left:6px; background:#ef4444; color:#fff; font-size:11px; font-weight:700; border-radius:999px; padding:1px 7px;">0</span>
+      </button>
 
       <button class="nav-item" id="btn-dark-sidebar" style="margin-top: auto" onclick="toggleDarkSystem()">
         <i class="fa-solid fa-moon"></i><span>Modo Escuro</span>
@@ -2008,9 +2012,9 @@
         <i class="fa-solid fa-gear"></i><span>Configurações</span>
       </button>
 
-      <div class="sidebar-profile" id="sidebar-profile" style="cursor: pointer; transition: 0.2s" onclick="toggleEditorLogin()"
+      <div class="sidebar-profile" id="sidebar-profile" style="cursor: pointer; transition: 0.2s" onclick="toggleLogin()"
         onmouseover="this.style.background = 'rgba(255,255,255,0.01)'"
-        onmouseout="this.style.background = 'transparent'" title="Entrar como editor">
+        onmouseout="this.style.background = 'transparent'" title="Entrar">
         <div class="profile-avatar" id="profile-avatar"><i class="fa-solid fa-lock"></i></div>
         <div class="profile-info">
           <span class="profile-name" id="profile-name">Ministério de Música</span>
@@ -2044,7 +2048,7 @@
               onclick="limparBusca()" style="display: none;">
               <i class="fa-solid fa-xmark"></i> Limpar
             </button>
-            <button class="btn btn-primary btn-nova-musica-desktop" onclick="abrirModalCadastroMusica()">
+            <button class="btn btn-primary btn-nova-musica-desktop logado-only" onclick="abrirModalCadastroMusica()">
               <i class="fa-solid fa-plus"></i> Nova Música
             </button>
           </div>
@@ -2061,7 +2065,7 @@
       </div>
     </div>
 
-    <button class="fab" onclick="abrirModalCadastroMusica()" title="Nova Música" id="fab-nova-musica">
+    <button class="fab logado-only" onclick="abrirModalCadastroMusica()" title="Nova Música" id="fab-nova-musica">
       <i class="fa-solid fa-plus"></i>
     </button>
 
@@ -2079,15 +2083,17 @@
             <h2>Repertórios</h2>
             <p>Gerencie seus repertórios de músicas.</p>
           </div>
-          <button class="btn btn-primary btn-nova-musica-desktop" onclick="abrirModalCadastroRepertorio()">
+          <button class="btn btn-primary btn-nova-musica-desktop logado-only" onclick="abrirModalCadastroRepertorio()">
             <i class="fa-solid fa-plus"></i> Novo Repertório
           </button>
         </div>
+        <div id="filtro-ministerios-repertorios" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;"></div>
         <div class="card-table">
           <table>
             <thead>
               <tr>
                 <th>Nome do Repertório</th>
+                <th>Ministério</th>
                 <th>Data</th>
                 <th>Qtd. Músicas</th>
                 <th style="text-align: right">Ações</th>
@@ -2113,7 +2119,7 @@
             <h2>Dicionário de Acordes</h2>
             <p>Gerencie seus acordes personalizados.</p>
           </div>
-          <button class="btn btn-primary btn-nova-musica-desktop" onclick="abrirModalCadastroAcorde()">
+          <button class="btn btn-primary btn-nova-musica-desktop admin-only" onclick="abrirModalCadastroAcorde()">
             <i class="fa-solid fa-plus"></i> Novo Acorde
           </button>
         </div>
@@ -2136,6 +2142,39 @@
               </tr>
             </thead>
             <tbody id="tabela-dicionario-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="tela-solicitacoes" style="display: none">
+      <div class="main-area">
+        <div class="header-title-area" style="
+              margin-bottom: 24px;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              flex-wrap: wrap;
+              gap: 20px;
+            ">
+          <div>
+            <h2>Solicitações</h2>
+            <p id="solicitacoes-subtitulo">Pedidos de música nova ou ajuste enviados pelos ministérios.</p>
+          </div>
+        </div>
+        <div class="card-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Tipo</th>
+                <th>Título</th>
+                <th>Ministério</th>
+                <th>Data</th>
+                <th>Status</th>
+                <th style="text-align: right">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-solicitacoes-body"></tbody>
           </table>
         </div>
       </div>
@@ -2235,6 +2274,16 @@
         </select>
         <small style="color: var(--text-muted); margin-top: 4px;">Define como os acordes aparecem ao clicar neles na cifra.</small>
       </div>
+      <div class="form-group full-width admin-only" style="margin-bottom: 20px; border-top: 1px solid var(--border); padding-top: 16px;">
+        <label style="margin-bottom: 8px; display: block;">Ministérios cadastrados</label>
+        <div id="lista-ministerios" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px;"></div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <input type="text" id="cfg-ministerio-nome" placeholder="Nome do ministério" style="flex: 1; min-width: 140px;" />
+          <input type="email" id="cfg-ministerio-email" placeholder="E-mail (já criado no Supabase)" style="flex: 1; min-width: 180px;" />
+          <button type="button" class="btn btn-secondary" onclick="adicionarMinisterio()"><i class="fa-solid fa-plus"></i> Adicionar</button>
+        </div>
+        <small style="color: var(--text-muted); margin-top: 6px; display: block;">O login (e-mail/senha) precisa ser criado antes no painel do Supabase (Authentication → Users). Aqui você só vincula o nome do ministério a esse e-mail — veja MINISTERIOS.md.</small>
+      </div>
       <button class="btn" style="width: 100%; justify-content: center" onclick="salvarConfiguracao()">
         Salvar Configurações
       </button>
@@ -2244,20 +2293,25 @@
   <div class="modal-overlay" id="modal-login">
     <div class="modal-content" style="max-width: 420px;">
       <div class="modal-header">
-        <h2><i class="fa-solid fa-lock" style="margin-right:8px; color: var(--primary);"></i>Acesso de Editor</h2>
+        <h2><i class="fa-solid fa-lock" style="margin-right:8px; color: var(--primary);"></i>Entrar no sistema</h2>
         <button class="close-btn" onclick="fecharModal('modal-login')">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
       <p style="color: var(--text-muted); font-size: 14px; margin: 0 0 18px;">
-        Digite a senha de editor para liberar a criação, edição e exclusão de músicas, repertórios e acordes. Sem a senha, o sistema fica em modo somente leitura.
+        Entre com o login do administrador ou do seu ministério para gerenciar repertórios e solicitar músicas. Sem login, o sistema fica em modo somente leitura.
       </p>
+      <div class="form-group" style="margin-bottom: 14px;">
+        <label for="login-email">E-mail</label>
+        <input type="email" id="login-email" placeholder="seuministerio@exemplo.com"
+          onkeydown="if(event.key==='Enter') entrar()" />
+      </div>
       <div class="form-group" style="margin-bottom: 18px;">
         <label for="login-senha">Senha</label>
         <input type="password" id="login-senha" placeholder="••••••••"
-          onkeydown="if(event.key==='Enter') entrarComoEditor()" />
+          onkeydown="if(event.key==='Enter') entrar()" />
       </div>
-      <button class="btn" style="width: 100%; justify-content: center" onclick="entrarComoEditor()">
+      <button class="btn" style="width: 100%; justify-content: center" onclick="entrar()">
         <i class="fa-solid fa-right-to-bracket"></i> Entrar
       </button>
     </div>
@@ -2271,6 +2325,7 @@
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
+      <div class="form-group full-width" id="cad-info-solicitacao" style="display:none; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: var(--text-muted); margin-bottom: 12px;"></div>
       <div class="form-grid">
         <div class="form-group">
           <label>Título *</label><input type="text" id="cad-titulo" />
@@ -2309,10 +2364,19 @@
           </div>
           <textarea id="cad-conteudo"></textarea>
         </div>
+        <div class="form-group full-width" id="cad-observacao-group" style="display:none;">
+          <label>Observação do administrador (opcional)</label>
+          <textarea id="cad-observacao" rows="2" placeholder="Ex.: motivo da rejeição, ou o que foi ajustado..."></textarea>
+        </div>
       </div>
-      <button class="btn" style="width: 100%; justify-content: center" onclick="salvarMusica()">
-        <i class="fa-solid fa-check"></i> Salvar Música
-      </button>
+      <div id="cad-musica-acoes" style="display: flex; gap: 10px;">
+        <button class="btn" id="btn-salvar-musica" style="flex: 1; justify-content: center" onclick="salvarMusica()">
+          <i class="fa-solid fa-check"></i> <span id="btn-salvar-musica-label">Salvar Música</span>
+        </button>
+        <button class="btn" id="btn-rejeitar-solicitacao" style="display: none; flex: 1; justify-content: center; background: #ef4444; border-color: transparent; color: #fff;" onclick="rejeitarSolicitacao()">
+          <i class="fa-solid fa-xmark"></i> Rejeitar
+        </button>
+      </div>
     </div>
   </div>
 
@@ -2344,6 +2408,12 @@
         </div>
         <div class="form-group">
           <label>Data</label><input type="date" id="rep-data" />
+        </div>
+        <div class="form-group admin-only" id="rep-ministerio-group">
+          <label>Ministério (dono do repertório)</label>
+          <select id="rep-ministerio">
+            <option value="">Geral (sem ministério)</option>
+          </select>
         </div>
 
         <div class="form-group full-width builder-container"
@@ -2481,17 +2551,25 @@
     let supabaseClient = null;
     let _carregandoCount = 0;
 
-    // === CONTROLE DE ACESSO (EDITOR) ===
-    // E-mail do usuário "editor" cadastrado no Supabase (Authentication > Users).
+    // === CONTROLE DE ACESSO (ADMIN / MINISTÉRIO) ===
+    // E-mail do administrador, cadastrado no Supabase (Authentication > Users).
     // A senha NÃO fica no código: é verificada pelo Supabase no login.
-    // Para usar outro e-mail, basta criar o usuário no painel e trocar a linha abaixo.
-    const EDITOR_EMAIL = "nildeno.aragao@gmail.com";
-    let ehEditor = false;
+    // Para usar outro e-mail, troque aqui e também nas policies de RLS (veja MINISTERIOS.md).
+    const ADMIN_EMAIL = "nildeno.aragao@gmail.com";
+    let ehAdmin = false;
+    let ehMinisterio = false;
+    let meuMinisterio = null; // linha da tabela `ministerios` do usuário logado (quando não-admin)
+    let ministeriosGlobal = [];
+    function logado() { return ehAdmin || ehMinisterio; }
     let ambienteAtual = "acervo";
     let acervoGlobal = [];
     let repertoriosGlobal = [];
     let dicionarioGlobal = [];
+    let solicitacoesGlobal = [];
     let idEdicaoAtual = null;
+    let modoModalMusica = "admin"; // 'admin' | 'ministerio-nova' | 'ministerio-edicao' | 'admin-revisao'
+    let idSolicitacaoRevisao = null;
+    let filtroMinisterioRepertorios = "todos";
     let idEdicaoRepertorioAtual = null;
     let musicaSelecionada = null;
     let musicasRepertorioAtual = [];
@@ -2677,94 +2755,204 @@
     }
 
     // =========================================
-    // ✨ CONTROLE DE ACESSO (EDITOR)
+    // ✨ CONTROLE DE ACESSO (ADMIN / MINISTÉRIO)
     // =========================================
-    // Atualiza a interface conforme o usuário estiver ou não logado como editor.
+    // Depois de autenticar, descobre se o e-mail logado é o administrador
+    // ou está vinculado a um ministério (tabela `ministerios`).
+    async function resolverPapel(email) {
+      ehAdmin = false;
+      ehMinisterio = false;
+      meuMinisterio = null;
+      if (!email) return;
+      if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+        ehAdmin = true;
+        return;
+      }
+      const { data } = await supabaseClient
+        .from("ministerios")
+        .select("*")
+        .ilike("email", email)
+        .maybeSingle();
+      if (data) {
+        ehMinisterio = true;
+        meuMinisterio = data;
+      } else {
+        mostrarToast("Esta conta não está vinculada a nenhum ministério. Fale com o administrador.", "erro");
+        await supabaseClient.auth.signOut();
+      }
+    }
+
+    // Atualiza a interface conforme o papel do usuário logado.
     function atualizarUIEditor() {
-      document.body.classList.toggle("modo-editor", ehEditor);
+      document.body.classList.toggle("modo-logado", logado());
+      document.body.classList.toggle("modo-admin", ehAdmin);
       const role = document.getElementById("profile-role");
       const name = document.getElementById("profile-name");
       const avatar = document.getElementById("profile-avatar");
       const profile = document.getElementById("sidebar-profile");
-      if (ehEditor) {
-        if (role) { role.textContent = "Editor conectado (sair)"; role.className = "profile-role status-editor"; }
+      if (ehAdmin) {
+        if (role) { role.textContent = "Administrador (sair)"; role.className = "profile-role status-editor"; }
         if (name) name.textContent = "Modo Edição";
         if (avatar) avatar.innerHTML = '<i class="fa-solid fa-unlock"></i>';
-        if (profile) profile.title = "Sair do modo editor";
+        if (profile) profile.title = "Sair";
+      } else if (ehMinisterio) {
+        if (role) { role.textContent = "Ministério conectado (sair)"; role.className = "profile-role status-ministerio"; }
+        if (name) name.textContent = meuMinisterio ? meuMinisterio.nome : "Ministério";
+        if (avatar) avatar.innerHTML = '<i class="fa-solid fa-unlock"></i>';
+        if (profile) profile.title = "Sair";
       } else {
         if (role) { role.textContent = "Somente leitura"; role.className = "profile-role status-leitura"; }
         if (name) name.textContent = "Ministério de Música";
         if (avatar) avatar.innerHTML = '<i class="fa-solid fa-lock"></i>';
-        if (profile) profile.title = "Entrar como editor";
+        if (profile) profile.title = "Entrar";
       }
+      atualizarBadgeSolicitacoes();
     }
 
-    // Clique no bloco de perfil: entra (se leitura) ou sai (se editor).
-    function toggleEditorLogin() {
-      if (ehEditor) {
-        sairEditor();
+    // Clique no bloco de perfil: entra (se leitura) ou sai (se logado).
+    function toggleLogin() {
+      if (logado()) {
+        sair();
       } else {
         abrirModalLogin();
       }
     }
 
     function abrirModalLogin() {
-      const campo = document.getElementById("login-senha");
-      if (campo) campo.value = "";
+      const campoEmail = document.getElementById("login-email");
+      const campoSenha = document.getElementById("login-senha");
+      if (campoEmail) campoEmail.value = "";
+      if (campoSenha) campoSenha.value = "";
       document.getElementById("modal-login").style.display = "flex";
-      setTimeout(() => { if (campo) campo.focus(); }, 100);
+      setTimeout(() => { if (campoEmail) campoEmail.focus(); }, 100);
     }
 
-    async function entrarComoEditor() {
+    async function entrar() {
       if (!supabaseClient) { mostrarToast("Banco de dados não conectado.", "erro"); return; }
+      const email = document.getElementById("login-email").value.trim();
       const senha = document.getElementById("login-senha").value;
-      if (!senha) { mostrarToast("Digite a senha.", "erro"); return; }
+      if (!email || !senha) { mostrarToast("Digite e-mail e senha.", "erro"); return; }
       mostrarCarregando();
-      const { error } = await supabaseClient.auth.signInWithPassword({
-        email: EDITOR_EMAIL,
-        password: senha,
-      });
-      esconderCarregando();
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password: senha });
       if (error) {
-        mostrarToast("Senha incorreta.", "erro");
+        esconderCarregando();
+        mostrarToast("E-mail ou senha incorretos.", "erro");
         return;
       }
-      ehEditor = true;
+      await resolverPapel(email);
+      esconderCarregando();
+      if (!logado()) return; // resolverPapel já deslogou e mostrou o toast de erro
       atualizarUIEditor();
       fecharModal("modal-login");
-      mostrarToast("Modo edição liberado!", "sucesso");
+      mostrarToast("Login realizado!", "sucesso");
       // Recarrega os dados já no contexto autenticado (permite gravar via RLS).
       carregarAcervo();
       carregarRepertorios();
       carregarDicionario();
+      carregarSolicitacoes();
+      if (ehAdmin) carregarMinisterios();
     }
 
-    async function sairEditor() {
+    async function sair() {
       if (supabaseClient) await supabaseClient.auth.signOut();
-      ehEditor = false;
+      ehAdmin = false;
+      ehMinisterio = false;
+      meuMinisterio = null;
       atualizarUIEditor();
       mostrarToast("Modo somente leitura ativado.", "info");
+      carregarRepertorios();
+      carregarSolicitacoes();
     }
 
-    // Bloqueia ações de escrita quando não há editor logado (defesa extra;
+    // Bloqueia ações de escrita quando não há ninguém logado (defesa extra;
     // a regra que realmente protege os dados é o RLS no Supabase).
-    function exigirEditor() {
-      if (ehEditor) return true;
-      mostrarToast("Entre como editor para fazer alterações.", "erro");
+    function exigirLogado() {
+      if (logado()) return true;
+      mostrarToast("Entre para fazer alterações.", "erro");
       abrirModalLogin();
       return false;
     }
 
-    // Restaura a sessão de editor caso já exista (ex.: recarregou a página).
+    // Bloqueia ações exclusivas do administrador.
+    function exigirAdmin() {
+      if (ehAdmin) return true;
+      mostrarToast(logado() ? "Só o administrador pode fazer isso." : "Entre como administrador para fazer alterações.", "erro");
+      if (!logado()) abrirModalLogin();
+      return false;
+    }
+
+    // Restaura a sessão (admin ou ministério) caso já exista (ex.: recarregou a página).
     async function verificarSessaoEditor() {
       if (!supabaseClient) return;
       try {
         const { data } = await supabaseClient.auth.getSession();
-        ehEditor = !!(data && data.session);
+        if (data && data.session) {
+          await resolverPapel(data.session.user.email);
+        }
       } catch (e) {
-        ehEditor = false;
+        ehAdmin = false;
+        ehMinisterio = false;
+        meuMinisterio = null;
       }
       atualizarUIEditor();
+      if (logado()) {
+        carregarSolicitacoes();
+        if (ehAdmin) carregarMinisterios();
+      }
+    }
+
+    // =========================================
+    // ✨ MINISTÉRIOS (admin-only)
+    // =========================================
+    async function carregarMinisterios() {
+      if (!supabaseClient || !ehAdmin) { ministeriosGlobal = []; return; }
+      const { data, error } = await supabaseClient.from("ministerios").select("*").order("nome");
+      if (error) { mostrarToast("Erro ao carregar ministérios.", "erro"); return; }
+      ministeriosGlobal = data || [];
+      renderizarListaMinisterios();
+      renderizarFiltroMinisteriosRepertorios();
+      renderizarTabelaRepertorios();
+      renderizarTabelaSolicitacoes();
+    }
+
+    function renderizarListaMinisterios() {
+      const container = document.getElementById("lista-ministerios");
+      if (!container) return;
+      if (ministeriosGlobal.length === 0) {
+        container.innerHTML = `<small style="color: var(--text-muted);">Nenhum ministério cadastrado ainda.</small>`;
+        return;
+      }
+      container.innerHTML = ministeriosGlobal.map((m) => `
+        <div style="display:flex; justify-content:space-between; align-items:center; background: var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:8px 12px;">
+          <span><strong>${m.nome}</strong> &nbsp; <span style="color:var(--text-muted); font-size:13px;">${m.email}</span></span>
+          <button type="button" class="btn btn-secondary" style="padding:4px 10px;" onclick="removerMinisterio('${m.id}')" title="Remover"><i class="fa-solid fa-trash"></i></button>
+        </div>`).join("");
+    }
+
+    async function adicionarMinisterio() {
+      if (!exigirAdmin()) return;
+      const nome = document.getElementById("cfg-ministerio-nome").value.trim();
+      const email = document.getElementById("cfg-ministerio-email").value.trim().toLowerCase();
+      if (!nome || !email) return mostrarToast("Preencha nome e e-mail do ministério.", "erro");
+      mostrarCarregando();
+      const { error } = await supabaseClient.from("ministerios").insert([{ nome, email }]);
+      esconderCarregando();
+      if (error) return mostrarToast("Erro ao adicionar ministério: " + error.message, "erro");
+      document.getElementById("cfg-ministerio-nome").value = "";
+      document.getElementById("cfg-ministerio-email").value = "";
+      mostrarToast("Ministério cadastrado!", "sucesso");
+      carregarMinisterios();
+    }
+
+    async function removerMinisterio(id) {
+      if (!exigirAdmin()) return;
+      if (!confirm("Remover este ministério? Os repertórios dele viram \"Geral\" e o histórico de solicitações dele é apagado.")) return;
+      mostrarCarregando();
+      const { error } = await supabaseClient.from("ministerios").delete().eq("id", id);
+      esconderCarregando();
+      if (error) return mostrarToast("Erro ao remover: " + error.message, "erro");
+      mostrarToast("Ministério removido.", "sucesso");
+      carregarMinisterios();
     }
 
     function conectarSupabase(url, key) {
@@ -2803,9 +2991,10 @@
       const activeNav = document.getElementById(`nav-${ambiente}`);
       if (activeNav) activeNav.classList.add("nav-active");
 
-      document.getElementById("tela-acervo").style.display      = ambiente === "acervo"      ? "block" : "none";
-      document.getElementById("tela-repertorios").style.display  = ambiente === "repertorios" ? "block" : "none";
-      document.getElementById("tela-dicionario").style.display   = ambiente === "dicionario"  ? "block" : "none";
+      document.getElementById("tela-acervo").style.display        = ambiente === "acervo"        ? "block" : "none";
+      document.getElementById("tela-repertorios").style.display    = ambiente === "repertorios"   ? "block" : "none";
+      document.getElementById("tela-dicionario").style.display     = ambiente === "dicionario"    ? "block" : "none";
+      document.getElementById("tela-solicitacoes").style.display   = ambiente === "solicitacoes"  ? "block" : "none";
       document.getElementById("tela-visor").style.display        = "none";
 
       const fab = document.getElementById("fab-nova-musica");
@@ -2829,14 +3018,47 @@
       abertos.forEach(m => m.style.display = "none");
     });
     function abrirModalConfig() {
+      if (ehAdmin) renderizarListaMinisterios();
       document.getElementById("modal-config").style.display = "flex";
     }
 
+    // Ajusta título, banner e botões do modal de música conforme o modo:
+    // 'admin' (grava direto), 'ministerio-nova'/'ministerio-edicao' (vira
+    // solicitação) ou 'admin-revisao' (admin decide uma solicitação pendente).
+    function configurarModalMusica(modo, opts = {}) {
+      modoModalMusica = modo;
+      const info = document.getElementById("cad-info-solicitacao");
+      const obsGroup = document.getElementById("cad-observacao-group");
+      const btnSalvarLabel = document.getElementById("btn-salvar-musica-label");
+      const btnRejeitar = document.getElementById("btn-rejeitar-solicitacao");
+      info.style.display = "none";
+      obsGroup.style.display = "none";
+      btnRejeitar.style.display = "none";
+      document.getElementById("cad-observacao").value = "";
+      document.getElementById("btn-salvar-musica").disabled = false;
+      if (modo === "admin-revisao") {
+        document.getElementById("modal-titulo-musica").textContent =
+          opts.tipo === "nova" ? "Revisar: Nova Música" : "Revisar: Ajuste de Música";
+        info.style.display = "block";
+        info.innerHTML = `<i class="fa-solid fa-circle-info"></i> Solicitado por <strong>${opts.ministerioNome || "-"}</strong> em ${formatarData(opts.criadoEm)}`;
+        obsGroup.style.display = "block";
+        btnSalvarLabel.textContent = "Aprovar";
+        btnRejeitar.style.display = "flex";
+      } else if (modo === "ministerio-nova") {
+        document.getElementById("modal-titulo-musica").textContent = "Solicitar Nova Música";
+        btnSalvarLabel.textContent = "Enviar Solicitação";
+      } else if (modo === "ministerio-edicao") {
+        document.getElementById("modal-titulo-musica").textContent = "Solicitar Ajuste";
+        btnSalvarLabel.textContent = "Enviar Solicitação";
+      } else {
+        document.getElementById("modal-titulo-musica").textContent = opts.titulo || "Nova Música";
+        btnSalvarLabel.textContent = "Salvar Música";
+      }
+    }
     function abrirModalCadastroMusica() {
-      if (!exigirEditor()) return;
+      if (!exigirLogado()) return;
       idEdicaoAtual = null;
-      document.getElementById("modal-titulo-musica").textContent =
-        "Nova Música";
+      idSolicitacaoRevisao = null;
       document
         .querySelectorAll(
           "#modal-cadastro-musica input, #modal-cadastro-musica textarea",
@@ -2845,14 +3067,14 @@
       document.getElementById("cad-tom").value = "E";
       if (tinymce.get("cad-conteudo"))
         tinymce.get("cad-conteudo").setContent("");
+      configurarModalMusica(ehAdmin ? "admin" : "ministerio-nova");
       document.getElementById("modal-cadastro-musica").style.display = "flex";
     }
     function abrirEdicaoMusica(index) {
-      if (!exigirEditor()) return;
+      if (!exigirLogado()) return;
       const m = acervoGlobal[index];
       idEdicaoAtual = m.id;
-      document.getElementById("modal-titulo-musica").textContent =
-        "Editar Música";
+      idSolicitacaoRevisao = null;
       document.getElementById("cad-titulo").value = m.titulo;
       document.getElementById("cad-autor").value = m.autor || "";
       document.getElementById("cad-tom").value = m.tom_original;
@@ -2869,10 +3091,12 @@
       } else {
         document.getElementById("cad-conteudo").value = content;
       }
+      configurarModalMusica(ehAdmin ? "admin" : "ministerio-edicao", { titulo: "Editar Música" });
       document.getElementById("modal-cadastro-musica").style.display = "flex";
     }
     async function salvarMusica() {
-      if (!exigirEditor()) return;
+      if (!exigirLogado()) return;
+      if (modoModalMusica === "admin-revisao") return aprovarSolicitacao();
       const conteudoInput = tinymce.get("cad-conteudo")
         ? tinymce.get("cad-conteudo").getContent()
         : document.getElementById("cad-conteudo").value;
@@ -2888,16 +3112,30 @@
         return mostrarToast("A cifra não pode estar vazia.", "erro");
 
       mostrarCarregando();
-      const { error } = idEdicaoAtual
-        ? await supabaseClient.from("musicas").update(p).eq("id", idEdicaoAtual)
-        : await supabaseClient.from("musicas").insert([p]);
-      esconderCarregando();
-
-      if (error) return mostrarToast("Erro ao salvar: " + error.message, "erro");
-
-      fecharModal("modal-cadastro-musica");
-      mostrarToast(idEdicaoAtual ? "Música atualizada!" : "Música salva!", "sucesso");
-      carregarAcervo();
+      if (ehAdmin) {
+        const { error } = idEdicaoAtual
+          ? await supabaseClient.from("musicas").update(p).eq("id", idEdicaoAtual)
+          : await supabaseClient.from("musicas").insert([p]);
+        esconderCarregando();
+        if (error) return mostrarToast("Erro ao salvar: " + error.message, "erro");
+        fecharModal("modal-cadastro-musica");
+        mostrarToast(idEdicaoAtual ? "Música atualizada!" : "Música salva!", "sucesso");
+        carregarAcervo();
+      } else {
+        const solicitacao = {
+          tipo: idEdicaoAtual ? "edicao" : "nova",
+          musica_id: idEdicaoAtual || null,
+          ministerio_id: meuMinisterio.id,
+          status: "pendente",
+          ...p,
+        };
+        const { error } = await supabaseClient.from("solicitacoes_musica").insert([solicitacao]);
+        esconderCarregando();
+        if (error) return mostrarToast("Erro ao enviar solicitação: " + error.message, "erro");
+        fecharModal("modal-cadastro-musica");
+        mostrarToast("Solicitação enviada! Aguarde a aprovação do administrador.", "sucesso");
+        carregarSolicitacoes();
+      }
     }
 
     async function carregarAcervo() {
@@ -2952,11 +3190,11 @@
                     <div class="acervo-right">
                         <div class="acervo-actions">
                             <button class="action-circle play" title="Tocar" onclick="tocarMusicaAvulsa(${i})"><i class="fa-solid fa-play"></i></button>
-                            <button class="action-more" title="Mais" onclick="toggleDropdown(event)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                            <button class="action-more logado-only" title="Mais" onclick="toggleDropdown(event)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
                         </div>
                         <div class="dropdown-menu" data-music-id="${m.id}">
-                            <div class="menu-item" onclick="abrirEdicaoMusica(${i}); closeAllMenus();"><i class="fa-solid fa-pen"></i> Editar</div>
-                            <div class="menu-item danger" onclick="excluirMusica('${m.id}'); closeAllMenus();"><i class="fa-solid fa-trash"></i> Excluir</div>
+                            <div class="menu-item" onclick="abrirEdicaoMusica(${i}); closeAllMenus();"><i class="fa-solid fa-pen"></i> ${ehAdmin ? "Editar" : "Solicitar ajuste"}</div>
+                            <div class="menu-item danger admin-only" onclick="excluirMusica('${m.id}'); closeAllMenus();"><i class="fa-solid fa-trash"></i> Excluir</div>
                         </div>
                     </div>`;
         container.appendChild(card);
@@ -3170,14 +3408,28 @@
       }
     }
 
+    // Só admin ou o próprio ministério dono podem editar/excluir um repertório.
+    function podeEditarRepertorio(rep) {
+      return ehAdmin || (ehMinisterio && !!meuMinisterio && rep.ministerio_id === meuMinisterio.id);
+    }
+
+    function preencherSelectMinisterioRepertorio(selecionado) {
+      const sel = document.getElementById("rep-ministerio");
+      if (!sel) return;
+      sel.innerHTML = '<option value="">Geral (sem ministério)</option>' +
+        ministeriosGlobal.map(m => `<option value="${m.id}">${m.nome}</option>`).join("");
+      sel.value = selecionado || "";
+    }
+
     function abrirModalCadastroRepertorio() {
-      if (!exigirEditor()) return;
+      if (!exigirLogado()) return;
       idEdicaoRepertorioAtual = null;
       const tituloEl = document.getElementById("modal-titulo-repertorio");
       if (tituloEl) tituloEl.textContent = "Novo Repertório";
 
       document.getElementById("rep-nome").value = "";
       document.getElementById("rep-data").value = "";
+      preencherSelectMinisterioRepertorio("");
       const inputBusca = document.getElementById("rep-busca-musica");
       if (inputBusca) inputBusca.value = "";
 
@@ -3188,8 +3440,12 @@
     }
 
     function abrirEdicaoRepertorio(index) {
-      if (!exigirEditor()) return;
+      if (!exigirLogado()) return;
       const rep = repertoriosGlobal[index];
+      if (!podeEditarRepertorio(rep)) {
+        mostrarToast("Você não tem permissão para editar este repertório.", "erro");
+        return;
+      }
       idEdicaoRepertorioAtual = rep.id;
 
       const tituloEl = document.getElementById("modal-titulo-repertorio");
@@ -3197,6 +3453,7 @@
 
       document.getElementById("rep-nome").value = rep.nome;
       document.getElementById("rep-data").value = rep.data_evento ? rep.data_evento.split("T")[0] : "";
+      preencherSelectMinisterioRepertorio(rep.ministerio_id || "");
 
       const inputBusca = document.getElementById("rep-busca-musica");
       if (inputBusca) inputBusca.value = "";
@@ -3214,7 +3471,7 @@
     }
 
     async function salvarRepertorio() {
-      if (!exigirEditor()) return;
+      if (!exigirLogado()) return;
       const nome = document.getElementById("rep-nome").value.trim();
       const data_evento = document.getElementById("rep-data").value || null;
 
@@ -3222,20 +3479,28 @@
       if (musicasRepertorioAtual.length === 0)
         return mostrarToast("Adicione ao menos uma música ao repertório.", "erro");
 
-      const payload = { nome, data_evento, musicas: musicasRepertorioAtual };
+      // Ministério logado só grava repertórios em nome dele mesmo; admin escolhe.
+      const ministerio_id = ehAdmin
+        ? (document.getElementById("rep-ministerio").value || null)
+        : meuMinisterio.id;
+
+      const payload = { nome, data_evento, musicas: musicasRepertorioAtual, ministerio_id };
 
       mostrarCarregando();
-      let error;
+      let error, data;
       if (idEdicaoRepertorioAtual) {
-        const res = await supabaseClient.from("repertorios").update(payload).eq("id", idEdicaoRepertorioAtual);
-        error = res.error;
+        const res = await supabaseClient.from("repertorios").update(payload).eq("id", idEdicaoRepertorioAtual).select();
+        error = res.error; data = res.data;
       } else {
-        const res = await supabaseClient.from("repertorios").insert([payload]);
-        error = res.error;
+        const res = await supabaseClient.from("repertorios").insert([payload]).select();
+        error = res.error; data = res.data;
       }
       esconderCarregando();
 
       if (error) return mostrarToast("Erro ao salvar repertório: " + error.message, "erro");
+      // RLS pode bloquear silenciosamente (0 linhas afetadas) sem retornar erro.
+      if (!data || data.length === 0)
+        return mostrarToast("Você não tem permissão para alterar este repertório.", "erro");
 
       fecharModal("modal-cadastro-repertorio");
       mostrarToast(idEdicaoRepertorioAtual ? "Repertório atualizado!" : "Repertório criado!", "sucesso");
@@ -3255,28 +3520,242 @@
         .order("created_at", { ascending: false });
       if (error) { mostrarToast("Erro ao carregar repertórios.", "erro"); return; }
       repertoriosGlobal = data || [];
+      renderizarFiltroMinisteriosRepertorios();
+      renderizarTabelaRepertorios();
+    }
+
+    // Fileira de pílulas "Todos / <cada ministério> / Geral" acima da tabela —
+    // é a "aba dividida por ministério": filtra client-side, sem query extra.
+    function renderizarFiltroMinisteriosRepertorios() {
+      const container = document.getElementById("filtro-ministerios-repertorios");
+      if (!container) return;
+      if (!logado() || repertoriosGlobal.length === 0) { container.innerHTML = ""; return; }
+      const ministeriosComRepertorio = ministeriosGlobal.filter((m) =>
+        repertoriosGlobal.some((r) => r.ministerio_id === m.id));
+      const pills = [{ id: "todos", nome: "Todos" }, ...ministeriosComRepertorio, { id: "geral", nome: "Geral" }];
+      container.innerHTML = pills.map((p) => {
+        const ativo = filtroMinisterioRepertorios === String(p.id);
+        return `<button type="button" class="tag-pill" style="cursor:pointer; border:1px solid var(--border); background:${ativo ? "var(--primary)" : "var(--surface-2)"}; color:${ativo ? "#fff" : "var(--text-main)"};" onclick="filtrarRepertoriosPorMinisterio('${p.id}')">${p.nome}</button>`;
+      }).join("");
+    }
+
+    function filtrarRepertoriosPorMinisterio(id) {
+      filtroMinisterioRepertorios = id;
+      renderizarFiltroMinisteriosRepertorios();
+      renderizarTabelaRepertorios();
+    }
+
+    function renderizarTabelaRepertorios() {
       const tbody = document.getElementById("tabela-repertorios-body");
+      if (!tbody) return;
+      let lista = repertoriosGlobal;
+      if (filtroMinisterioRepertorios === "geral") lista = lista.filter((r) => !r.ministerio_id);
+      else if (filtroMinisterioRepertorios !== "todos") lista = lista.filter((r) => r.ministerio_id === filtroMinisterioRepertorios);
+
       tbody.innerHTML = "";
-      if (repertoriosGlobal.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 40px; color: var(--text-muted);">Nenhum repertório cadastrado ainda.</td></tr>`;
+      if (lista.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--text-muted);">Nenhum repertório cadastrado ainda.</td></tr>`;
         return;
       }
-      repertoriosGlobal.forEach((r, i) => {
+      lista.forEach((r) => {
+        const i = repertoriosGlobal.findIndex((item) => item.id === r.id);
         let qtd = Array.isArray(r.musicas) ? r.musicas.length : 0;
+        const ministerio = ministeriosGlobal.find((m) => m.id === r.ministerio_id);
+        const nomeMinisterio = ministerio ? ministerio.nome : "Geral";
+        const acoes = podeEditarRepertorio(r)
+          ? `<button class="btn btn-secondary" style="padding: 6px 10px; margin-left: 6px;" onclick="abrirEdicaoRepertorio(${i})" title="Editar"><i class="fa-solid fa-pen"></i></button>
+             <button class="btn btn-secondary" style="padding:6px 10px; margin-left:6px; background:#ef4444; border-color:transparent; color:#fff;" onclick="excluirRepertorio('${r.id}')" title="Excluir"><i class="fa-solid fa-trash"></i></button>`
+          : "";
         tbody.innerHTML += `<tr>
           <td style="font-weight: 600;">${r.nome}</td>
+          <td><span class="tag-pill">${nomeMinisterio}</span></td>
           <td>${formatarData(r.data_evento)}</td>
           <td><span class="tag-pill">${qtd} música${qtd !== 1 ? "s" : ""}</span></td>
           <td style="text-align: right; white-space: nowrap;">
             <button class="btn" style="padding: 6px 12px;" onclick="tocarRepertorio(${i})"><i class="fa-solid fa-play"></i> Iniciar</button>
-            <button class="btn btn-secondary editor-only" style="padding: 6px 10px; margin-left: 6px;" onclick="abrirEdicaoRepertorio(${i})" title="Editar"><i class="fa-solid fa-pen"></i></button>
-            <button class="btn btn-secondary editor-only" style="padding:6px 10px; margin-left:6px; background:#ef4444; border-color:transparent; color:#fff;" onclick="excluirRepertorio('${r.id}')" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+            ${acoes}
           </td></tr>`;
       });
     }
 
+    // =========================================
+    // ✨ SOLICITAÇÕES DE MÚSICA (fila de aprovação)
+    // =========================================
+    async function carregarSolicitacoes() {
+      if (!supabaseClient || !logado()) {
+        solicitacoesGlobal = [];
+        renderizarTabelaSolicitacoes();
+        atualizarBadgeSolicitacoes();
+        return;
+      }
+      const { data, error } = await supabaseClient
+        .from("solicitacoes_musica")
+        .select("*")
+        .order("criado_em", { ascending: false });
+      if (error) { mostrarToast("Erro ao carregar solicitações.", "erro"); return; }
+      solicitacoesGlobal = data || [];
+      renderizarTabelaSolicitacoes();
+      atualizarBadgeSolicitacoes();
+    }
+
+    function atualizarBadgeSolicitacoes() {
+      const badge = document.getElementById("badge-solicitacoes-pendentes");
+      if (!badge) return;
+      if (!ehAdmin) { badge.style.display = "none"; return; }
+      const qtd = solicitacoesGlobal.filter((s) => s.status === "pendente").length;
+      badge.textContent = String(qtd);
+      badge.style.display = qtd > 0 ? "inline-block" : "none";
+    }
+
+    function statusBadgeHtml(status) {
+      const cores = {
+        pendente: { bg: "#fef3c7", cor: "#92400e" },
+        aprovada: { bg: "#dcfce7", cor: "#166534" },
+        rejeitada: { bg: "#fee2e2", cor: "#991b1b" },
+      };
+      const c = cores[status] || cores.pendente;
+      const rotulo = { pendente: "Pendente", aprovada: "Aprovada", rejeitada: "Rejeitada" }[status] || status;
+      return `<span class="tag-pill" style="background:${c.bg}; color:${c.cor}; border:none;">${rotulo}</span>`;
+    }
+
+    function renderizarTabelaSolicitacoes() {
+      const tbody = document.getElementById("tabela-solicitacoes-body");
+      if (!tbody) return;
+      const subtitulo = document.getElementById("solicitacoes-subtitulo");
+      if (subtitulo) {
+        subtitulo.textContent = ehAdmin
+          ? "Pedidos de música nova ou ajuste enviados pelos ministérios."
+          : "Acompanhe o status das músicas que seu ministério solicitou.";
+      }
+      tbody.innerHTML = "";
+      if (solicitacoesGlobal.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: var(--text-muted);">Nenhuma solicitação por aqui.</td></tr>`;
+        return;
+      }
+      solicitacoesGlobal.forEach((s) => {
+        const ministerio = ministeriosGlobal.find((m) => m.id === s.ministerio_id);
+        const nomeMinisterio = ministerio ? ministerio.nome : "-";
+        const tipoLabel = s.tipo === "nova" ? "Nova música" : "Ajuste";
+        let acoes = "";
+        if (ehAdmin) {
+          acoes = s.status === "pendente"
+            ? `<button class="btn" style="padding: 6px 12px;" onclick="abrirRevisaoSolicitacao('${s.id}')"><i class="fa-solid fa-magnifying-glass"></i> Revisar</button>`
+            : `<button class="btn btn-secondary" style="padding: 6px 12px;" onclick="abrirRevisaoSolicitacao('${s.id}')"><i class="fa-solid fa-eye"></i> Ver</button>`;
+        }
+        const obs = s.observacao_admin
+          ? `<div style="font-size:12px; color: var(--text-muted); margin-top:4px;">"${s.observacao_admin}"</div>`
+          : "";
+        tbody.innerHTML += `<tr>
+          <td>${tipoLabel}</td>
+          <td style="font-weight:600;">${s.titulo || "-"}</td>
+          <td>${nomeMinisterio}</td>
+          <td>${formatarData(s.criado_em)}</td>
+          <td>${statusBadgeHtml(s.status)}${obs}</td>
+          <td style="text-align: right; white-space: nowrap;">${acoes}</td>
+        </tr>`;
+      });
+    }
+
+    // Abre o modal de música em modo de revisão, pré-preenchido com o que o
+    // ministério enviou. O admin pode ajustar qualquer campo antes de decidir.
+    function abrirRevisaoSolicitacao(id) {
+      if (!exigirAdmin()) return;
+      const s = solicitacoesGlobal.find((x) => x.id === id);
+      if (!s) return;
+      idSolicitacaoRevisao = s.id;
+      idEdicaoAtual = s.musica_id || null;
+      document.getElementById("cad-titulo").value = s.titulo || "";
+      document.getElementById("cad-autor").value = s.autor || "";
+      document.getElementById("cad-tom").value = s.tom_original || "E";
+      document.getElementById("cad-momento").value = s.momento_missa || "";
+      let content = s.conteudo || "";
+      if (content && !/<[a-z][\s\S]*>/i.test(content)) {
+        content = content.split("\n").map((line) => `<p>${line || "&nbsp;"}</p>`).join("");
+      }
+      if (tinymce.get("cad-conteudo")) {
+        tinymce.get("cad-conteudo").setContent(content);
+      } else {
+        document.getElementById("cad-conteudo").value = content;
+      }
+      const ministerio = ministeriosGlobal.find((m) => m.id === s.ministerio_id);
+      configurarModalMusica("admin-revisao", {
+        tipo: s.tipo,
+        ministerioNome: ministerio ? ministerio.nome : "-",
+        criadoEm: s.criado_em,
+      });
+      const btnSalvar = document.getElementById("btn-salvar-musica");
+      if (s.status !== "pendente") {
+        document.getElementById("btn-salvar-musica-label").textContent =
+          s.status === "aprovada" ? "Já aprovada" : "Já rejeitada";
+        btnSalvar.disabled = true;
+        document.getElementById("btn-rejeitar-solicitacao").style.display = "none";
+        if (s.observacao_admin) document.getElementById("cad-observacao").value = s.observacao_admin;
+      } else {
+        btnSalvar.disabled = false;
+      }
+      document.getElementById("modal-cadastro-musica").style.display = "flex";
+    }
+
+    // Publica a solicitação (insere música nova ou atualiza a existente) e
+    // marca a solicitação como aprovada.
+    async function aprovarSolicitacao() {
+      if (!exigirAdmin()) return;
+      const s = solicitacoesGlobal.find((x) => x.id === idSolicitacaoRevisao);
+      if (!s) return;
+      const conteudoInput = tinymce.get("cad-conteudo")
+        ? tinymce.get("cad-conteudo").getContent()
+        : document.getElementById("cad-conteudo").value;
+      const p = {
+        titulo: document.getElementById("cad-titulo").value.trim(),
+        autor: document.getElementById("cad-autor").value.trim(),
+        tom_original: document.getElementById("cad-tom").value,
+        momento_missa: document.getElementById("cad-momento").value.trim(),
+        conteudo: conteudoInput,
+      };
+      if (!p.titulo) return mostrarToast("O título da música é obrigatório.", "erro");
+      if (!p.conteudo || p.conteudo === "<p></p>" || p.conteudo.trim() === "")
+        return mostrarToast("A cifra não pode estar vazia.", "erro");
+
+      mostrarCarregando();
+      const resMusica = s.tipo === "nova"
+        ? await supabaseClient.from("musicas").insert([p])
+        : await supabaseClient.from("musicas").update(p).eq("id", s.musica_id);
+      if (resMusica.error) {
+        esconderCarregando();
+        return mostrarToast("Erro ao publicar música: " + resMusica.error.message, "erro");
+      }
+      const { error } = await supabaseClient
+        .from("solicitacoes_musica")
+        .update({ status: "aprovada", revisado_em: new Date().toISOString() })
+        .eq("id", s.id);
+      esconderCarregando();
+      if (error) return mostrarToast("Música publicada, mas houve erro ao atualizar a solicitação: " + error.message, "erro");
+
+      fecharModal("modal-cadastro-musica");
+      mostrarToast("Solicitação aprovada e música publicada!", "sucesso");
+      carregarAcervo();
+      carregarSolicitacoes();
+    }
+
+    async function rejeitarSolicitacao() {
+      if (!exigirAdmin()) return;
+      const s = solicitacoesGlobal.find((x) => x.id === idSolicitacaoRevisao);
+      if (!s) return;
+      const observacao = document.getElementById("cad-observacao").value.trim();
+      mostrarCarregando();
+      const { error } = await supabaseClient
+        .from("solicitacoes_musica")
+        .update({ status: "rejeitada", observacao_admin: observacao || null, revisado_em: new Date().toISOString() })
+        .eq("id", s.id);
+      esconderCarregando();
+      if (error) return mostrarToast("Erro ao rejeitar: " + error.message, "erro");
+      fecharModal("modal-cadastro-musica");
+      mostrarToast("Solicitação rejeitada.", "info");
+      carregarSolicitacoes();
+    }
+
     function abrirModalCadastroAcorde() {
-      if (!exigirEditor()) return;
+      if (!exigirAdmin()) return;
       idEdicaoAcordeAtual = null;
       const h2 = document.querySelector("#modal-cadastro-acorde .modal-header h2");
       if (h2) h2.textContent = "Novo Acorde";
@@ -3295,7 +3774,7 @@
     }
 
     function abrirEdicaoAcorde(id) {
-      if (!exigirEditor()) return;
+      if (!exigirAdmin()) return;
       const acorde = dicionarioGlobal.find((a) => a.id === id);
       if (!acorde) return;
       idEdicaoAcordeAtual = acorde.id;
@@ -3554,7 +4033,7 @@
     }
 
     async function salvarAcorde() {
-      if (!exigirEditor()) return;
+      if (!exigirAdmin()) return;
       const nome = document.getElementById("cad-acorde-nome").value.trim();
       if (!nome) return mostrarToast("Dê um nome ao acorde.", "erro");
       if (!supabaseClient) return mostrarToast("Sem conexão.", "erro");
@@ -3690,14 +4169,14 @@
         const chip = ehTeclado
           ? '<span class="tag-pill" style="background: rgba(226,59,46,0.12); color:#e23b2e; border-color: rgba(226,59,46,0.3);"><i class="fa-solid fa-keyboard"></i> Teclado</span>'
           : '<span class="tag-pill" style="background: rgba(109,93,252,0.12); color: var(--primary); border-color: rgba(109,93,252,0.3);"><i class="fa-solid fa-guitar"></i> Violão</span>';
-        containerEl.innerHTML += `<div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: var(--card-shadow); display: flex; flex-direction: column; align-items: center; gap: 16px;">${chip}${diagramaHtml}<div class="editor-only" style="display: flex; gap: 8px; width: 100%; justify-content: center; margin-top: auto;"><button class="btn btn-secondary" style="padding: 8px 16px;" onclick="abrirEdicaoAcorde(${v.id})" title="Editar formato"><i class="fa-solid fa-pen"></i></button><button class="btn btn-secondary" style="padding: 8px 16px; color: #ef4444;" onclick="excluirAcordeUnico(${v.id}, '${nome}')" title="Excluir formato"><i class="fa-solid fa-trash"></i></button></div></div>`;
+        containerEl.innerHTML += `<div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: var(--card-shadow); display: flex; flex-direction: column; align-items: center; gap: 16px;">${chip}${diagramaHtml}<div class="admin-only" style="display: flex; gap: 8px; width: 100%; justify-content: center; margin-top: auto;"><button class="btn btn-secondary" style="padding: 8px 16px;" onclick="abrirEdicaoAcorde(${v.id})" title="Editar formato"><i class="fa-solid fa-pen"></i></button><button class="btn btn-secondary" style="padding: 8px 16px; color: #ef4444;" onclick="excluirAcordeUnico(${v.id}, '${nome}')" title="Excluir formato"><i class="fa-solid fa-trash"></i></button></div></div>`;
       });
       document.getElementById("modal-visualizar-acorde").style.display =
         "flex";
     }
 
     async function excluirAcordeUnico(id, nome) {
-      if (!exigirEditor()) return;
+      if (!exigirAdmin()) return;
       if (!confirm("Deseja excluir este formato específico?")) return;
       if (!supabaseClient) return;
       mostrarCarregando();
@@ -3725,7 +4204,7 @@
       mostrarAcorde(fakeEvent, nome);
     }
     async function excluirMusica(id) {
-      if (!exigirEditor()) return;
+      if (!exigirAdmin()) return;
       if (!confirm("Excluir esta música? A ação é irreversível.")) return;
       if (!supabaseClient) return mostrarToast("Sem conexão.", "erro");
       mostrarCarregando();
@@ -3736,13 +4215,20 @@
       carregarAcervo();
     }
     async function excluirRepertorio(id) {
-      if (!exigirEditor()) return;
+      if (!exigirLogado()) return;
+      const rep = repertoriosGlobal.find((r) => r.id === id);
+      if (rep && !podeEditarRepertorio(rep)) {
+        mostrarToast("Você não tem permissão para excluir este repertório.", "erro");
+        return;
+      }
       if (!confirm("Excluir este repertório? A ação é irreversível.")) return;
       if (!supabaseClient) return mostrarToast("Sem conexão.", "erro");
       mostrarCarregando();
-      const { error } = await supabaseClient.from("repertorios").delete().eq("id", id);
+      const { error, data } = await supabaseClient.from("repertorios").delete().eq("id", id).select();
       esconderCarregando();
       if (error) return mostrarToast("Erro ao excluir.", "erro");
+      if (!data || data.length === 0)
+        return mostrarToast("Você não tem permissão para excluir este repertório.", "erro");
       mostrarToast("Repertório excluído.", "sucesso");
       carregarRepertorios();
     }
@@ -4057,6 +4543,7 @@
       document.getElementById("tela-acervo").style.display = "none";
       document.getElementById("tela-repertorios").style.display = "none";
       document.getElementById("tela-dicionario").style.display = "none";
+      document.getElementById("tela-solicitacoes").style.display = "none";
       document.getElementById("tela-visor").style.display = "block";
       musicaSelecionada = playlistAtual[indexPlaylist];
       semitonsAcumulados = 0;

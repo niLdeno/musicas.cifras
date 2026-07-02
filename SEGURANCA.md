@@ -1,5 +1,12 @@
 # 🔒 Como proteger o sistema (passo a passo)
 
+> 📖 **Atualização:** o sistema agora suporta múltiplos ministérios de
+> música, cada um com login próprio, além do administrador. Este documento
+> descreve só a conta do **administrador** (o que era chamado de "editor").
+> Para cadastrar ministérios e ativar a fila de aprovação de músicas, veja
+> **`MINISTERIOS.md`** — as regras de RLS de lá **substituem** as do Passo 2
+> aqui embaixo (o Passo 2 deste arquivo ficou só como referência histórica).
+
 O sistema agora tem um **"Modo Editor"**: visitantes só **leem** as músicas, e
 para **criar / editar / excluir** é preciso **entrar com uma senha**.
 
@@ -16,7 +23,7 @@ para **criar / editar / excluir** é preciso **entrar com uma senha**.
 2. Menu lateral: **Authentication → Users → Add user**.
 3. Preencha:
    - **Email:** `nildeno.aragao@gmail.com`
-     *(é o mesmo valor que está na constante `EDITOR_EMAIL` dentro do `index.html`.
+     *(é o mesmo valor que está na constante `ADMIN_EMAIL` dentro do `index.html`.
      Se quiser usar outro e-mail, troque nos dois lugares.)*
    - **Password:** a senha que você vai compartilhar **só com quem pode editar**.
    - ✅ Marque **Auto Confirm User** (assim não precisa confirmar e-mail).
@@ -27,7 +34,7 @@ basta editar o usuário nesse mesmo painel — **não precisa mexer no código**
 
 ---
 
-## Passo 2 — Ligar a proteção no banco (RLS)
+## Passo 2 — Ligar a proteção no banco (RLS) ⚠️ substituído por `MINISTERIOS.md`
 
 No painel do Supabase → **SQL Editor → New query**, cole o bloco abaixo e clique
 em **Run**. Ele faz: **leitura liberada para todos**, **gravação só para quem
