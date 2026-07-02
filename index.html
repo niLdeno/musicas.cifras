@@ -1974,6 +1974,48 @@
   <div id="loading-overlay"><div class="spinner"></div></div>
   <div id="tooltip-acorde"></div>
 
+  <div id="tela-bloqueio-acesso" style="
+        position: fixed; inset: 0; z-index: 500; display: flex;
+        flex-direction: column; align-items: center; justify-content: center;
+        text-align: center; padding: 24px; background: var(--bg-color);
+      ">
+    <svg width="180" height="180" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom: 8px;">
+      <circle cx="100" cy="100" r="94" fill="var(--surface-2)" />
+      <g transform="rotate(18 100 100)">
+        <rect x="118" y="24" width="13" height="66" rx="6" fill="var(--primary-700)" />
+        <rect x="112" y="12" width="25" height="18" rx="5" fill="var(--primary-700)" />
+        <circle cx="118" cy="21" r="2.4" fill="var(--surface-2)" />
+        <circle cx="126" cy="21" r="2.4" fill="var(--surface-2)" />
+        <line x1="122" y1="86" x2="122" y2="150" stroke="var(--primary-700)" stroke-width="1.4" opacity="0.5" />
+        <line x1="126" y1="86" x2="126" y2="150" stroke="var(--primary-700)" stroke-width="1.4" opacity="0.5" />
+        <ellipse cx="98" cy="150" rx="46" ry="38" fill="var(--primary)" />
+        <ellipse cx="98" cy="112" rx="30" ry="26" fill="var(--primary)" />
+        <circle cx="100" cy="148" r="15" fill="var(--surface-2)" />
+      </g>
+      <g fill="var(--primary-700)">
+        <circle cx="146" cy="62" r="7" />
+        <rect x="151" y="26" width="4" height="38" />
+        <path d="M151 26 Q167 22 166 38 Q158 32 151 36 Z" />
+      </g>
+      <g fill="var(--primary-700)" opacity="0.75">
+        <circle cx="162" cy="86" r="5" />
+        <rect x="165" y="58" width="3" height="30" />
+      </g>
+      <circle cx="152" cy="152" r="24" fill="var(--primary-700)" stroke="var(--bg-color)" stroke-width="5" />
+      <path d="M144 150 v-6 a8 8 0 0 1 16 0 v6" stroke="var(--surface)" stroke-width="3" fill="none" stroke-linecap="round" />
+      <rect x="141" y="149" width="22" height="16" rx="3" fill="var(--surface)" />
+    </svg>
+    <h2 style="margin: 0 0 8px;">Acesso restrito</h2>
+    <p style="color: var(--text-muted); max-width: 420px; margin: 0 0 24px;">
+      Este sistema é de uso exclusivo dos ministérios de música cadastrados.
+      Entre com sua conta ou cadastre seu ministério para começar.
+    </p>
+    <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;">
+      <button class="btn" onclick="abrirModalLogin()"><i class="fa-solid fa-right-to-bracket"></i> Entrar</button>
+      <button class="btn btn-secondary" onclick="abrirModalCadastroMinisterio()"><i class="fa-solid fa-user-plus"></i> Cadastrar ministério</button>
+    </div>
+  </div>
+
   <aside class="sidebar">
     <div class="sidebar-top">
       <div class="logo">
@@ -2885,6 +2927,8 @@
     function atualizarUIEditor() {
       document.body.classList.toggle("modo-logado", logado());
       document.body.classList.toggle("modo-admin", ehAdmin);
+      const bloqueio = document.getElementById("tela-bloqueio-acesso");
+      if (bloqueio) bloqueio.style.display = logado() ? "none" : "flex";
       const role = document.getElementById("profile-role");
       const name = document.getElementById("profile-name");
       const avatar = document.getElementById("profile-avatar");
@@ -2957,10 +3001,16 @@
       ehAdmin = false;
       ehMinisterio = false;
       meuMinisterio = null;
+      // Sem sessão o RLS não libera leitura nenhuma; limpa localmente em vez
+      // de recarregar do banco (a tela de bloqueio some, ninguém vê isso mesmo).
+      acervoGlobal = [];
+      repertoriosGlobal = [];
+      dicionarioGlobal = [];
+      solicitacoesGlobal = [];
+      ministeriosGlobal = [];
+      cadastrosPendentesGlobal = [];
       atualizarUIEditor();
-      mostrarToast("Modo somente leitura ativado.", "info");
-      carregarRepertorios();
-      carregarSolicitacoes();
+      mostrarToast("Você saiu do sistema.", "info");
     }
 
     // =========================================
@@ -3098,6 +3148,9 @@
       }
       atualizarUIEditor();
       if (logado()) {
+        carregarAcervo();
+        carregarRepertorios();
+        carregarDicionario();
         carregarSolicitacoes();
         if (ehAdmin) { carregarMinisterios(); carregarCadastrosPendentes(); }
       }
@@ -3251,9 +3304,9 @@
         supabaseClient.auth.onAuthStateChange((event) => {
           if (event === "PASSWORD_RECOVERY") abrirModalNovaSenha();
         });
-        carregarAcervo();
-        carregarRepertorios();
-        carregarDicionario();
+        // Acervo/repertórios/dicionário só carregam depois de confirmar login
+        // (veja verificarSessaoEditor/entrar/confirmarNovaSenha) — sem conta
+        // aprovada, o RLS não libera leitura nenhuma mesmo.
       } catch (error) {
         mostrarToast("Erro ao conectar ao banco de dados.", "erro");
         abrirModalConfig();
