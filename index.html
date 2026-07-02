@@ -2010,6 +2010,7 @@
       </button>
       <button class="nav-item" onclick="abrirModalConfig()">
         <i class="fa-solid fa-gear"></i><span>Configurações</span>
+        <span id="badge-cadastros-pendentes" class="admin-only" style="display:none; margin-left:6px; background:#ef4444; color:#fff; font-size:11px; font-weight:700; border-radius:999px; padding:1px 7px;">0</span>
       </button>
 
       <div class="sidebar-profile" id="sidebar-profile" style="cursor: pointer; transition: 0.2s" onclick="toggleLogin()"
@@ -2274,6 +2275,10 @@
         </select>
         <small style="color: var(--text-muted); margin-top: 4px;">Define como os acordes aparecem ao clicar neles na cifra.</small>
       </div>
+      <div class="form-group full-width admin-only" id="grupo-cadastros-pendentes" style="margin-bottom: 20px; border-top: 1px solid var(--border); padding-top: 16px; display: none;">
+        <label style="margin-bottom: 8px; display: block;">Cadastros pendentes</label>
+        <div id="lista-cadastros-pendentes" style="display: flex; flex-direction: column; gap: 6px;"></div>
+      </div>
       <div class="form-group full-width admin-only" style="margin-bottom: 20px; border-top: 1px solid var(--border); padding-top: 16px;">
         <label style="margin-bottom: 8px; display: block;">Ministérios cadastrados</label>
         <div id="lista-ministerios" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px;"></div>
@@ -2306,13 +2311,83 @@
         <input type="email" id="login-email" placeholder="seuministerio@exemplo.com"
           onkeydown="if(event.key==='Enter') entrar()" />
       </div>
-      <div class="form-group" style="margin-bottom: 18px;">
+      <div class="form-group" style="margin-bottom: 10px;">
         <label for="login-senha">Senha</label>
         <input type="password" id="login-senha" placeholder="••••••••"
           onkeydown="if(event.key==='Enter') entrar()" />
       </div>
+      <div style="text-align: right; margin-bottom: 18px;">
+        <a href="#" onclick="recuperarSenha(); return false;" style="font-size: 13px; color: var(--text-muted);">Esqueci minha senha</a>
+      </div>
       <button class="btn" style="width: 100%; justify-content: center" onclick="entrar()">
         <i class="fa-solid fa-right-to-bracket"></i> Entrar
+      </button>
+      <div style="text-align: center; margin-top: 16px; font-size: 13px; color: var(--text-muted);">
+        Ainda não tem acesso?
+        <a href="#" onclick="fecharModal('modal-login'); abrirModalCadastroMinisterio(); return false;">Cadastre seu ministério</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-cadastro-ministerio">
+    <div class="modal-content" style="max-width: 460px;">
+      <div class="modal-header">
+        <h2><i class="fa-solid fa-user-plus" style="margin-right:8px; color: var(--primary);"></i>Cadastre seu ministério</h2>
+        <button class="close-btn" onclick="fecharModal('modal-cadastro-ministerio')">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <p style="color: var(--text-muted); font-size: 14px; margin: 0 0 18px;">
+        Preencha os dados abaixo. Seu cadastro fica pendente até o administrador aprovar — só depois disso o login funciona.
+      </p>
+      <div class="form-group" style="margin-bottom: 14px;">
+        <label for="cadmin-nome-ministerio">Nome do ministério</label>
+        <input type="text" id="cadmin-nome-ministerio" placeholder="Ex.: Ministério Jovem" />
+      </div>
+      <div class="form-grid" style="margin-bottom: 14px;">
+        <div class="form-group">
+          <label for="cadmin-responsavel-nome">Nome do responsável</label>
+          <input type="text" id="cadmin-responsavel-nome" />
+        </div>
+        <div class="form-group">
+          <label for="cadmin-responsavel-sobrenome">Sobrenome do responsável</label>
+          <input type="text" id="cadmin-responsavel-sobrenome" />
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom: 14px;">
+        <label for="cadmin-email">E-mail</label>
+        <input type="email" id="cadmin-email" placeholder="seuministerio@exemplo.com" />
+      </div>
+      <div class="form-group" style="margin-bottom: 18px;">
+        <label for="cadmin-senha">Senha (mínimo 6 caracteres)</label>
+        <input type="password" id="cadmin-senha" placeholder="••••••••" />
+      </div>
+      <button class="btn" style="width: 100%; justify-content: center" onclick="cadastrarMinisterioSolicitacao()">
+        <i class="fa-solid fa-paper-plane"></i> Enviar cadastro
+      </button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-nova-senha">
+    <div class="modal-content" style="max-width: 420px;">
+      <div class="modal-header">
+        <h2><i class="fa-solid fa-key" style="margin-right:8px; color: var(--primary);"></i>Definir nova senha</h2>
+        <button class="close-btn" onclick="fecharModal('modal-nova-senha')">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="form-group" style="margin-bottom: 14px;">
+        <label for="nova-senha-1">Nova senha (mínimo 6 caracteres)</label>
+        <input type="password" id="nova-senha-1" placeholder="••••••••"
+          onkeydown="if(event.key==='Enter') confirmarNovaSenha()" />
+      </div>
+      <div class="form-group" style="margin-bottom: 18px;">
+        <label for="nova-senha-2">Confirmar nova senha</label>
+        <input type="password" id="nova-senha-2" placeholder="••••••••"
+          onkeydown="if(event.key==='Enter') confirmarNovaSenha()" />
+      </div>
+      <button class="btn" style="width: 100%; justify-content: center" onclick="confirmarNovaSenha()">
+        <i class="fa-solid fa-check"></i> Salvar nova senha
       </button>
     </div>
   </div>
@@ -2560,6 +2635,7 @@
     let ehMinisterio = false;
     let meuMinisterio = null; // linha da tabela `ministerios` do usuário logado (quando não-admin)
     let ministeriosGlobal = [];
+    let cadastrosPendentesGlobal = [];
     function logado() { return ehAdmin || ehMinisterio; }
     let ambienteAtual = "acervo";
     let acervoGlobal = [];
@@ -2757,6 +2833,29 @@
     // =========================================
     // ✨ CONTROLE DE ACESSO (ADMIN / MINISTÉRIO)
     // =========================================
+    // Quando o e-mail logado não está em `ministerios`, checa se há um
+    // pedido de acesso (auto-cadastro) em andamento pra dar uma mensagem
+    // mais precisa do que o genérico "fale com o administrador".
+    async function avisarStatusCadastro(email) {
+      const { data } = await supabaseClient
+        .from("solicitacoes_cadastro")
+        .select("*")
+        .ilike("email", email)
+        .order("criado_em", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (data && data.status === "pendente") {
+        mostrarToast("Seu cadastro está aguardando aprovação do administrador.", "info");
+      } else if (data && data.status === "rejeitada") {
+        mostrarToast(
+          "Seu cadastro foi rejeitado." + (data.observacao_admin ? " Motivo: " + data.observacao_admin : ""),
+          "erro",
+        );
+      } else {
+        mostrarToast("Esta conta não está vinculada a nenhum ministério. Fale com o administrador.", "erro");
+      }
+    }
+
     // Depois de autenticar, descobre se o e-mail logado é o administrador
     // ou está vinculado a um ministério (tabela `ministerios`).
     async function resolverPapel(email) {
@@ -2777,7 +2876,7 @@
         ehMinisterio = true;
         meuMinisterio = data;
       } else {
-        mostrarToast("Esta conta não está vinculada a nenhum ministério. Fale com o administrador.", "erro");
+        await avisarStatusCadastro(email);
         await supabaseClient.auth.signOut();
       }
     }
@@ -2850,7 +2949,7 @@
       carregarRepertorios();
       carregarDicionario();
       carregarSolicitacoes();
-      if (ehAdmin) carregarMinisterios();
+      if (ehAdmin) { carregarMinisterios(); carregarCadastrosPendentes(); }
     }
 
     async function sair() {
@@ -2862,6 +2961,109 @@
       mostrarToast("Modo somente leitura ativado.", "info");
       carregarRepertorios();
       carregarSolicitacoes();
+    }
+
+    // =========================================
+    // ✨ AUTO-CADASTRO DE MINISTÉRIO
+    // =========================================
+    function abrirModalCadastroMinisterio() {
+      document.querySelectorAll("#modal-cadastro-ministerio input").forEach((el) => (el.value = ""));
+      document.getElementById("modal-cadastro-ministerio").style.display = "flex";
+    }
+
+    // Cria a conta de login de verdade (auth.signUp funciona só com a chave
+    // anônima), mas ela só passa a funcionar no sistema depois que o admin
+    // aprovar o pedido em `solicitacoes_cadastro` — por isso desloga na hora.
+    async function cadastrarMinisterioSolicitacao() {
+      if (!supabaseClient) { mostrarToast("Banco de dados não conectado.", "erro"); return; }
+      const nomeMinisterio = document.getElementById("cadmin-nome-ministerio").value.trim();
+      const responsavelNome = document.getElementById("cadmin-responsavel-nome").value.trim();
+      const responsavelSobrenome = document.getElementById("cadmin-responsavel-sobrenome").value.trim();
+      const email = document.getElementById("cadmin-email").value.trim();
+      const senha = document.getElementById("cadmin-senha").value;
+
+      if (!nomeMinisterio || !responsavelNome || !responsavelSobrenome || !email || !senha)
+        return mostrarToast("Preencha todos os campos.", "erro");
+      if (senha.length < 6)
+        return mostrarToast("A senha precisa ter pelo menos 6 caracteres.", "erro");
+
+      mostrarCarregando();
+      const { error: erroCadastro } = await supabaseClient.auth.signUp({ email, password: senha });
+      if (erroCadastro) {
+        esconderCarregando();
+        return mostrarToast("Erro ao criar conta: " + erroCadastro.message, "erro");
+      }
+
+      const { error: erroSolicitacao } = await supabaseClient.from("solicitacoes_cadastro").insert([{
+        nome_ministerio: nomeMinisterio,
+        responsavel_nome: responsavelNome,
+        responsavel_sobrenome: responsavelSobrenome,
+        email,
+      }]);
+      await supabaseClient.auth.signOut();
+      esconderCarregando();
+
+      if (erroSolicitacao) {
+        const duplicado = erroSolicitacao.message.toLowerCase().includes("duplicate");
+        return mostrarToast(
+          duplicado
+            ? "Já existe um cadastro pendente para este e-mail."
+            : "Erro ao enviar cadastro: " + erroSolicitacao.message,
+          "erro",
+        );
+      }
+
+      fecharModal("modal-cadastro-ministerio");
+      mostrarToast("Cadastro enviado! Aguarde a aprovação do administrador.", "sucesso");
+    }
+
+    // =========================================
+    // ✨ RECUPERAÇÃO DE SENHA
+    // =========================================
+    async function recuperarSenha() {
+      if (!supabaseClient) { mostrarToast("Banco de dados não conectado.", "erro"); return; }
+      const emailAtual = document.getElementById("login-email").value.trim();
+      const email = prompt("Digite o e-mail cadastrado para receber o link de redefinição de senha:", emailAtual);
+      if (!email) return;
+      mostrarCarregando();
+      await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + window.location.pathname,
+      });
+      esconderCarregando();
+      mostrarToast("Se esse e-mail estiver cadastrado, você vai receber um link para redefinir a senha.", "info");
+    }
+
+    function abrirModalNovaSenha() {
+      document.getElementById("nova-senha-1").value = "";
+      document.getElementById("nova-senha-2").value = "";
+      document.getElementById("modal-nova-senha").style.display = "flex";
+    }
+
+    // Chamado depois que a pessoa clica no link do e-mail de recuperação:
+    // o Supabase já deixa uma sessão de "recovery" ativa, então só falta
+    // trocar a senha e seguir o mesmo caminho de um login normal.
+    async function confirmarNovaSenha() {
+      const senha1 = document.getElementById("nova-senha-1").value;
+      const senha2 = document.getElementById("nova-senha-2").value;
+      if (senha1.length < 6) return mostrarToast("A senha precisa ter pelo menos 6 caracteres.", "erro");
+      if (senha1 !== senha2) return mostrarToast("As senhas não coincidem.", "erro");
+
+      mostrarCarregando();
+      const { data, error } = await supabaseClient.auth.updateUser({ password: senha1 });
+      esconderCarregando();
+      if (error) return mostrarToast("Erro ao definir nova senha: " + error.message, "erro");
+
+      fecharModal("modal-nova-senha");
+      history.replaceState(null, "", window.location.pathname);
+      mostrarToast("Senha atualizada! Você já está logado.", "sucesso");
+
+      await resolverPapel(data.user.email);
+      atualizarUIEditor();
+      carregarAcervo();
+      carregarRepertorios();
+      carregarDicionario();
+      carregarSolicitacoes();
+      if (ehAdmin) { carregarMinisterios(); carregarCadastrosPendentes(); }
     }
 
     // Bloqueia ações de escrita quando não há ninguém logado (defesa extra;
@@ -2897,7 +3099,7 @@
       atualizarUIEditor();
       if (logado()) {
         carregarSolicitacoes();
-        if (ehAdmin) carregarMinisterios();
+        if (ehAdmin) { carregarMinisterios(); carregarCadastrosPendentes(); }
       }
     }
 
@@ -2929,13 +3131,18 @@
         </div>`).join("");
     }
 
+    // Usado tanto pelo "Adicionar" manual quanto por aprovar um auto-cadastro.
+    async function criarMinisterio(nome, email) {
+      return supabaseClient.from("ministerios").insert([{ nome, email: email.toLowerCase() }]);
+    }
+
     async function adicionarMinisterio() {
       if (!exigirAdmin()) return;
       const nome = document.getElementById("cfg-ministerio-nome").value.trim();
-      const email = document.getElementById("cfg-ministerio-email").value.trim().toLowerCase();
+      const email = document.getElementById("cfg-ministerio-email").value.trim();
       if (!nome || !email) return mostrarToast("Preencha nome e e-mail do ministério.", "erro");
       mostrarCarregando();
-      const { error } = await supabaseClient.from("ministerios").insert([{ nome, email }]);
+      const { error } = await criarMinisterio(nome, email);
       esconderCarregando();
       if (error) return mostrarToast("Erro ao adicionar ministério: " + error.message, "erro");
       document.getElementById("cfg-ministerio-nome").value = "";
@@ -2955,9 +3162,95 @@
       carregarMinisterios();
     }
 
+    // =========================================
+    // ✨ CADASTROS PENDENTES (auto-cadastro de ministério)
+    // =========================================
+    async function carregarCadastrosPendentes() {
+      if (!supabaseClient || !ehAdmin) { cadastrosPendentesGlobal = []; atualizarBadgeCadastros(); return; }
+      const { data, error } = await supabaseClient
+        .from("solicitacoes_cadastro")
+        .select("*")
+        .eq("status", "pendente")
+        .order("criado_em");
+      if (error) { mostrarToast("Erro ao carregar cadastros pendentes.", "erro"); return; }
+      cadastrosPendentesGlobal = data || [];
+      renderizarListaCadastrosPendentes();
+      atualizarBadgeCadastros();
+    }
+
+    function atualizarBadgeCadastros() {
+      const badge = document.getElementById("badge-cadastros-pendentes");
+      if (!badge) return;
+      const qtd = cadastrosPendentesGlobal.length;
+      badge.textContent = String(qtd);
+      badge.style.display = ehAdmin && qtd > 0 ? "inline-block" : "none";
+    }
+
+    function renderizarListaCadastrosPendentes() {
+      const grupo = document.getElementById("grupo-cadastros-pendentes");
+      const container = document.getElementById("lista-cadastros-pendentes");
+      if (!container || !grupo) return;
+      grupo.style.display = cadastrosPendentesGlobal.length > 0 ? "block" : "none";
+      container.innerHTML = cadastrosPendentesGlobal.map((c) => `
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; background: var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:8px 12px;">
+          <span>
+            <strong>${c.nome_ministerio}</strong>
+            <span style="color:var(--text-muted); font-size:13px;"> — ${c.responsavel_nome} ${c.responsavel_sobrenome} · ${c.email} · ${formatarData(c.criado_em)}</span>
+          </span>
+          <span style="display:flex; gap:6px; flex-shrink:0;">
+            <button type="button" class="btn" style="padding:4px 10px; background:#16a34a;" onclick="aprovarCadastro('${c.id}')" title="Aprovar"><i class="fa-solid fa-check"></i></button>
+            <button type="button" class="btn btn-secondary" style="padding:4px 10px; background:#ef4444; color:#fff;" onclick="rejeitarCadastro('${c.id}')" title="Rejeitar"><i class="fa-solid fa-xmark"></i></button>
+          </span>
+        </div>`).join("");
+    }
+
+    async function aprovarCadastro(id) {
+      if (!exigirAdmin()) return;
+      const c = cadastrosPendentesGlobal.find((x) => x.id === id);
+      if (!c) return;
+      const nome = prompt("Nome do ministério (pode ajustar antes de aprovar):", c.nome_ministerio);
+      if (!nome) return;
+      mostrarCarregando();
+      const { error: erroMinisterio } = await criarMinisterio(nome, c.email);
+      if (erroMinisterio) {
+        esconderCarregando();
+        return mostrarToast("Erro ao criar ministério: " + erroMinisterio.message, "erro");
+      }
+      const { error } = await supabaseClient
+        .from("solicitacoes_cadastro")
+        .update({ status: "aprovada", revisado_em: new Date().toISOString() })
+        .eq("id", id);
+      esconderCarregando();
+      if (error) return mostrarToast("Ministério criado, mas houve erro ao atualizar o pedido: " + error.message, "erro");
+      mostrarToast("Cadastro aprovado!", "sucesso");
+      carregarCadastrosPendentes();
+      carregarMinisterios();
+    }
+
+    async function rejeitarCadastro(id) {
+      if (!exigirAdmin()) return;
+      const observacao = prompt("Motivo da rejeição (opcional):", "");
+      if (observacao === null) return;
+      mostrarCarregando();
+      const { error } = await supabaseClient
+        .from("solicitacoes_cadastro")
+        .update({ status: "rejeitada", observacao_admin: observacao || null, revisado_em: new Date().toISOString() })
+        .eq("id", id);
+      esconderCarregando();
+      if (error) return mostrarToast("Erro ao rejeitar: " + error.message, "erro");
+      mostrarToast("Cadastro rejeitado.", "info");
+      carregarCadastrosPendentes();
+    }
+
     function conectarSupabase(url, key) {
       try {
         supabaseClient = supabase.createClient(url, key);
+        // O link de recuperação de senha abre o app com um token de
+        // "recovery" na URL; o cliente v2 detecta sozinho (detectSessionInUrl)
+        // e dispara este evento.
+        supabaseClient.auth.onAuthStateChange((event) => {
+          if (event === "PASSWORD_RECOVERY") abrirModalNovaSenha();
+        });
         carregarAcervo();
         carregarRepertorios();
         carregarDicionario();
@@ -3018,7 +3311,10 @@
       abertos.forEach(m => m.style.display = "none");
     });
     function abrirModalConfig() {
-      if (ehAdmin) renderizarListaMinisterios();
+      if (ehAdmin) {
+        renderizarListaMinisterios();
+        renderizarListaCadastrosPendentes();
+      }
       document.getElementById("modal-config").style.display = "flex";
     }
 

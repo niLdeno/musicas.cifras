@@ -15,7 +15,10 @@ Como fica:
 | Inserir música nova / ajustar música existente | ❌ | ✅ (vira **solicitação pendente**) | ✅ (direto, sem aprovação) |
 | Aprovar/rejeitar/ajustar solicitações | ❌ | ❌ (só vê o status das próprias) | ✅ |
 | Excluir música do acervo | ❌ | ❌ | ✅ |
-| Cadastrar/gerenciar ministérios | ❌ | ❌ | ✅ |
+| Se cadastrar sozinho (vira **pedido de acesso pendente**) | ✅ | — | — |
+| Aprovar/rejeitar pedidos de acesso de ministério | ❌ | ❌ | ✅ |
+| Cadastrar/gerenciar ministérios manualmente | ❌ | ❌ | ✅ |
+| Recuperar a própria senha por e-mail | — | ✅ | ✅ |
 
 ⚠️ Assim como antes: esconder botões no `index.html` não protege nada
 sozinho — a proteção de verdade são as regras de **RLS** abaixo no Supabase.
@@ -60,6 +63,24 @@ create table public.solicitacoes_musica (
   criado_em timestamptz not null default now(),
   revisado_em timestamptz
 );
+
+-- ===== PEDIDOS DE ACESSO (auto-cadastro de ministério) =====
+create table public.solicitacoes_cadastro (
+  id uuid primary key default gen_random_uuid(),
+  nome_ministerio text not null,
+  responsavel_nome text not null,
+  responsavel_sobrenome text not null,
+  email text not null,
+  status text not null default 'pendente' check (status in ('pendente', 'aprovada', 'rejeitada')),
+  observacao_admin text,
+  criado_em timestamptz not null default now(),
+  revisado_em timestamptz
+);
+
+-- evita duas solicitações pendentes pro mesmo e-mail ao mesmo tempo
+create unique index solicitacoes_cadastro_email_pendente_uidx
+  on public.solicitacoes_cadastro (lower(email))
+  where status = 'pendente';
 ```
 
 ---
@@ -159,6 +180,32 @@ create policy "admin apaga solicitacoes"
   on public.solicitacoes_musica for delete
   to authenticated
   using (lower(auth.jwt() ->> 'email') = lower('nildeno.aragao@gmail.com'));
+
+-- ---------- PEDIDOS DE ACESSO (auto-cadastro) ----------
+alter table public.solicitacoes_cadastro enable row level security;
+
+-- Qualquer pessoa pode pedir acesso (o cadastro cria a conta no Supabase
+-- Auth na hora, mas ela só funciona no sistema depois que isso for aprovado)
+create policy "qualquer um solicita cadastro"
+  on public.solicitacoes_cadastro for insert
+  to anon, authenticated
+  with check (true);
+
+-- Dono do e-mail (pra ver o próprio status) ou admin (pra ver tudo)
+create policy "leitura admin ou proprio email cadastro"
+  on public.solicitacoes_cadastro for select
+  to authenticated
+  using (
+    lower(auth.jwt() ->> 'email') = lower('nildeno.aragao@gmail.com')
+    or lower(email) = lower(auth.jwt() ->> 'email')
+  );
+
+-- Só admin aprova/rejeita
+create policy "admin decide cadastros"
+  on public.solicitacoes_cadastro for update
+  to authenticated
+  using (lower(auth.jwt() ->> 'email') = lower('nildeno.aragao@gmail.com'))
+  with check (lower(auth.jwt() ->> 'email') = lower('nildeno.aragao@gmail.com'));
 ```
 
 > Se o e-mail do administrador mudar no futuro, troque nos dois lugares:
@@ -167,20 +214,52 @@ create policy "admin apaga solicitacoes"
 
 ---
 
-## Passo 3 — Cadastrar um ministério
+## Passo 3 — Configurar o e-mail de recuperação de senha no Supabase
 
-Criar o **login** de um ministério ainda exige um passo manual no painel do
-Supabase (o app só usa a chave pública, então não consegue criar contas
-sozinho) — é o mesmo passo que já era feito para o editor único:
+A recuperação de senha ("Esqueci minha senha") usa o serviço de e-mail
+padrão do Supabase — não precisa configurar SMTP para começar a usar, mas
+tem **um ajuste obrigatório**:
+
+1. Painel do Supabase → **Authentication → URL Configuration**.
+2. Em **Redirect URLs**, adicione o endereço onde o sistema fica publicado
+   (ex.: `https://nildeno.github.io/musicas.cifras/*`). Sem isso, o link do
+   e-mail de recuperação é rejeitado pelo Supabase.
+3. (Opcional, recomendado) Em **Authentication → Providers → Email**,
+   deixe **Confirm email** ligado — assim o Supabase confirma que o e-mail
+   que o ministério digitou no auto-cadastro é real, o que também deixa a
+   recuperação de senha mais confiável.
+
+---
+
+## Passo 4 — Cadastrar um ministério
+
+Agora existem **dois jeitos**:
+
+### A) O próprio ministério se cadastra (recomendado)
+
+Na tela de login do sistema, o ministério clica em **"Cadastre seu
+ministério"**, preenche nome do ministério, nome/sobrenome do responsável,
+e-mail e senha, e envia. Isso já cria a conta de verdade no Supabase Auth,
+mas ela **não funciona ainda** — vira um pedido pendente que só você
+aprova. Você vê os pedidos em **Configurações → Ministérios → "Cadastros
+pendentes"**, pode ajustar o nome do ministério se quiser e clicar
+**Aprovar** (ou **Rejeitar**, com um motivo opcional). Aprovando, o
+ministério já consegue entrar na próxima tentativa.
+
+⚠️ Se você **rejeitar**, a conta que a pessoa criou continua existindo no
+Supabase Auth (o app não tem permissão pra apagar contas — isso exigiria a
+chave "service role", que este sistema nunca usa no navegador por
+segurança). Ela só fica "sem vínculo" e não consegue fazer nada no
+sistema. Se quiser removê-la de vez, apague manualmente em
+**Authentication → Users** no painel do Supabase.
+
+### B) Você cadastra manualmente (como antes)
 
 1. Painel do Supabase → **Authentication → Users → Add user**.
 2. Preencha e-mail e senha do ministério, marque **Auto Confirm User**.
 3. Clique em **Create user**.
-
-Depois disso, **vincular** aquele e-mail a um nome de ministério é feito
-**dentro do próprio sistema**: entre como administrador → **Configurações**
-→ seção **Ministérios** → "Adicionar ministério" (nome + o mesmo e-mail
-criado no passo 2). Não precisa mexer em SQL para isso.
+4. Entre como administrador → **Configurações → Ministérios** → "Adicionar
+   ministério" (nome + o mesmo e-mail criado acima).
 
 ⚠️ Se o ministério trocar de e-mail depois (você editar o cadastro dele no
 sistema), quem já estava logado precisa **sair e entrar de novo** — o login
@@ -188,7 +267,7 @@ antigo continua "lembrando" o e-mail anterior até relogar.
 
 ---
 
-## Como funciona a fila de solicitações
+## Como funciona a fila de solicitações (músicas)
 
 - Quando um ministério cria ou ajusta uma música pela aba **Músicas**, o
   formulário é o mesmo de sempre, mas em vez de gravar direto no acervo, cria
@@ -202,3 +281,20 @@ antigo continua "lembrando" o e-mail anterior até relogar.
     explicando o motivo.
 - O ministério que enviou só enxerga o status e a observação — não pode
   editar depois de enviar.
+
+---
+
+## Como funciona o auto-cadastro e a recuperação de senha
+
+- **Cadastro:** ao enviar o formulário, o sistema já cria a conta de login
+  (e-mail + senha) no Supabase e registra o pedido em "Cadastros
+  pendentes". A pessoa é deslogada na hora — mesmo com a conta criada, ela
+  não consegue usar nada até você aprovar. Se tentar entrar antes de você
+  decidir, o sistema avisa que o cadastro está aguardando aprovação (ou
+  que foi rejeitado, se for o caso).
+- **Aprovação:** você revisa nome do ministério, responsável e e-mail, pode
+  ajustar o nome antes de confirmar, e aprova ou rejeita.
+- **Recuperar senha:** o ministério clica em "Esqueci minha senha" na tela
+  de login, digita o e-mail, e recebe um link do Supabase para definir uma
+  senha nova — sem precisar falar com você. Só funciona depois de
+  configurado o Passo 3 acima (Redirect URLs).
