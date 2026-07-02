@@ -47,7 +47,7 @@ alter table public.repertorios
 create table public.solicitacoes_musica (
   id uuid primary key default gen_random_uuid(),
   tipo text not null check (tipo in ('nova', 'edicao')),
-  musica_id uuid references public.musicas(id),   -- só preenchido quando tipo = 'edicao'
+  musica_id bigint references public.musicas(id),   -- só preenchido quando tipo = 'edicao' (id de `musicas` é bigint, não uuid)
   ministerio_id uuid not null references public.ministerios(id) on delete cascade,
   -- se o ministério for removido, o histórico de solicitações dele some junto
   titulo text,
