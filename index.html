@@ -715,6 +715,98 @@
       flex-wrap: wrap;
     }
 
+    .btn-voltar-visor {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 13px;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+
+    .btn-voltar-visor:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    .visor-header-right {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .visor-album {
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 2px;
+    }
+
+    .grupo-fonte {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 3px;
+    }
+
+    .grupo-fonte .btn-ferramenta {
+      border: none;
+      background: transparent;
+      height: 34px;
+      padding: 0 12px;
+    }
+
+    .seletor-versao-wrap {
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+      background: var(--accent);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px 10px;
+      color: var(--primary-700);
+      font-size: 11px;
+      width: fit-content;
+    }
+
+    .seletor-versao-wrap i {
+      font-size: 10px;
+    }
+
+    .seletor-versao {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary-700);
+      background: transparent;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      max-width: 200px;
+      padding: 0;
+    }
+
+    .seletor-versao option {
+      background: var(--surface);
+      color: var(--text-main);
+      font-weight: 500;
+    }
+
     .visor-header-left {
       display: flex;
       align-items: center;
@@ -729,14 +821,6 @@
       font-weight: var(--fw-bold);
       line-height: 1.3;
       flex: 1;
-    }
-
-    .visor-header-right {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 12px;
-      flex-wrap: wrap;
     }
 
     #nav-repertorio-visor {
@@ -838,13 +922,21 @@
     .controles-tom {
       display: flex;
       align-items: center;
-      gap: 16px;
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      padding: 0 16px;
+      gap: 14px;
+      background: var(--chord-bg);
+      border: 1px solid rgba(224, 89, 11, 0.25);
+      padding: 0 8px 0 16px;
       height: 44px;
       border-radius: 12px;
       margin: 0;
+    }
+
+    .controles-tom .rotulo-tom {
+      font-weight: 800;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--chord-color);
     }
 
     .controles-tom span {
@@ -2163,7 +2255,6 @@
       #nav-repertorio-visor {
         width: 100%;
         justify-content: space-between;
-        order: -1;
         box-sizing: border-box;
       }
 
@@ -2603,13 +2694,16 @@
       <div class="main-area">
         <div class="visor-header">
           <div class="visor-header-left">
-            <button class="btn btn-secondary" onclick="fecharVisor()">
-              <i class="fa-solid fa-arrow-left"></i> Voltar
+            <button class="btn-voltar-visor" onclick="fecharVisor()" title="Voltar" aria-label="Voltar">
+              <i class="fa-solid fa-arrow-left"></i>
             </button>
             <div style="display: flex; flex-direction: column;">
               <h2 id="visor-titulo">-</h2>
-              <select id="seletor-versao-visor" onchange="mudarVersaoVisor()" class="btn-secondary"
-                style="display: none; margin-top: 4px; max-width: 250px; padding: 4px 8px; font-size: 12px; border-radius: 6px; cursor: pointer;"></select>
+              <div id="visor-album" class="visor-album" style="display: none;"><i class="fa-solid fa-compact-disc" style="font-size: 10px;"></i><span id="visor-album-texto"></span></div>
+              <div class="seletor-versao-wrap" id="seletor-versao-wrap" style="display: none;">
+                <i class="fa-solid fa-code-branch"></i>
+                <select id="seletor-versao-visor" onchange="mudarVersaoVisor()" class="seletor-versao"></select>
+              </div>
             </div>
           </div>
 
@@ -2625,12 +2719,14 @@
 
           <div class="visor-header-right">
             <div class="visor-ferramentas">
-              <button class="btn-ferramenta" onclick="mudarTamanhoFonte(-2)">
-                A-
-              </button>
-              <button class="btn-ferramenta" onclick="mudarTamanhoFonte(2)">
-                A+
-              </button>
+              <div class="grupo-fonte">
+                <button class="btn-ferramenta" onclick="mudarTamanhoFonte(-2)">
+                  A-
+                </button>
+                <button class="btn-ferramenta" onclick="mudarTamanhoFonte(2)">
+                  A+
+                </button>
+              </div>
               <button class="btn-ferramenta" id="btn-colunas" onclick="toggleColunas()">
                 <i class="fa-solid fa-columns"></i> 1 Coluna
               </button>
@@ -2641,9 +2737,9 @@
             </div>
 
             <div class="controles-tom">
+              <span class="rotulo-tom">Tom</span>
               <button class="btn-tom" onclick="alterarTom(-1)">-</button>
-              <span>Tom:
-                <strong id="visor-tom" style="font-size: 20px; color: var(--primary)">E</strong></span>
+              <strong id="visor-tom" style="font-size: 20px; color: var(--chord-color)">E</strong>
               <button class="btn-tom" onclick="alterarTom(1)">+</button>
             </div>
           </div>
@@ -5411,7 +5507,8 @@
       musicaSelecionada = playlistAtual[indexPlaylist];
 
       const seletor = document.getElementById("seletor-versao-visor");
-      seletor.style.display = "none";
+      const seletorWrap = document.getElementById("seletor-versao-wrap");
+      seletorWrap.style.display = "none";
 
       if (!musicaSelecionada.momento_repertorio) {
         const versoes = acervoGlobal.filter(m => (m.titulo || "").trim().toLowerCase() === (musicaSelecionada.titulo || "").trim().toLowerCase());
@@ -5431,15 +5528,23 @@
             if (v.id == musicaSelecionada.id) opt.selected = true;
             seletor.appendChild(opt);
           });
-          seletor.style.display = "block";
+          seletorWrap.style.display = "flex";
         }
       }
       semitonsAcumulados = 0;
-      let tituloMomento = musicaSelecionada.titulo;
+      const { tituloLimpo: tituloVisorLimpo, album: albumVisor } = extrairAlbumDoTitulo(musicaSelecionada.titulo);
+      let tituloMomento = tituloVisorLimpo;
       if (musicaSelecionada.momento_repertorio) {
         tituloMomento = `<span style="display:block; font-size: 14px; color: var(--text-muted); font-weight: normal; margin-bottom: 2px;">${musicaSelecionada.momento_repertorio}</span>` + tituloMomento;
       }
       document.getElementById("visor-titulo").innerHTML = tituloMomento;
+      const elAlbumVisor = document.getElementById("visor-album");
+      if (albumVisor) {
+        document.getElementById("visor-album-texto").textContent = albumVisor;
+        elAlbumVisor.style.display = "flex";
+      } else {
+        elAlbumVisor.style.display = "none";
+      }
       document.getElementById("contador-repertorio").textContent =
         `${indexPlaylist + 1} / ${playlistAtual.length}`;
       renderizarTextoTransposto();
