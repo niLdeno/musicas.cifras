@@ -9,7 +9,9 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;700&family=Source+Code+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;700&family=Source+Code+Pro:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
   <script src="dicionario_br.js"></script>
   <script src="dicionario_teclado.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js" referrerpolicy="origin"></script>
@@ -1069,7 +1071,9 @@
       transition: background 0.12s;
     }
 
-    .piano-white:hover { background: linear-gradient(to bottom, #f4f6ff, #e4e8f5); }
+    .piano-white:hover {
+      background: linear-gradient(to bottom, #f4f6ff, #e4e8f5);
+    }
 
     .piano-blacks {
       position: absolute;
@@ -1092,7 +1096,9 @@
       transition: background 0.12s;
     }
 
-    .piano-black:hover { background: linear-gradient(to bottom, #4a4a55, #16161c); }
+    .piano-black:hover {
+      background: linear-gradient(to bottom, #4a4a55, #16161c);
+    }
 
     .piano-dot {
       position: absolute;
@@ -1106,10 +1112,23 @@
       pointer-events: none;
     }
 
-    .piano-white .piano-dot { bottom: 12px; }
-    .piano-black .piano-dot { bottom: 8px; width: 14px; height: 14px; }
-    .piano-dot.nota { background: #f59331; }
-    .piano-dot.root { background: #e23b2e; }
+    .piano-white .piano-dot {
+      bottom: 12px;
+    }
+
+    .piano-black .piano-dot {
+      bottom: 8px;
+      width: 14px;
+      height: 14px;
+    }
+
+    .piano-dot.nota {
+      background: #f59331;
+    }
+
+    .piano-dot.root {
+      background: #e23b2e;
+    }
 
     .braco-grid {
       display: grid;
@@ -1417,14 +1436,17 @@
       border-color: #334155;
       color: #f8fafc;
     }
+
     body.dark-mode .skeleton {
-      background: linear-gradient(90deg, #1e293b 25%, rgba(51,65,85,0.5) 50%, #1e293b 75%);
+      background: linear-gradient(90deg, #1e293b 25%, rgba(51, 65, 85, 0.5) 50%, #1e293b 75%);
       background-size: 200% 100%;
       animation: shimmer 1.5s infinite;
     }
+
     body.dark-mode .skeleton-card {
       background: #0f172a;
     }
+
     body.dark-mode .tag-pill[style*="background: #e0e7ff"] {
       background: #1e293b !important;
       color: #818cf8 !important;
@@ -1443,6 +1465,7 @@
       gap: 10px;
       pointer-events: none;
     }
+
     .toast {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -1452,7 +1475,7 @@
       font-size: 14px;
       font-weight: 500;
       color: var(--text-main);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
       display: flex;
       align-items: center;
       gap: 10px;
@@ -1461,21 +1484,62 @@
       max-width: 340px;
       animation: toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .toast.saindo { animation: toastOut 0.3s ease forwards; }
-    .toast.sucesso { border-left-color: #22c55e; }
-    .toast.erro    { border-left-color: #ef4444; }
-    .toast.info    { border-left-color: var(--primary); }
-    .toast i       { font-size: 16px; flex-shrink: 0; }
-    .toast.sucesso i { color: #22c55e; }
-    .toast.erro    i { color: #ef4444; }
-    .toast.info    i { color: var(--primary); }
-    @keyframes toastIn {
-      from { opacity: 0; transform: translateX(20px) scale(0.95); }
-      to   { opacity: 1; transform: translateX(0) scale(1); }
+
+    .toast.saindo {
+      animation: toastOut 0.3s ease forwards;
     }
+
+    .toast.sucesso {
+      border-left-color: #22c55e;
+    }
+
+    .toast.erro {
+      border-left-color: #ef4444;
+    }
+
+    .toast.info {
+      border-left-color: var(--primary);
+    }
+
+    .toast i {
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .toast.sucesso i {
+      color: #22c55e;
+    }
+
+    .toast.erro i {
+      color: #ef4444;
+    }
+
+    .toast.info i {
+      color: var(--primary);
+    }
+
+    @keyframes toastIn {
+      from {
+        opacity: 0;
+        transform: translateX(20px) scale(0.95);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+      }
+    }
+
     @keyframes toastOut {
-      from { opacity: 1; transform: translateX(0) scale(1); }
-      to   { opacity: 0; transform: translateX(20px) scale(0.95); }
+      from {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+      }
+
+      to {
+        opacity: 0;
+        transform: translateX(20px) scale(0.95);
+      }
     }
 
     /* =========================================
@@ -1484,23 +1548,32 @@
     #loading-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(15,23,42,0.25);
+      background: rgba(15, 23, 42, 0.25);
       backdrop-filter: blur(2px);
       z-index: 9000;
       display: none;
       align-items: center;
       justify-content: center;
     }
-    #loading-overlay.ativo { display: flex; }
+
+    #loading-overlay.ativo {
+      display: flex;
+    }
+
     .spinner {
       width: 44px;
       height: 44px;
-      border: 3px solid rgba(255,255,255,0.3);
+      border: 3px solid rgba(255, 255, 255, 0.3);
       border-top-color: white;
       border-radius: 50%;
       animation: spin 0.75s linear infinite;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
 
     /* Skeleton loading nos cards */
     .skeleton-card {
@@ -1512,19 +1585,46 @@
       align-items: center;
       gap: 16px;
     }
+
     .skeleton {
-      background: linear-gradient(90deg, var(--border) 25%, rgba(148,163,184,0.15) 50%, var(--border) 75%);
+      background: linear-gradient(90deg, var(--border) 25%, rgba(148, 163, 184, 0.15) 50%, var(--border) 75%);
       background-size: 200% 100%;
       animation: shimmer 1.5s infinite;
       border-radius: 6px;
     }
-    .sk-icon { width: 48px; height: 48px; border-radius: 12px; flex-shrink: 0; }
-    .sk-lines { flex: 1; display: flex; flex-direction: column; gap: 10px; }
-    .sk-title { height: 16px; width: 55%; }
-    .sk-sub   { height: 12px; width: 38%; }
+
+    .sk-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      flex-shrink: 0;
+    }
+
+    .sk-lines {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .sk-title {
+      height: 16px;
+      width: 55%;
+    }
+
+    .sk-sub {
+      height: 12px;
+      width: 38%;
+    }
+
     @keyframes shimmer {
-      0%   { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
+      0% {
+        background-position: 200% 0;
+      }
+
+      100% {
+        background-position: -200% 0;
+      }
     }
 
     /* =========================================
@@ -1537,11 +1637,13 @@
       flex: 1;
       min-width: 0;
     }
+
     .search-wrapper input {
       width: 100%;
       padding-right: 16px;
       box-sizing: border-box;
     }
+
     .search-clear {
       position: absolute;
       right: 10px;
@@ -1558,8 +1660,15 @@
       transition: all 0.15s;
       line-height: 1;
     }
-    .search-clear:hover { color: var(--text-main); background: var(--border); }
-    .search-clear.visivel { display: flex; }
+
+    .search-clear:hover {
+      color: var(--text-main);
+      background: var(--border);
+    }
+
+    .search-clear.visivel {
+      display: flex;
+    }
 
     /* =========================================
        ✨ FAB (Mobile nova música)
@@ -1577,14 +1686,20 @@
       border: none;
       font-size: 22px;
       cursor: pointer;
-      box-shadow: 0 6px 20px rgba(99,102,241,0.45);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
       z-index: 999;
       align-items: center;
       justify-content: center;
       transition: all 0.2s;
     }
-    .fab:hover { transform: scale(1.08); }
-    .fab:active { transform: scale(0.95); }
+
+    .fab:hover {
+      transform: scale(1.08);
+    }
+
+    .fab:active {
+      transform: scale(0.95);
+    }
 
     /* =========================================
        ✨ EMPTY STATE
@@ -1595,50 +1710,106 @@
       padding: 60px 20px;
       color: var(--text-muted);
     }
+
     .empty-state i {
       font-size: 48px;
       margin-bottom: 16px;
       opacity: 0.3;
       display: block;
     }
-    .empty-state p { font-size: 15px; margin: 0; }
-    .empty-state small { font-size: 13px; margin-top: 6px; display: block; }
+
+    .empty-state p {
+      font-size: 15px;
+      margin: 0;
+    }
+
+    .empty-state small {
+      font-size: 13px;
+      margin-top: 6px;
+      display: block;
+    }
 
     /* =========================================
        ✨ RESPONSIVIDADE (MOBILE & TABLET)
        ========================================= */
     /* ===== TELAS MÉDIAS (< 1024px) ===== */
     @media (max-width: 1024px) {
-      .main-area { padding: 28px 24px; }
-      #render-cifra { padding: 28px 28px; font-size: 15px; }
-      #render-cifra.layout-2-colunas { font-size: 13px; }
-      #render-cifra.layout-3-colunas { font-size: 12px; }
-      .linha-acorde { word-spacing: normal; }
-      .layout-3-colunas { gap: 16px !important; }
+      .main-area {
+        padding: 28px 24px;
+      }
+
+      #render-cifra {
+        padding: 28px 28px;
+        font-size: 15px;
+      }
+
+      #render-cifra.layout-2-colunas {
+        font-size: 13px;
+      }
+
+      #render-cifra.layout-3-colunas {
+        font-size: 12px;
+      }
+
+      .linha-acorde {
+        word-spacing: normal;
+      }
+
+      .layout-3-colunas {
+        gap: 16px !important;
+      }
     }
 
     /* ===== TABLET (769px - 1024px) ===== */
     @media (min-width: 769px) and (max-width: 1024px) {
-      body:not(.menu-recolhido) .sidebar { width: 210px !important; }
-      body:not(.menu-recolhido) .container { margin-left: calc(210px + 20px) !important; }
+      body:not(.menu-recolhido) .sidebar {
+        width: 210px !important;
+      }
 
-      .acervo-list { grid-template-columns: 1fr !important; }
+      body:not(.menu-recolhido) .container {
+        margin-left: calc(210px + 20px) !important;
+      }
 
-      .visor-header { flex-wrap: wrap; gap: 12px; }
-      .visor-header-right { flex-wrap: wrap; gap: 10px; }
+      .acervo-list {
+        grid-template-columns: 1fr !important;
+      }
 
-      .modal-content { padding: 28px 24px; }
-      .builder-container { grid-template-columns: 1fr 1fr !important; }
+      .visor-header {
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .visor-header-right {
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .modal-content {
+        padding: 28px 24px;
+      }
+
+      .builder-container {
+        grid-template-columns: 1fr 1fr !important;
+      }
 
       #render-cifra {
         padding: 22px 20px;
         white-space: pre;
       }
-      .layout-2-colunas { gap: 20px; }
-      .layout-3-colunas { gap: 16px; }
+
+      .layout-2-colunas {
+        gap: 20px;
+      }
+
+      .layout-3-colunas {
+        gap: 16px;
+      }
 
       /* Toast fica acima do normal, não sobrepõe nada */
-      #toast-container { bottom: 20px; right: 20px; }
+      #toast-container {
+        bottom: 20px;
+        right: 20px;
+      }
     }
 
     /* Zone the gate-screen text/buttons must stay inside: below the cross,
@@ -1658,14 +1829,17 @@
         font-size: clamp(15px, 3.4vh, 22px) !important;
         margin-bottom: clamp(1px, 0.5vh, 8px) !important;
       }
+
       .gate-content-text {
         font-size: clamp(10px, 1.7vh, 14px) !important;
         line-height: 1.25 !important;
         margin-bottom: clamp(4px, 1.2vh, 24px) !important;
       }
+
       .gate-content-buttons {
         gap: clamp(6px, 1vh, 12px) !important;
       }
+
       .gate-content-buttons .btn {
         padding: clamp(5px, 1.1vh, 11px) 13px !important;
         font-size: clamp(10px, 1.6vh, 14px) !important;
@@ -1688,14 +1862,17 @@
         font-size: clamp(13px, 3.6vh, 22px) !important;
         margin-bottom: clamp(1px, 0.4vh, 8px) !important;
       }
+
       .gate-content-text {
         font-size: clamp(9px, 1.6vh, 14px) !important;
         line-height: 1.2 !important;
         margin-bottom: clamp(3px, 1vh, 24px) !important;
       }
+
       .gate-content-buttons {
         gap: clamp(5px, 0.9vh, 12px) !important;
       }
+
       .gate-content-buttons .btn {
         padding: clamp(4px, 1vh, 11px) 12px !important;
         font-size: clamp(9px, 1.5vh, 14px) !important;
@@ -1710,15 +1887,17 @@
         flex-direction: row;
         padding: 0;
         border-right: none;
-        border-top: 1px solid rgba(255,255,255,0.08);
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
         z-index: 1000;
         overflow: visible;
       }
+
       .sidebar .sidebar-top,
       .sidebar-profile,
-      .sidebar-nav > button:first-child {
+      .sidebar-nav>button:first-child {
         display: none !important;
       }
+
       .sidebar-nav {
         flex-direction: row;
         justify-content: space-around;
@@ -1727,6 +1906,7 @@
         gap: 0;
         padding: 0 4px;
       }
+
       .nav-item {
         flex-direction: column;
         gap: 2px;
@@ -1739,12 +1919,17 @@
         text-align: center;
         letter-spacing: 0;
       }
+
       .nav-item i {
         font-size: 20px;
         width: auto !important;
         margin: 0;
       }
-      .nav-item span { display: block !important; white-space: nowrap; }
+
+      .nav-item span {
+        display: block !important;
+        white-space: nowrap;
+      }
 
       /* Indicador ativo: borda no TOPO (vem de baixo) */
       .nav-active {
@@ -1752,21 +1937,32 @@
         border-top: 3px solid var(--primary) !important;
         border-radius: 0 !important;
         padding-left: 2px !important;
-        background: rgba(99,102,241,0.08) !important;
+        background: rgba(99, 102, 241, 0.08) !important;
         color: #818cf8 !important;
       }
-      .nav-active i { color: #818cf8; }
+
+      .nav-active i {
+        color: #818cf8;
+      }
 
       /* --- Layout --- */
       .container {
         margin-left: 0 !important;
         padding-bottom: 80px;
       }
-      .main-area { padding: 16px 14px; }
+
+      .main-area {
+        padding: 16px 14px;
+      }
 
       /* --- Header titles --- */
-      .header-title-area h2 { font-size: 22px; }
-      .header-title-area p  { font-size: 13px; }
+      .header-title-area h2 {
+        font-size: 22px;
+      }
+
+      .header-title-area p {
+        font-size: 13px;
+      }
 
       /* --- Área de busca --- */
       .acervo-busca-area {
@@ -1775,32 +1971,78 @@
         gap: 10px !important;
         align-items: stretch !important;
       }
+
       .acervo-busca-area .search-wrapper,
       .acervo-busca-area #acervo-busca {
         width: 100% !important;
         min-width: 0 !important;
       }
-      .btn-nova-musica-desktop { display: none !important; }
-      .fab { display: flex !important; }
-      #toast-container { bottom: 74px; right: 14px; }
+
+      .btn-nova-musica-desktop {
+        display: none !important;
+      }
+
+      .fab {
+        display: flex !important;
+      }
+
+      #toast-container {
+        bottom: 74px;
+        right: 14px;
+      }
 
       /* --- Botão Limpar --- */
-      .btn-limpar-busca { width: 100%; justify-content: center; }
+      .btn-limpar-busca {
+        width: 100%;
+        justify-content: center;
+      }
 
       /* --- Cards --- */
-      .acervo-card { padding: 14px 14px; border-radius: 12px; }
-      .card-icon { width: 44px; height: 44px; font-size: 17px; border-radius: 10px; }
-      .acervo-titulo { font-size: 15px; }
-      .acervo-sub { gap: 6px; }
-      .tag-pill { font-size: 10px; padding: 3px 8px; }
+      .acervo-card {
+        padding: 14px 14px;
+        border-radius: 12px;
+      }
+
+      .card-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 17px;
+        border-radius: 10px;
+      }
+
+      .acervo-titulo {
+        font-size: 15px;
+      }
+
+      .acervo-sub {
+        gap: 6px;
+      }
+
+      .tag-pill {
+        font-size: 10px;
+        padding: 3px 8px;
+      }
 
       /* --- Formulários --- */
-      .form-grid { grid-template-columns: 1fr !important; gap: 14px; }
-      .builder-container { grid-template-columns: 1fr !important; gap: 12px !important; }
-      .form-group.full-width { grid-column: span 1; }
+      .form-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px;
+      }
+
+      .builder-container {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+      }
+
+      .form-group.full-width {
+        grid-column: span 1;
+      }
 
       /* --- Modals (sheet do fundo em mobile) --- */
-      .modal-overlay { align-items: flex-end; }
+      .modal-overlay {
+        align-items: flex-end;
+      }
+
       .modal-content {
         padding: 20px 16px 28px;
         border-radius: 20px 20px 0 0 !important;
@@ -1810,12 +2052,26 @@
         margin: 0;
         animation: sheetIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       }
+
       @keyframes sheetIn {
-        from { transform: translateY(30px); opacity: 0; }
-        to   { transform: translateY(0); opacity: 1; }
+        from {
+          transform: translateY(30px);
+          opacity: 0;
+        }
+
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
       }
-      .modal-header { margin-bottom: 18px; }
-      .modal-header h2 { font-size: 18px; }
+
+      .modal-header {
+        margin-bottom: 18px;
+      }
+
+      .modal-header h2 {
+        font-size: 18px;
+      }
 
       /* --- Tabelas (scroll horizontal, touch-friendly) --- */
       .card-table {
@@ -1823,7 +2079,12 @@
         -webkit-overflow-scrolling: touch;
         display: block;
       }
-      th, td { padding: 12px 14px; white-space: nowrap; }
+
+      th,
+      td {
+        padding: 12px 14px;
+        white-space: nowrap;
+      }
 
       /* --- Visor de Cifras --- */
       .visor-header {
@@ -1833,16 +2094,19 @@
         border-radius: 12px;
         margin-bottom: 14px;
       }
+
       .visor-header-left {
         width: 100%;
         gap: 10px;
         flex: 0 0 auto;
         box-sizing: border-box;
       }
+
       .visor-header-left h2 {
         font-size: 15px;
         line-height: 1.3;
       }
+
       .visor-header-right {
         width: 100%;
         flex-direction: column;
@@ -1851,12 +2115,14 @@
         margin-top: 0;
         box-sizing: border-box;
       }
+
       .visor-ferramentas {
         width: 100%;
         justify-content: stretch;
         gap: 6px;
         box-sizing: border-box;
       }
+
       .btn-ferramenta {
         flex: 1;
         font-size: 12px;
@@ -1865,6 +2131,7 @@
         border-radius: 10px;
         box-sizing: border-box;
       }
+
       .controles-tom {
         width: 100%;
         justify-content: center;
@@ -1872,12 +2139,14 @@
         border-radius: 10px;
         box-sizing: border-box;
       }
+
       #nav-repertorio-visor {
         width: 100%;
         justify-content: space-between;
         order: -1;
         box-sizing: border-box;
       }
+
       #render-cifra {
         padding: 20px 16px;
         border-radius: 12px;
@@ -1886,17 +2155,28 @@
         letter-spacing: 0;
         overflow-x: auto;
       }
+
       .layout-2-colunas,
       .layout-3-colunas {
         flex-direction: column !important;
       }
 
       /* --- Construtor de acorde --- */
-      .braco-container { width: 100%; max-width: 300px; }
+      .braco-container {
+        width: 100%;
+        max-width: 300px;
+      }
 
       /* --- Botões ação nos cards (maior para touch) --- */
-      .action-circle { width: 44px; height: 44px; }
-      .action-more   { width: 40px; height: 40px; }
+      .action-circle {
+        width: 44px;
+        height: 44px;
+      }
+
+      .action-more {
+        width: 40px;
+        height: 40px;
+      }
 
       /* --- Cabeçalho do header que empilha bem --- */
       .header-area-top {
@@ -1908,10 +2188,23 @@
 
     /* ===== PEQUENOS (≤ 400px) ===== */
     @media (max-width: 400px) {
-      .acervo-card { padding: 12px 12px; }
-      .card-icon { width: 38px; height: 38px; font-size: 15px; }
-      .acervo-titulo { font-size: 14px; }
-      .main-area { padding: 12px 10px; }
+      .acervo-card {
+        padding: 12px 12px;
+      }
+
+      .card-icon {
+        width: 38px;
+        height: 38px;
+        font-size: 15px;
+      }
+
+      .acervo-titulo {
+        font-size: 14px;
+      }
+
+      .main-area {
+        padding: 12px 10px;
+      }
     }
 
     /* =========================================
@@ -2028,15 +2321,25 @@
     }
 
     /* Indicador de status no rodapé do menu */
-    .profile-role.status-editor { color: #4ade80; }
-    .profile-role.status-ministerio { color: #4ade80; }
-    .profile-role.status-leitura { color: #94a3b8; }
+    .profile-role.status-editor {
+      color: #4ade80;
+    }
+
+    .profile-role.status-ministerio {
+      color: #4ade80;
+    }
+
+    .profile-role.status-leitura {
+      color: #94a3b8;
+    }
   </style>
 </head>
 
 <body>
   <div id="toast-container"></div>
-  <div id="loading-overlay"><div class="spinner"></div></div>
+  <div id="loading-overlay">
+    <div class="spinner"></div>
+  </div>
   <div id="tooltip-acorde"></div>
 
   <aside class="sidebar">
@@ -2067,7 +2370,8 @@
       </button>
       <button id="nav-solicitacoes" class="nav-item logado-only" onclick="mudarAmbiente('solicitacoes')">
         <i class="fa-solid fa-inbox"></i><span>Solicitações</span>
-        <span id="badge-solicitacoes-pendentes" style="display:none; margin-left:6px; background:#ef4444; color:#fff; font-size:11px; font-weight:700; border-radius:999px; padding:1px 7px;">0</span>
+        <span id="badge-solicitacoes-pendentes"
+          style="display:none; margin-left:6px; background:#ef4444; color:#fff; font-size:11px; font-weight:700; border-radius:999px; padding:1px 7px;">0</span>
       </button>
 
       <button class="nav-item" id="btn-dark-sidebar" style="margin-top: auto" onclick="toggleDarkSystem()">
@@ -2075,11 +2379,12 @@
       </button>
       <button class="nav-item" onclick="abrirModalConfig()">
         <i class="fa-solid fa-gear"></i><span>Configurações</span>
-        <span id="badge-cadastros-pendentes" class="admin-only" style="display:none; margin-left:6px; background:#ef4444; color:#fff; font-size:11px; font-weight:700; border-radius:999px; padding:1px 7px;">0</span>
+        <span id="badge-cadastros-pendentes" class="admin-only"
+          style="display:none; margin-left:6px; background:#ef4444; color:#fff; font-size:11px; font-weight:700; border-radius:999px; padding:1px 7px;">0</span>
       </button>
 
-      <div class="sidebar-profile" id="sidebar-profile" style="cursor: pointer; transition: 0.2s" onclick="toggleLogin()"
-        onmouseover="this.style.background = 'rgba(255,255,255,0.01)'"
+      <div class="sidebar-profile" id="sidebar-profile" style="cursor: pointer; transition: 0.2s"
+        onclick="toggleLogin()" onmouseover="this.style.background = 'rgba(255,255,255,0.01)'"
         onmouseout="this.style.background = 'transparent'" title="Entrar">
         <div class="profile-avatar" id="profile-avatar"><i class="fa-solid fa-lock"></i></div>
         <div class="profile-info">
@@ -2093,7 +2398,8 @@
   <div id="tela-bloqueio-acesso" style="position: fixed; inset: 0; z-index: 1000; background: #17182b;">
     <picture>
       <source media="(max-width: 768px)" srcset="imagem-fundo-mobile.jpg?v=2">
-      <img src="imagem-fundo.jpg?v=2" alt="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; display: block;">
+      <img src="imagem-fundo.jpg?v=2" alt=""
+        style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; display: block;">
     </picture>
     <div class="gate-content-zone" style="
           position: absolute; left: 0; right: 0; top: 60%; transform: translateY(-50%);
@@ -2101,14 +2407,17 @@
           text-align: center; padding: 12px 24px; overflow-y: auto;
         ">
       <div class="gate-content-inner" style="max-width: 460px;">
-        <h2 class="gate-content-title" style="margin: 0 0 8px; color: #ffffff; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.55);">Acesso restrito</h2>
-        <p class="gate-content-text" style="color: rgba(255, 255, 255, 0.9); max-width: 420px; margin: 0 0 24px; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55);">
+        <h2 class="gate-content-title"
+          style="margin: 0 0 8px; color: #ffffff; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.55);">Acesso restrito</h2>
+        <p class="gate-content-text"
+          style="color: rgba(255, 255, 255, 0.9); max-width: 420px; margin: 0 0 24px; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55);">
           Este sistema é de uso exclusivo dos ministérios de música cadastrados.
           Entre com sua conta ou cadastre seu ministério para começar.
         </p>
         <div class="gate-content-buttons" style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;">
           <button class="btn" onclick="abrirModalLogin()"><i class="fa-solid fa-right-to-bracket"></i> Entrar</button>
-          <button class="btn btn-secondary" onclick="abrirModalCadastroMinisterio()"><i class="fa-solid fa-user-plus"></i> Cadastrar ministério</button>
+          <button class="btn btn-secondary" onclick="abrirModalCadastroMinisterio()"><i
+              class="fa-solid fa-user-plus"></i> Cadastrar ministério</button>
         </div>
       </div>
     </div>
@@ -2177,7 +2486,8 @@
             <i class="fa-solid fa-plus"></i> Novo Repertório
           </button>
         </div>
-        <div id="filtro-ministerios-repertorios" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;"></div>
+        <div id="filtro-ministerios-repertorios" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
+        </div>
         <div class="card-table">
           <table>
             <thead>
@@ -2215,8 +2525,7 @@
         </div>
         <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 16px; max-width: 420px;">
           <input type="text" id="dic-busca" placeholder="Buscar acorde (ex: D9, Am7)..."
-            oninput="renderizarTabelaDicionario()"
-            style="flex: 1; min-width: 0; box-sizing: border-box;" />
+            oninput="renderizarTabelaDicionario()" style="flex: 1; min-width: 0; box-sizing: border-box;" />
           <button class="btn btn-secondary" onclick="limparBuscaDicionario()" title="Limpar busca"
             style="width: 44px; height: 44px; padding: 0; flex-shrink: 0; justify-content: center;">
             <i class="fa-solid fa-delete-left"></i>
@@ -2277,7 +2586,11 @@
             <button class="btn btn-secondary" onclick="fecharVisor()">
               <i class="fa-solid fa-arrow-left"></i> Voltar
             </button>
-            <h2 id="visor-titulo">-</h2>
+            <div style="display: flex; flex-direction: column;">
+              <h2 id="visor-titulo">-</h2>
+              <select id="seletor-versao-visor" onchange="mudarVersaoVisor()" class="btn-secondary"
+                style="display: none; margin-top: 4px; max-width: 250px; padding: 4px 8px; font-size: 12px; border-radius: 6px; cursor: pointer;"></select>
+            </div>
           </div>
 
           <div id="nav-repertorio-visor" style="display: none">
@@ -2301,7 +2614,8 @@
               <button class="btn-ferramenta" id="btn-colunas" onclick="toggleColunas()">
                 <i class="fa-solid fa-columns"></i> 1 Coluna
               </button>
-              <button class="btn-ferramenta" id="btn-instrumento" onclick="alternarInstrumento()" title="Instrumento dos diagramas de acorde">
+              <button class="btn-ferramenta" id="btn-instrumento" onclick="alternarInstrumento()"
+                title="Instrumento dos diagramas de acorde">
                 <i class="fa-solid fa-guitar"></i> Violão
               </button>
             </div>
@@ -2362,21 +2676,29 @@
           <option value="violao">🎸 Violão / Guitarra (braço)</option>
           <option value="teclado">🎹 Teclado / Piano (notas)</option>
         </select>
-        <small style="color: var(--text-muted); margin-top: 4px;">Define como os acordes aparecem ao clicar neles na cifra.</small>
+        <small style="color: var(--text-muted); margin-top: 4px;">Define como os acordes aparecem ao clicar neles na
+          cifra.</small>
       </div>
-      <div class="form-group full-width admin-only" id="grupo-cadastros-pendentes" style="margin-bottom: 20px; border-top: 1px solid var(--border); padding-top: 16px; display: none;">
+      <div class="form-group full-width admin-only" id="grupo-cadastros-pendentes"
+        style="margin-bottom: 20px; border-top: 1px solid var(--border); padding-top: 16px; display: none;">
         <label style="margin-bottom: 8px; display: block;">Cadastros pendentes</label>
         <div id="lista-cadastros-pendentes" style="display: flex; flex-direction: column; gap: 6px;"></div>
       </div>
-      <div class="form-group full-width admin-only" style="margin-bottom: 20px; border-top: 1px solid var(--border); padding-top: 16px;">
+      <div class="form-group full-width admin-only"
+        style="margin-bottom: 20px; border-top: 1px solid var(--border); padding-top: 16px;">
         <label style="margin-bottom: 8px; display: block;">Ministérios cadastrados</label>
         <div id="lista-ministerios" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px;"></div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <input type="text" id="cfg-ministerio-nome" placeholder="Nome do ministério" style="flex: 1; min-width: 140px;" />
-          <input type="email" id="cfg-ministerio-email" placeholder="E-mail (já criado no Supabase)" style="flex: 1; min-width: 180px;" />
-          <button type="button" class="btn btn-secondary" onclick="adicionarMinisterio()"><i class="fa-solid fa-plus"></i> Adicionar</button>
+          <input type="text" id="cfg-ministerio-nome" placeholder="Nome do ministério"
+            style="flex: 1; min-width: 140px;" />
+          <input type="email" id="cfg-ministerio-email" placeholder="E-mail (já criado no Supabase)"
+            style="flex: 1; min-width: 180px;" />
+          <button type="button" class="btn btn-secondary" onclick="adicionarMinisterio()"><i
+              class="fa-solid fa-plus"></i> Adicionar</button>
         </div>
-        <small style="color: var(--text-muted); margin-top: 6px; display: block;">O login (e-mail/senha) precisa ser criado antes no painel do Supabase (Authentication → Users). Aqui você só vincula o nome do ministério a esse e-mail — veja MINISTERIOS.md.</small>
+        <small style="color: var(--text-muted); margin-top: 6px; display: block;">O login (e-mail/senha) precisa ser
+          criado antes no painel do Supabase (Authentication → Users). Aqui você só vincula o nome do ministério a esse
+          e-mail — veja MINISTERIOS.md.</small>
       </div>
       <button class="btn" style="width: 100%; justify-content: center" onclick="salvarConfiguracao()">
         Salvar Configurações
@@ -2393,7 +2715,8 @@
         </button>
       </div>
       <p style="color: var(--text-muted); font-size: 14px; margin: 0 0 18px;">
-        Entre com o login do administrador ou do seu ministério para gerenciar repertórios e solicitar músicas. Sem login, o sistema fica em modo somente leitura.
+        Entre com o login do administrador ou do seu ministério para gerenciar repertórios e solicitar músicas. Sem
+        login, o sistema fica em modo somente leitura.
       </p>
       <div class="form-group" style="margin-bottom: 14px;">
         <label for="login-email">E-mail</label>
@@ -2402,18 +2725,19 @@
       </div>
       <div class="form-group" style="margin-bottom: 10px;">
         <label for="login-senha">Senha</label>
-        <input type="password" id="login-senha" placeholder="••••••••"
-          onkeydown="if(event.key==='Enter') entrar()" />
+        <input type="password" id="login-senha" placeholder="••••••••" onkeydown="if(event.key==='Enter') entrar()" />
       </div>
       <div style="text-align: right; margin-bottom: 18px;">
-        <a href="#" onclick="recuperarSenha(); return false;" style="font-size: 13px; color: var(--text-muted);">Esqueci minha senha</a>
+        <a href="#" onclick="recuperarSenha(); return false;" style="font-size: 13px; color: var(--text-muted);">Esqueci
+          minha senha</a>
       </div>
       <button class="btn" style="width: 100%; justify-content: center" onclick="entrar()">
         <i class="fa-solid fa-right-to-bracket"></i> Entrar
       </button>
       <div style="text-align: center; margin-top: 16px; font-size: 13px; color: var(--text-muted);">
         Ainda não tem acesso?
-        <a href="#" onclick="fecharModal('modal-login'); abrirModalCadastroMinisterio(); return false;">Cadastre seu ministério</a>
+        <a href="#" onclick="fecharModal('modal-login'); abrirModalCadastroMinisterio(); return false;">Cadastre seu
+          ministério</a>
       </div>
     </div>
   </div>
@@ -2421,13 +2745,15 @@
   <div class="modal-overlay" id="modal-cadastro-ministerio">
     <div class="modal-content" style="max-width: 460px;">
       <div class="modal-header">
-        <h2><i class="fa-solid fa-user-plus" style="margin-right:8px; color: var(--primary);"></i>Cadastre seu ministério</h2>
+        <h2><i class="fa-solid fa-user-plus" style="margin-right:8px; color: var(--primary);"></i>Cadastre seu
+          ministério</h2>
         <button class="close-btn" onclick="fecharModal('modal-cadastro-ministerio')">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
       <p style="color: var(--text-muted); font-size: 14px; margin: 0 0 18px;">
-        Preencha os dados abaixo. Seu cadastro fica pendente até o administrador aprovar — só depois disso o login funciona.
+        Preencha os dados abaixo. Seu cadastro fica pendente até o administrador aprovar — só depois disso o login
+        funciona.
       </p>
       <div class="form-group" style="margin-bottom: 14px;">
         <label for="cadmin-nome-ministerio">Nome do ministério</label>
@@ -2489,7 +2815,9 @@
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
-      <div class="form-group full-width" id="cad-info-solicitacao" style="display:none; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: var(--text-muted); margin-bottom: 12px;"></div>
+      <div class="form-group full-width" id="cad-info-solicitacao"
+        style="display:none; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+      </div>
       <div class="form-grid">
         <div class="form-group">
           <label>Título *</label><input type="text" id="cad-titulo" />
@@ -2523,21 +2851,25 @@
             <div style="font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
               <i class="fa-solid fa-circle-info"></i>
               Os versos não são divididos entre colunas. Para forçar uma nova coluna, escreva uma linha só com
-              <code style="background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px;">---</code>
+              <code
+                style="background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px;">---</code>
             </div>
           </div>
           <textarea id="cad-conteudo"></textarea>
         </div>
         <div class="form-group full-width" id="cad-observacao-group" style="display:none;">
           <label>Observação do administrador (opcional)</label>
-          <textarea id="cad-observacao" rows="2" placeholder="Ex.: motivo da rejeição, ou o que foi ajustado..."></textarea>
+          <textarea id="cad-observacao" rows="2"
+            placeholder="Ex.: motivo da rejeição, ou o que foi ajustado..."></textarea>
         </div>
       </div>
       <div id="cad-musica-acoes" style="display: flex; gap: 10px;">
         <button class="btn" id="btn-salvar-musica" style="flex: 1; justify-content: center" onclick="salvarMusica()">
           <i class="fa-solid fa-check"></i> <span id="btn-salvar-musica-label">Salvar Música</span>
         </button>
-        <button class="btn" id="btn-rejeitar-solicitacao" style="display: none; flex: 1; justify-content: center; background: #ef4444; border-color: transparent; color: #fff;" onclick="rejeitarSolicitacao()">
+        <button class="btn" id="btn-rejeitar-solicitacao"
+          style="display: none; flex: 1; justify-content: center; background: #ef4444; border-color: transparent; color: #fff;"
+          onclick="rejeitarSolicitacao()">
           <i class="fa-solid fa-xmark"></i> Rejeitar
         </button>
       </div>
@@ -2559,19 +2891,21 @@
   </datalist>
 
   <div class="modal-overlay" id="modal-cadastro-repertorio">
-    <div class="modal-content" style="max-width: 900px; display: flex; flex-direction: column; max-height: 92vh;">
+    <div class="modal-content" style="max-width: 1200px; width: 95%; height: 92vh; display: flex; flex-direction: column;">
       <div class="modal-header">
         <h2 id="modal-titulo-repertorio">Novo Repertório</h2>
         <button class="close-btn" onclick="fecharModal('modal-cadastro-repertorio')">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
-      <div class="form-grid" style="flex: 1; min-height: 0; overflow: hidden;">
-        <div class="form-group">
-          <label>Nome do Evento</label><input type="text" id="rep-nome" />
-        </div>
-        <div class="form-group">
-          <label>Data</label><input type="date" id="rep-data" />
+      <div style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; gap: 16px; margin-bottom: 16px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div class="form-group">
+            <label>Nome do Evento</label><input type="text" id="rep-nome" />
+          </div>
+          <div class="form-group">
+            <label>Data</label><input type="date" id="rep-data" />
+          </div>
         </div>
         <div class="form-group admin-only" id="rep-ministerio-group">
           <label>Ministério (dono do repertório)</label>
@@ -2580,12 +2914,16 @@
           </select>
         </div>
 
-        <div class="form-group full-width builder-container"
-          style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; min-height: 0; min-width: 0; flex: 1;">
+        <style>
+          .builder-container-flex { display: flex; flex-direction: row; gap: 20px; flex: 1; min-height: 0; min-width: 0; height: 100%; }
+          @media (max-width: 768px) { .builder-container-flex { flex-direction: column; } }
+        </style>
+        <div class="form-group full-width builder-container-flex">
           <!-- Lado Esquerdo: Busca e Acervo -->
-          <div class="builder-acervo" style="display: flex; flex-direction: column; min-height: 0; min-width: 0;">
+          <div class="builder-acervo" style="display: flex; flex-direction: column; min-height: 0; min-width: 0; flex: 1;">
             <label style="margin-bottom: 8px; display: block;">Adicionar Músicas:</label>
-            <div style="position: relative; margin-bottom: 12px; width: 100%; box-sizing: border-box; display: flex; gap: 8px; align-items: center;">
+            <div
+              style="position: relative; margin-bottom: 12px; width: 100%; box-sizing: border-box; display: flex; gap: 8px; align-items: center;">
               <input type="text" id="rep-busca-musica" placeholder="Buscar no acervo..."
                 oninput="toggleLimparBusca(); debounceFiltroRepertorio()"
                 style="flex: 1; min-width: 0; box-sizing: border-box;" />
@@ -2599,7 +2937,7 @@
             </div>
           </div>
           <!-- Lado Direito: Sequência -->
-          <div class="builder-sequencia" style="display: flex; flex-direction: column; min-height: 0; min-width: 0;">
+          <div class="builder-sequencia" style="display: flex; flex-direction: column; min-height: 0; min-width: 0; flex: 1;">
             <label style="margin-bottom: 8px; display: block;">Sequência do Repertório:</label>
             <div class="lista-selecao-musicas" id="lista-sequencia-repertorio"
               style="flex: 1; min-height: 120px; min-width: 0; overflow-y: auto; overflow-x: hidden; background: var(--bg-color); border: 1px dashed var(--border);">
@@ -2607,7 +2945,8 @@
           </div>
         </div>
       </div>
-      <button class="btn" style="width: 100%; justify-content: center; flex-shrink: 0; margin-top: 16px;" onclick="salvarRepertorio()">
+      <button class="btn" style="width: 100%; justify-content: center; flex-shrink: 0; margin-top: 16px;"
+        onclick="salvarRepertorio()">
         <i class="fa-solid fa-check"></i> Salvar Repertório
       </button>
     </div>
@@ -2630,10 +2969,12 @@
       <div class="form-group full-width" style="margin-bottom: 18px">
         <label style="margin-bottom: 8px; display: block;">Instrumento</label>
         <div style="display: flex; gap: 10px;">
-          <button type="button" id="btn-cad-violao" class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="selecionarInstrumentoCadastro('violao')">
+          <button type="button" id="btn-cad-violao" class="btn btn-secondary" style="flex: 1; justify-content: center;"
+            onclick="selecionarInstrumentoCadastro('violao')">
             <i class="fa-solid fa-guitar"></i> Violão
           </button>
-          <button type="button" id="btn-cad-teclado" class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="selecionarInstrumentoCadastro('teclado')">
+          <button type="button" id="btn-cad-teclado" class="btn btn-secondary" style="flex: 1; justify-content: center;"
+            onclick="selecionarInstrumentoCadastro('teclado')">
             <i class="fa-solid fa-keyboard"></i> Teclado
           </button>
         </div>
@@ -2878,8 +3219,8 @@
     };
 
     function salvarConfiguracao() {
-      const showFret   = document.getElementById("cfg-show-fret-numbers").checked ? "1" : "0";
-      const startFret  = document.getElementById("cfg-start-fret").value || "1";
+      const showFret = document.getElementById("cfg-show-fret-numbers").checked ? "1" : "0";
+      const startFret = document.getElementById("cfg-start-fret").value || "1";
       const showFinger = document.getElementById("cfg-show-finger-numbers").checked ? "1" : "0";
       localStorage.setItem("gerecifras_show_fret_numbers", showFret);
       localStorage.setItem("gerecifras_start_fret", startFret);
@@ -3361,7 +3702,7 @@
     }
 
     // === ATALHOS DE TECLADO ===
-    document.addEventListener("keydown", function(e) {
+    document.addEventListener("keydown", function (e) {
       const visor = document.getElementById("tela-visor");
       if (!visor || visor.style.display === "none") return;
       if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
@@ -3384,11 +3725,11 @@
       const activeNav = document.getElementById(`nav-${ambiente}`);
       if (activeNav) activeNav.classList.add("nav-active");
 
-      document.getElementById("tela-acervo").style.display        = ambiente === "acervo"        ? "block" : "none";
-      document.getElementById("tela-repertorios").style.display    = ambiente === "repertorios"   ? "block" : "none";
-      document.getElementById("tela-dicionario").style.display     = ambiente === "dicionario"    ? "block" : "none";
-      document.getElementById("tela-solicitacoes").style.display   = ambiente === "solicitacoes"  ? "block" : "none";
-      document.getElementById("tela-visor").style.display        = "none";
+      document.getElementById("tela-acervo").style.display = ambiente === "acervo" ? "block" : "none";
+      document.getElementById("tela-repertorios").style.display = ambiente === "repertorios" ? "block" : "none";
+      document.getElementById("tela-dicionario").style.display = ambiente === "dicionario" ? "block" : "none";
+      document.getElementById("tela-solicitacoes").style.display = ambiente === "solicitacoes" ? "block" : "none";
+      document.getElementById("tela-visor").style.display = "none";
 
       const fab = document.getElementById("fab-nova-musica");
       if (fab) fab.style.display = ambiente === "acervo" ? "" : "none";
@@ -3398,14 +3739,14 @@
     }
 
     // Fecha modal aberto ao clicar no overlay
-    document.addEventListener("click", function(e) {
+    document.addEventListener("click", function (e) {
       if (e.target.classList.contains("modal-overlay")) {
         e.target.style.display = "none";
       }
     });
 
     // Fecha modal com Escape
-    document.addEventListener("keydown", function(e) {
+    document.addEventListener("keydown", function (e) {
       if (e.key !== "Escape") return;
       const abertos = document.querySelectorAll('.modal-overlay[style*="flex"]');
       abertos.forEach(m => m.style.display = "none");
@@ -3518,19 +3859,25 @@
         mostrarToast(idEdicaoAtual ? "Música atualizada!" : "Música salva!", "sucesso");
         carregarAcervo();
       } else {
-        const solicitacao = {
-          tipo: idEdicaoAtual ? "edicao" : "nova",
-          musica_id: idEdicaoAtual || null,
-          ministerio_id: meuMinisterio.id,
-          status: "pendente",
-          ...p,
-        };
-        const { error } = await supabaseClient.from("solicitacoes_musica").insert([solicitacao]);
+        p.ministerio_id = meuMinisterio.id;
+
+        let shouldUpdate = false;
+        if (idEdicaoAtual) {
+          const musicaOriginal = acervoGlobal.find(m => m.id === idEdicaoAtual);
+          if (musicaOriginal && musicaOriginal.ministerio_id === meuMinisterio.id) {
+            shouldUpdate = true;
+          }
+        }
+
+        const { error } = shouldUpdate
+          ? await supabaseClient.from("musicas").update(p).eq("id", idEdicaoAtual)
+          : await supabaseClient.from("musicas").insert([p]);
+
         esconderCarregando();
-        if (error) return mostrarToast("Erro ao enviar solicitação: " + error.message, "erro");
+        if (error) return mostrarToast("Erro ao salvar: " + error.message, "erro");
         fecharModal("modal-cadastro-musica");
-        mostrarToast("Solicitação enviada! Aguarde a aprovação do administrador.", "sucesso");
-        carregarSolicitacoes();
+        mostrarToast(shouldUpdate ? "Música atualizada!" : "Nova versão salva!", "sucesso");
+        carregarAcervo();
       }
     }
 
@@ -3547,6 +3894,12 @@
       renderizarAcervo(acervoGlobal);
     }
 
+    function getNomeDonoMusica(m) {
+      if (!m.ministerio_id) return "Admin";
+      const min = ministeriosGlobal.find(x => x.id === m.ministerio_id);
+      return min ? min.nome : "Desconhecido";
+    }
+
     // ✨ NOVA FUNÇÃO: Desenha as músicas na tela (separada para ser muito mais rápida)
     function renderizarAcervo(lista) {
       const container = document.getElementById("acervo-cards");
@@ -3559,14 +3912,41 @@
           : `<div class="empty-state"><i class="fa-solid fa-music"></i><p>Nenhuma música cadastrada ainda.</p><small>Clique em "Nova Música" para começar.</small></div>`;
       }
 
-      lista.forEach((m) => {
-        // ✨ Encontra o índice original para os botões de Editar/Tocar não quebrarem ao filtrar
+      // Agrupar por titulo
+      const grupos = {};
+      lista.forEach(m => {
+        const key = (m.titulo || "").trim().toLowerCase();
+        if (!grupos[key]) grupos[key] = [];
+        grupos[key].push(m);
+      });
+
+      const chavesOrdenadas = Object.keys(grupos).sort();
+
+      chavesOrdenadas.forEach((key) => {
+        const versoes = grupos[key];
+
+        // Colocar a versão Admin (ministerio_id == null) primeiro
+        versoes.sort((a, b) => {
+          if (!a.ministerio_id && b.ministerio_id) return -1;
+          if (a.ministerio_id && !b.ministerio_id) return 1;
+          return 0;
+        });
+
+        // A música exibida no card é a primeira do grupo
+        const m = versoes[0];
         const i = acervoGlobal.findIndex((item) => item.id === m.id);
 
         const tagMomento = m.momento_missa
           ? `<span class="tag-pill" style="background: var(--primary); color: white; border: none;">${m.momento_missa}</span>`
           : "";
         const tagTom = `<span class="tag-pill" style="background: #e0e7ff; color: var(--primary-700); border: 1px solid rgba(99,102,241,0.2);">Tom: ${m.tom_original || "-"}</span>`;
+
+        let donoText = getNomeDonoMusica(m);
+        let tagDono = `<span class="tag-pill" style="background: var(--surface-2); color: var(--text-main); border: 1px solid var(--border);"><i class="fa-solid fa-user" style="font-size: 10px; margin-right: 4px;"></i>${donoText}</span>`;
+
+        if (versoes.length > 1) {
+          tagDono = `<span class="tag-pill" style="background: var(--primary); color: white; border: none;"><i class="fa-solid fa-layer-group" style="font-size: 10px; margin-right: 4px;"></i>${versoes.length} Versões</span>`;
+        }
 
         const iconHtml = `<div class="card-icon"><i class="fa-solid fa-music"></i></div>`;
         const card = document.createElement("div");
@@ -3579,7 +3959,7 @@
                         <div class="acervo-meta">
                             <div class="acervo-titulo">${m.titulo}</div>
                             <div class="acervo-meta-row">
-                                <div class="acervo-sub">${m.autor || "-"} &nbsp; &bull; &nbsp; ${tagTom} &nbsp; ${tagMomento}</div>
+                                <div class="acervo-sub">${tagDono} &nbsp; &bull; &nbsp; ${m.autor || "-"} &nbsp; &bull; &nbsp; ${tagTom} &nbsp; ${tagMomento}</div>
                             </div>
                         </div>
                     </div>
@@ -3589,14 +3969,14 @@
                             <button class="action-more logado-only" title="Mais" onclick="toggleDropdown(event)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
                         </div>
                         <div class="dropdown-menu" data-music-id="${m.id}">
-                            <div class="menu-item" onclick="abrirEdicaoMusica(${i}); closeAllMenus();"><i class="fa-solid fa-pen"></i> ${ehAdmin ? "Editar" : "Solicitar ajuste"}</div>
+                            <div class="menu-item" onclick="abrirEdicaoMusica(${i}); closeAllMenus();"><i class="fa-solid fa-pen"></i> Editar</div>
                             <div class="menu-item danger admin-only" onclick="excluirMusica('${m.id}'); closeAllMenus();"><i class="fa-solid fa-trash"></i> Excluir</div>
                         </div>
                     </div>`;
         container.appendChild(card);
       });
       const countEl = document.getElementById("acervo-count");
-      if (countEl) countEl.textContent = String(lista.length || 0);
+      if (countEl) countEl.textContent = String(chavesOrdenadas.length || 0);
     }
 
     // ✨ Normaliza texto p/ busca: remove HTML, decodifica entidades,
@@ -3710,9 +4090,14 @@
           const campos = normalizarTexto(`${m.titulo} ${m.autor || ""}`);
           if (!campos.includes(termo)) return;
         }
+        const dono = getNomeDonoMusica(m);
+        const tagDonoSpan = `<span class="tag-pill" style="margin-left: 6px; font-size: 10px; background: var(--surface-2); color: var(--text-main); border: 1px solid var(--border); padding: 2px 6px;">Versão: ${dono}</span>`;
         partes.push(`<div class="item-selecao" style="justify-content: space-between;">
              <div style="flex: 1; min-width: 0;">
-                <strong style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;">${m.titulo}</strong>
+                <div style="display: flex; align-items: center; gap: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                   <strong>${m.titulo}</strong>
+                   ${tagDonoSpan}
+                </div>
                 <small style="color:var(--text-muted); display: block;">${m.momento_missa || "Geral"}</small>
              </div>
              <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px; flex-shrink: 0;" onclick="adicionarMusicaRepertorio(${m.id})" title="Adicionar ao Repertório"><i class="fa-solid fa-plus"></i></button>
@@ -3733,11 +4118,14 @@
       musicasRepertorioAtual.forEach((item, index) => {
         const m = acervoGlobal.find(x => x.id === item.id);
         if (!m) return;
+        const dono = getNomeDonoMusica(m);
+        const tagDonoSpan = `<span class="tag-pill" style="margin-left: 6px; font-size: 10px; background: var(--surface-2); color: var(--text-main); border: 1px solid var(--border); padding: 2px 6px;">Versão: ${dono}</span>`;
         partes.push(`<div class="item-selecao" style="flex-direction: column; align-items: stretch; gap: 8px; background: var(--surface); border: 1px solid var(--border); margin-bottom: 8px; border-radius: 8px;">
               <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
-                 <div style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                 <div style="flex: 1; min-width: 0; display: flex; align-items: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                     <span style="font-weight: bold; color: var(--primary); margin-right: 8px;">${index + 1}.</span>
                     <strong>${m.titulo}</strong>
+                    ${tagDonoSpan}
                  </div>
                  <div style="display: flex; gap: 4px; flex-shrink: 0;">
                     <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;" onclick="moverMusicaRepertorio(${index}, -1)" ${index === 0 ? "disabled" : ""} title="Subir"><i class="fa-solid fa-chevron-up"></i></button>
@@ -4942,6 +5330,31 @@
       document.getElementById("tela-solicitacoes").style.display = "none";
       document.getElementById("tela-visor").style.display = "block";
       musicaSelecionada = playlistAtual[indexPlaylist];
+
+      const seletor = document.getElementById("seletor-versao-visor");
+      seletor.style.display = "none";
+
+      if (!musicaSelecionada.momento_repertorio) {
+        const versoes = acervoGlobal.filter(m => (m.titulo || "").trim().toLowerCase() === (musicaSelecionada.titulo || "").trim().toLowerCase());
+        if (versoes.length > 1) {
+          versoes.sort((a, b) => {
+            if (!a.ministerio_id && b.ministerio_id) return -1;
+            if (a.ministerio_id && !b.ministerio_id) return 1;
+            return 0;
+          });
+
+          seletor.innerHTML = "";
+          versoes.forEach(v => {
+            const dono = getNomeDonoMusica(v);
+            const opt = document.createElement("option");
+            opt.value = v.id;
+            opt.textContent = `Versão: ${dono}`;
+            if (v.id == musicaSelecionada.id) opt.selected = true;
+            seletor.appendChild(opt);
+          });
+          seletor.style.display = "block";
+        }
+      }
       semitonsAcumulados = 0;
       let tituloMomento = musicaSelecionada.titulo;
       if (musicaSelecionada.momento_repertorio) {
@@ -4955,6 +5368,17 @@
     function fecharVisor() {
       document.getElementById("tela-visor").style.display = "none";
       mudarAmbiente(ambienteAtual);
+    }
+    function mudarVersaoVisor() {
+      const sel = document.getElementById("seletor-versao-visor");
+      const id = sel.value;
+      const novaM = acervoGlobal.find(m => m.id == id);
+      if (novaM) {
+        musicaSelecionada = novaM;
+        playlistAtual[indexPlaylist] = novaM;
+        semitonsAcumulados = 0;
+        renderizarTextoTransposto();
+      }
     }
     function alterarTom(modificador) {
       semitonsAcumulados += modificador;
