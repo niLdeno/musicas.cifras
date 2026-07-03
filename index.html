@@ -349,6 +349,26 @@
       min-width: 0;
     }
 
+    .acervo-titulo-row {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .acervo-titulo-row .acervo-titulo {
+      min-width: 0;
+    }
+
+    .acervo-album {
+      font-size: 12px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+    }
+
     .acervo-titulo {
       font-size: 17px;
       color: var(--text-main);
@@ -3909,6 +3929,22 @@
       return min ? min.nome : "Desconhecido";
     }
 
+    // ✨ Separa "(CD 30 anos – Um Só Corpo)" etc. do final do título para exibir
+    // como legenda de álbum, em vez de poluir o nome da música.
+    function extrairAlbumDoTitulo(titulo) {
+      const t = (titulo || "").trim();
+      const m = t.match(/^(.*?)\s*\(([^()]*\b(?:cd|álbum|album|ep)\b[^()]*)\)\s*$/i);
+      if (m) return { tituloLimpo: m[1].trim(), album: m[2].trim() };
+      return { tituloLimpo: t, album: null };
+    }
+
+    // ✨ Ícone do autor: pessoa física vs. comunidade/coletivo.
+    function getIconeAutor(autor) {
+      if (!autor) return "fa-user";
+      const coletivo = /comunidade|ministério|ministerio|grupo|coral|coletivo/i.test(autor);
+      return coletivo ? "fa-users" : "fa-user";
+    }
+
     // ✨ NOVA FUNÇÃO: Desenha as músicas na tela (separada para ser muito mais rápida)
     function renderizarAcervo(lista) {
       const container = document.getElementById("acervo-cards");
@@ -3950,12 +3986,27 @@
           : "";
         const tagTom = `<span class="tag-pill" style="background: #e0e7ff; color: var(--primary-700); border: 1px solid rgba(99,102,241,0.2);">Tom: ${m.tom_original || "-"}</span>`;
 
+        // ✨ Pílula de dono só aparece quando carrega informação real:
+        // ministério nomeado ou contagem de versões. "Admin" (o dono
+        // padrão da maioria dos cadastros) some por não agregar nada.
         let donoText = getNomeDonoMusica(m);
-        let tagDono = `<span class="tag-pill" style="background: var(--surface-2); color: var(--text-main); border: 1px solid var(--border);"><i class="fa-solid fa-user" style="font-size: 10px; margin-right: 4px;"></i>${donoText}</span>`;
-
+        let tagDono = "";
         if (versoes.length > 1) {
-          tagDono = `<span class="tag-pill" style="background: var(--primary); color: white; border: none;"><i class="fa-solid fa-layer-group" style="font-size: 10px; margin-right: 4px;"></i>${versoes.length} Versões</span>`;
+          tagDono = `<span class="tag-pill" style="background: var(--primary); color: white; border: none;"><i class="fa-solid fa-layer-group" style="font-size: 10px; margin-right: 4px;"></i>${versoes.length} Versões</span>` + " &nbsp; &bull; &nbsp; ";
+        } else if (donoText !== "Admin") {
+          tagDono = `<span class="tag-pill" style="background: var(--surface-2); color: var(--text-main); border: 1px solid var(--border);"><i class="fa-solid fa-users" style="font-size: 10px; margin-right: 4px;"></i>${donoText}</span>` + " &nbsp; &bull; &nbsp; ";
         }
+
+        // ✨ Autor sempre com ícone (pessoa vs. comunidade/coletivo), e o
+        // "(CD ... )" do título vira legenda de álbum separada.
+        const albumInfo = extrairAlbumDoTitulo(m.titulo);
+        const tituloLimpo = albumInfo.tituloLimpo;
+        const tagAlbum = albumInfo.album
+          ? `<span class="acervo-album"><i class="fa-solid fa-compact-disc" style="font-size: 10px; margin-right: 5px;"></i>${albumInfo.album}</span>`
+          : "";
+        const tagAutor = m.autor
+          ? `<span class="tag-pill" style="background: var(--surface-2); color: var(--text-main); border: 1px solid var(--border);"><i class="fa-solid ${getIconeAutor(m.autor)}" style="font-size: 10px; margin-right: 4px;"></i>${m.autor}</span>`
+          : "";
 
         const iconHtml = `<div class="card-icon"><i class="fa-solid fa-music"></i></div>`;
         const card = document.createElement("div");
@@ -3966,9 +4017,9 @@
                     <div class="acervo-left">
                         ${iconHtml}
                         <div class="acervo-meta">
-                            <div class="acervo-titulo">${m.titulo}</div>
+                            <div class="acervo-titulo-row"><div class="acervo-titulo">${tituloLimpo}</div>${tagAlbum}</div>
                             <div class="acervo-meta-row">
-                                <div class="acervo-sub">${tagDono} &nbsp; &bull; &nbsp; ${m.autor || "-"} &nbsp; &bull; &nbsp; ${tagTom} &nbsp; ${tagMomento}</div>
+                                <div class="acervo-sub">${tagDono}${tagAutor} &nbsp; ${tagTom} &nbsp; ${tagMomento}</div>
                             </div>
                         </div>
                     </div>
