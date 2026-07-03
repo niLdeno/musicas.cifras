@@ -1642,15 +1642,7 @@
     }
 
     /* ===== MOBILE (≤ 768px) ===== */
-    #tela-bloqueio-acesso {
-      background: #17182b url('imagem-fundo.jpg?v=2') center center / cover no-repeat;
-    }
-
     @media (max-width: 768px) {
-      #tela-bloqueio-acesso {
-        background-image: url('imagem-fundo-mobile.jpg?v=2');
-      }
-
       /* --- Bottom Navigation Bar --- */
       .sidebar {
         top: auto;
@@ -2040,7 +2032,11 @@
     </nav>
   </aside>
 
-  <div id="tela-bloqueio-acesso" style="position: fixed; inset: 0; z-index: 1000;">
+  <div id="tela-bloqueio-acesso" style="position: fixed; inset: 0; z-index: 1000; background: #17182b;">
+    <picture>
+      <source media="(max-width: 768px)" srcset="imagem-fundo-mobile.jpg?v=2">
+      <img src="imagem-fundo.jpg?v=2" alt="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; display: block;">
+    </picture>
     <div style="
           position: absolute; inset: 0; display: flex;
           flex-direction: column; align-items: center; justify-content: flex-start;
