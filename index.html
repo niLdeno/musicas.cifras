@@ -3984,8 +3984,6 @@
         const tagMomento = m.momento_missa
           ? `<span class="tag-pill" style="background: var(--primary); color: white; border: none;">${m.momento_missa}</span>`
           : "";
-        const tagTom = `<span class="tag-pill" style="background: #e0e7ff; color: var(--primary-700); border: 1px solid rgba(99,102,241,0.2);">Tom: ${m.tom_original || "-"}</span>`;
-
         // ✨ Pílula de dono só aparece quando carrega informação real:
         // ministério nomeado ou contagem de versões. "Admin" (o dono
         // padrão da maioria dos cadastros) some por não agregar nada.
@@ -4019,7 +4017,7 @@
                         <div class="acervo-meta">
                             <div class="acervo-titulo-row"><div class="acervo-titulo">${tituloLimpo}</div>${tagAlbum}</div>
                             <div class="acervo-meta-row">
-                                <div class="acervo-sub">${tagDono}${tagAutor} &nbsp; ${tagTom} &nbsp; ${tagMomento}</div>
+                                <div class="acervo-sub">${tagDono}${tagAutor} &nbsp; ${tagMomento}</div>
                             </div>
                         </div>
                     </div>
@@ -5538,9 +5536,20 @@
           unidades.pop();
         }
 
-        const totalGrupos = unidades.filter(u => u.type !== "break").length;
-        const base = Math.floor(totalGrupos / numColunas);
-        const resto = totalGrupos % numColunas;
+        // ✨ Peso de cada unidade = nº de linhas reais que ela ocupa (1 para
+        // linha solta, 2 para par acorde+letra) — balancear por CONTAGEM DE
+        // GRUPOS deixava colunas com números de linha bem diferentes sempre
+        // que uma tinha mais pares acorde+letra que outra. Balancear por
+        // linhas faz as colunas terminarem com alturas parecidas de verdade.
+        unidades.forEach(u => {
+          if (u.type !== "break") u.peso = u.el.children.length || 1;
+        });
+
+        const totalLinhas = unidades
+          .filter(u => u.type !== "break")
+          .reduce((soma, u) => soma + u.peso, 0);
+        const base = Math.floor(totalLinhas / numColunas);
+        const resto = totalLinhas % numColunas;
 
         const limites = [];
         for (let c = 0; c < numColunas; c++) {
@@ -5549,7 +5558,7 @@
 
         const colunasItens = Array.from({ length: numColunas }, () => []);
         let colAtual = 0;
-        let gruposNaCol = 0;
+        let linhasNaCol = 0;
 
         for (let i = 0; i < unidades.length; i++) {
           const u = unidades[i];
@@ -5559,11 +5568,11 @@
             continue;
           }
 
-          if (colAtual < numColunas - 1 && gruposNaCol >= limites[colAtual]) {
+          if (colAtual < numColunas - 1 && linhasNaCol >= limites[colAtual]) {
             const ultimoNaCol = colunasItens[colAtual][colunasItens[colAtual].length - 1];
             if (ultimoNaCol && ultimoNaCol.type === "break") {
               colAtual++;
-              gruposNaCol = 0;
+              linhasNaCol = 0;
             } else {
               let temBreakAFrente = false;
               for (let k = i; k < unidades.length; k++) {
@@ -5572,13 +5581,13 @@
               }
               if (!temBreakAFrente) {
                 colAtual++;
-                gruposNaCol = 0;
+                linhasNaCol = 0;
               }
             }
           }
 
           colunasItens[colAtual].push(u);
-          gruposNaCol++;
+          linhasNaCol += u.peso;
         }
 
         estrofes.forEach(e => e.remove());
