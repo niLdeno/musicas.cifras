@@ -224,10 +224,15 @@ tem **um ajuste obrigatório**:
 2. Em **Redirect URLs**, adicione o endereço onde o sistema fica publicado
    (ex.: `https://nildeno.github.io/musicas.cifras/*`). Sem isso, o link do
    e-mail de recuperação é rejeitado pelo Supabase.
-3. (Opcional, recomendado) Em **Authentication → Providers → Email**,
-   deixe **Confirm email** ligado — assim o Supabase confirma que o e-mail
-   que o ministério digitou no auto-cadastro é real, o que também deixa a
-   recuperação de senha mais confiável.
+3. Em **Authentication → Providers → Email**, deixe **Confirm email**
+   **desligado**. Como a aprovação do administrador já é a barreira real de
+   acesso (ninguém entra sem estar na tabela `ministerios`, aprovado por
+   você), exigir confirmação de e-mail só adiciona um passo extra sem
+   necessidade — e, pior, deixa a conta travada em "Waiting for
+   verification" no painel até a pessoa clicar num link de e-mail, mesmo
+   depois de você já ter aprovado o cadastro dela. Com essa opção
+   desligada, aprovar o cadastro já é suficiente para o ministério
+   conseguir entrar.
 
 ---
 
