@@ -3865,15 +3865,21 @@
         p.ministerio_id = meuMinisterio.id;
 
         let shouldUpdate = false;
-        if (idEdicaoAtual) {
-          const musicaOriginal = acervoGlobal.find(m => m.id === idEdicaoAtual);
-          if (musicaOriginal && musicaOriginal.ministerio_id === meuMinisterio.id) {
-            shouldUpdate = true;
-          }
+        let idParaAtualizar = idEdicaoAtual;
+
+        // Verifica se o ministério já tem uma versão cadastrada dessa mesma música
+        const tituloNormalizado = p.titulo.trim().toLowerCase();
+        const versaoDoMinisterio = acervoGlobal.find(
+          m => (m.titulo || "").trim().toLowerCase() === tituloNormalizado && m.ministerio_id === meuMinisterio.id
+        );
+
+        if (versaoDoMinisterio) {
+          shouldUpdate = true;
+          idParaAtualizar = versaoDoMinisterio.id;
         }
 
         const { error } = shouldUpdate
-          ? await supabaseClient.from("musicas").update(p).eq("id", idEdicaoAtual)
+          ? await supabaseClient.from("musicas").update(p).eq("id", idParaAtualizar)
           : await supabaseClient.from("musicas").insert([p]);
 
         esconderCarregando();
@@ -4542,7 +4548,7 @@
     }
 
     function abrirModalCadastroAcorde() {
-      if (!exigirAdmin()) return;
+      if (!exigirLogado()) return;
       idEdicaoAcordeAtual = null;
       const h2 = document.querySelector("#modal-cadastro-acorde .modal-header h2");
       if (h2) h2.textContent = "Novo Acorde";
@@ -4561,9 +4567,12 @@
     }
 
     function abrirEdicaoAcorde(id) {
-      if (!exigirAdmin()) return;
+      if (!exigirLogado()) return;
       const acorde = dicionarioGlobal.find((a) => a.id === id);
       if (!acorde) return;
+      if (!ehAdmin && acorde.ministerio_id !== meuMinisterio?.id) {
+        return mostrarToast("Você só pode editar os acordes cadastrados pelo seu ministério.", "erro");
+      }
       idEdicaoAcordeAtual = acorde.id;
       const h2 = document.querySelector("#modal-cadastro-acorde .modal-header h2");
       if (h2) h2.textContent = "Editar Acorde";
@@ -4820,7 +4829,7 @@
     }
 
     async function salvarAcorde() {
-      if (!exigirAdmin()) return;
+      if (!exigirLogado()) return;
       const nome = document.getElementById("cad-acorde-nome").value.trim();
       if (!nome) return mostrarToast("Dê um nome ao acorde.", "erro");
       if (!supabaseClient) return mostrarToast("Sem conexão.", "erro");
@@ -4838,6 +4847,7 @@
           dedos: null,
           start_fret: tecladoRoot === null ? -1 : tecladoRoot,
           num_casas: null,
+          ministerio_id: ehAdmin ? null : meuMinisterio?.id
         };
       } else {
         const posicoes = [...cordasAcordeAtual];
@@ -4846,7 +4856,15 @@
         while (dedos.length < 6) dedos.push(null);
         const startFretToSave = parseInt(document.getElementById("cad-start-fret")?.value || 1);
         const numCasasToSave = parseInt(document.getElementById("cad-num-casas")?.value || 5);
-        payload = { nome, instrumento: "violao", posicoes, dedos, start_fret: startFretToSave, num_casas: numCasasToSave };
+        payload = { 
+          nome, 
+          instrumento: "violao", 
+          posicoes, 
+          dedos, 
+          start_fret: startFretToSave, 
+          num_casas: numCasasToSave,
+          ministerio_id: ehAdmin ? null : meuMinisterio?.id
+        };
       }
 
       try {
@@ -4956,14 +4974,23 @@
         const chip = ehTeclado
           ? '<span class="tag-pill" style="background: rgba(226,59,46,0.12); color:#e23b2e; border-color: rgba(226,59,46,0.3);"><i class="fa-solid fa-keyboard"></i> Teclado</span>'
           : '<span class="tag-pill" style="background: rgba(109,93,252,0.12); color: var(--primary); border-color: rgba(109,93,252,0.3);"><i class="fa-solid fa-guitar"></i> Violão</span>';
-        containerEl.innerHTML += `<div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: var(--card-shadow); display: flex; flex-direction: column; align-items: center; gap: 16px;">${chip}${diagramaHtml}<div class="admin-only" style="display: flex; gap: 8px; width: 100%; justify-content: center; margin-top: auto;"><button class="btn btn-secondary" style="padding: 8px 16px;" onclick="abrirEdicaoAcorde(${v.id})" title="Editar formato"><i class="fa-solid fa-pen"></i></button><button class="btn btn-secondary" style="padding: 8px 16px; color: #ef4444;" onclick="excluirAcordeUnico(${v.id}, '${nome}')" title="Excluir formato"><i class="fa-solid fa-trash"></i></button></div></div>`;
+        const podeEditarExcluir = ehAdmin || (ehMinisterio && v.ministerio_id === meuMinisterio?.id);
+        const actionHtml = podeEditarExcluir 
+          ? `<div style="display: flex; gap: 8px; width: 100%; justify-content: center; margin-top: auto;"><button class="btn btn-secondary" style="padding: 8px 16px;" onclick="abrirEdicaoAcorde(${v.id})" title="Editar formato"><i class="fa-solid fa-pen"></i></button><button class="btn btn-secondary" style="padding: 8px 16px; color: #ef4444;" onclick="excluirAcordeUnico(${v.id}, '${nome}')" title="Excluir formato"><i class="fa-solid fa-trash"></i></button></div>`
+          : "";
+        containerEl.innerHTML += `<div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: var(--card-shadow); display: flex; flex-direction: column; align-items: center; gap: 16px;">${chip}${diagramaHtml}${actionHtml}</div>`;
       });
       document.getElementById("modal-visualizar-acorde").style.display =
         "flex";
     }
 
     async function excluirAcordeUnico(id, nome) {
-      if (!exigirAdmin()) return;
+      if (!exigirLogado()) return;
+      const acorde = dicionarioGlobal.find((a) => a.id === id);
+      if (!acorde) return;
+      if (!ehAdmin && acorde.ministerio_id !== meuMinisterio?.id) {
+        return mostrarToast("Você só pode excluir os acordes cadastrados pelo seu ministério.", "erro");
+      }
       if (!confirm("Deseja excluir este formato específico?")) return;
       if (!supabaseClient) return;
       mostrarCarregando();
