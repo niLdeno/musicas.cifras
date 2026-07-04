@@ -2445,6 +2445,87 @@
     .profile-role.status-leitura {
       color: #94a3b8;
     }
+
+    /* =========================================
+       ✨ EXPORTAÇÃO DE REPERTÓRIO EM PDF
+       Container só aparece na hora de imprimir; o resto da
+       página é escondido para a impressão sair limpa.
+       ========================================= */
+    #impressao-repertorio {
+      display: none;
+    }
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #impressao-repertorio,
+      #impressao-repertorio * {
+        visibility: visible;
+      }
+      #impressao-repertorio {
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+      }
+      .pdf-musica {
+        page-break-after: always;
+      }
+      .pdf-musica:last-child {
+        page-break-after: auto;
+      }
+    }
+
+    .pdf-capa {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    .pdf-capa h1 {
+      margin: 0 0 8px;
+      font-size: 26px;
+    }
+
+    .pdf-capa p {
+      margin: 0;
+      color: #555;
+      font-size: 14px;
+    }
+
+    .pdf-musica-header {
+      margin-bottom: 14px;
+      border-bottom: 2px solid #000;
+      padding-bottom: 8px;
+    }
+
+    .pdf-musica-header h2 {
+      margin: 0 0 4px;
+      font-size: 20px;
+    }
+
+    .pdf-musica-meta {
+      font-size: 13px;
+      color: #555;
+    }
+
+    .pdf-cifra {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      line-height: 1.4;
+      white-space: pre-wrap;
+      color: #000;
+    }
+
+    .pdf-cifra .linha-acorde {
+      color: #b45309;
+      font-weight: 700;
+    }
+
+    .pdf-cifra .linha-letra {
+      color: #000;
+    }
   </style>
 </head>
 
@@ -2454,6 +2535,7 @@
     <div class="spinner"></div>
   </div>
   <div id="tooltip-acorde"></div>
+  <div id="impressao-repertorio"></div>
 
   <aside class="sidebar">
     <div class="sidebar-top">
@@ -4548,10 +4630,104 @@
           <td><span class="tag-pill">${qtd} música${qtd !== 1 ? "s" : ""}</span></td>
           <td style="text-align: right; white-space: nowrap;">
             <button class="btn" style="padding: 6px 12px;" onclick="tocarRepertorio(${i})"><i class="fa-solid fa-play"></i> Iniciar</button>
+            <button class="btn btn-secondary" style="padding: 6px 12px; margin-left: 6px;" onclick="exportarRepertorioPDF(${i})" title="Exportar em PDF"><i class="fa-solid fa-file-pdf"></i> PDF</button>
             ${acoes}
           </td></tr>`;
       });
       tbody.innerHTML = linhas.join("");
+    }
+
+    // Monta a lista de músicas completas (com momento) a partir das
+    // referências salvas no repertório. Usada tanto pelo visor quanto
+    // pela exportação em PDF.
+    function montarPlaylistRepertorio(rep) {
+      return (rep.musicas || [])
+        .map((item) => {
+          let id = typeof item === 'object' ? item.id : item;
+          let originalM = acervoGlobal.find((x) => x.id === id);
+          if (originalM) {
+            let m = { ...originalM };
+            m.momento_repertorio = typeof item === 'object' ? item.momento : (m.momento_missa || "");
+            return m;
+          }
+          return undefined;
+        })
+        .filter((m) => m !== undefined);
+    }
+
+    // Converte o conteúdo (HTML rico) de uma música em linhas <p>
+    // marcadas como acorde/letra, no tom original, para a versão impressa.
+    function gerarLinhasCifraHtml(conteudoOriginal) {
+      let htmlContent = conteudoOriginal || "";
+      if (!/<[a-z][\s\S]*>/i.test(htmlContent)) {
+        htmlContent = htmlContent.replace(/\n/g, "<br>");
+      }
+      let temp = htmlContent
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<\/(p|div|h[1-6]|li)>/gi, "\n")
+        .replace(/<(p|div|h[1-6]|li)[^>]*>/gi, "");
+
+      const linhasRaw = temp.split("\n");
+      const partes = [];
+      linhasRaw.forEach((lineHtml) => {
+        if (lineHtml.trim() === "" && lineHtml.indexOf("&nbsp;") === -1) {
+          partes.push(`<p class="linha-letra">&nbsp;</p>`);
+          return;
+        }
+        const block = document.createElement("p");
+        block.innerHTML = lineHtml;
+        block.style.margin = "0";
+        limparEstiloFonte(block);
+
+        const textContent = block.textContent || "";
+        const textoSemEspaco = textContent.replace(/\s/g, "");
+        let matchArray = [];
+        let m;
+        regexAcorde.lastIndex = 0;
+        while ((m = regexAcorde.exec(textContent)) !== null) {
+          matchArray.push(m[2]);
+        }
+        const tamanhoAcordes = matchArray.join("").length;
+        const isAcorde = textoSemEspaco.length > 0 && tamanhoAcordes / textoSemEspaco.length > 0.4;
+        block.classList.add(isAcorde ? "linha-acorde" : "linha-letra");
+        partes.push(block.outerHTML);
+      });
+      return partes.join("");
+    }
+
+    // ✨ Exporta o repertório inteiro (capa + cifras) em PDF via impressão do navegador.
+    function exportarRepertorioPDF(indexRepertorio) {
+      const rep = repertoriosGlobal[indexRepertorio];
+      if (!rep) return;
+      const musicas = montarPlaylistRepertorio(rep);
+      if (musicas.length === 0) return mostrarToast("Este repertório não tem músicas cadastradas.", "info");
+
+      const ministerio = ministeriosGlobal.find((m) => m.id === rep.ministerio_id);
+      const nomeMinisterio = ministerio ? ministerio.nome : "Geral";
+
+      let html = `<div class="pdf-capa">
+        <h1>${rep.nome}</h1>
+        <p>${nomeMinisterio}${rep.data_evento ? " · " + formatarData(rep.data_evento) : ""}</p>
+      </div>`;
+
+      musicas.forEach((m) => {
+        const { tituloLimpo } = extrairAlbumDoTitulo(m.titulo);
+        const momento = m.momento_repertorio ? `${m.momento_repertorio} · ` : "";
+        html += `<div class="pdf-musica">
+          <div class="pdf-musica-header">
+            <h2>${tituloLimpo}</h2>
+            <div class="pdf-musica-meta">${momento}Tom: ${m.tom_original || "-"}</div>
+          </div>
+          <div class="pdf-cifra">${gerarLinhasCifraHtml(m.conteudo)}</div>
+        </div>`;
+      });
+
+      document.getElementById("impressao-repertorio").innerHTML = html;
+
+      const tituloOriginal = document.title;
+      document.title = rep.nome || "Repertorio";
+      window.addEventListener("afterprint", () => { document.title = tituloOriginal; }, { once: true });
+      window.print();
     }
 
     // =========================================
@@ -5519,18 +5695,7 @@
     }
     function tocarRepertorio(indexRepertorio) {
       const rep = repertoriosGlobal[indexRepertorio];
-      playlistAtual = (rep.musicas || [])
-        .map((item) => {
-          let id = typeof item === 'object' ? item.id : item;
-          let originalM = acervoGlobal.find((x) => x.id === id);
-          if (originalM) {
-            let m = { ...originalM };
-            m.momento_repertorio = typeof item === 'object' ? item.momento : (m.momento_missa || "");
-            return m;
-          }
-          return undefined;
-        })
-        .filter((m) => m !== undefined);
+      playlistAtual = montarPlaylistRepertorio(rep);
       if (playlistAtual.length === 0) return mostrarToast("Este repertório não tem músicas cadastradas.", "info");
       indexPlaylist = 0;
       document.getElementById("nav-repertorio-visor").style.display = "flex";
