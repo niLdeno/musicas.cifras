@@ -5,16 +5,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Músicas - Sistema Completo</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
     href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;700&family=Source+Code+Pro:wght@400;500;600;700&display=swap"
     rel="stylesheet" />
-  <script src="dicionario_br.js"></script>
-  <script src="dicionario_teclado.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js" referrerpolicy="origin"></script>
+  <script src="dicionario_br.js" defer></script>
+  <script src="dicionario_teclado.js" defer></script>
+  <!-- ✨ TinyMCE (editor rico) só é baixado quando o modal de cadastro/edição
+       de música é aberto pela 1ª vez — evita ~1MB de JS/CSS/skins no carregamento
+       inicial da página para quem só está lendo cifras. Veja carregarEditorTexto(). -->
 
   <style>
     :root {
@@ -2552,7 +2554,7 @@
           <div class="acervo-busca-area" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
             <div class="search-wrapper" style="min-width: 260px; max-width: 340px;">
               <input id="acervo-busca" placeholder="Buscar por título, autor, trecho da letra..."
-                oninput="filtrarAcervo(); atualizarBotaoLimpar()" style="width: 100%" />
+                oninput="debounceFiltrarAcervo(); atualizarBotaoLimpar()" style="width: 100%" />
             </div>
             <button class="btn btn-secondary btn-limpar-busca" id="btn-limpar-busca" title="Limpar busca"
               onclick="limparBusca()" style="display: none;">
@@ -3258,10 +3260,7 @@
     // === SKELETON CARDS ===
     function mostrarSkeletons(qtd = 4) {
       const container = document.getElementById("acervo-cards");
-      container.innerHTML = "";
-      for (let i = 0; i < qtd; i++) {
-        container.innerHTML += `<div class="skeleton-card"><div class="skeleton sk-icon"></div><div class="sk-lines"><div class="skeleton sk-title"></div><div class="skeleton sk-sub"></div></div></div>`;
-      }
+      container.innerHTML = `<div class="skeleton-card"><div class="skeleton sk-icon"></div><div class="sk-lines"><div class="skeleton sk-title"></div><div class="skeleton sk-sub"></div></div></div>`.repeat(qtd);
     }
 
     // === BUSCA ===
@@ -3278,23 +3277,49 @@
       input.focus();
     }
 
-    window.onload = () => {
-      tinymce.init({
-        selector: "#cad-conteudo",
-        plugins:
-          "lists link preview searchreplace visualblocks code fullscreen table help wordcount",
-        toolbar:
-          "undo redo | formatselect | fontfamily fontsize lineheight | " +
-          "bold italic underline | alignleft aligncenter " +
-          "alignright alignjustify | outdent indent | " +
-          "numlist bullist | forecolor backcolor | help",
-        menubar: false,
-        height: 600,
-        lineheight_formats: '1 1.1 1.2 1.3 1.4 1.5 1.6 1.8 2 2.5 3',
-        content_style:
-          "body { margin: 0; padding: 16px; box-sizing: border-box; font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 16px; line-height: 1.5; white-space: pre-wrap; }",
+    // ✨ TinyMCE só é baixado/inicializado quando o modal de música é aberto
+    // pela 1ª vez (economiza ~1MB de JS/CSS no carregamento da página para
+    // quem só está lendo cifras). Enquanto não carrega, o `<textarea>` comum
+    // por trás do editor guarda o conteúdo normalmente (ver `tinymce.get`
+    // checado em toda leitura/escrita de `cad-conteudo`) e o TinyMCE lê esse
+    // valor como conteúdo inicial assim que termina de inicializar.
+    let _editorTextoCarregando = null;
+    function carregarEditorTexto() {
+      if (typeof tinymce !== "undefined" && tinymce.get("cad-conteudo")) return Promise.resolve();
+      if (_editorTextoCarregando) return _editorTextoCarregando;
+      _editorTextoCarregando = new Promise((resolve) => {
+        const iniciar = () => {
+          tinymce.init({
+            selector: "#cad-conteudo",
+            plugins:
+              "lists link preview searchreplace visualblocks code fullscreen table help wordcount",
+            toolbar:
+              "undo redo | formatselect | fontfamily fontsize lineheight | " +
+              "bold italic underline | alignleft aligncenter " +
+              "alignright alignjustify | outdent indent | " +
+              "numlist bullist | forecolor backcolor | help",
+            menubar: false,
+            height: 600,
+            lineheight_formats: '1 1.1 1.2 1.3 1.4 1.5 1.6 1.8 2 2.5 3',
+            content_style:
+              "body { margin: 0; padding: 16px; box-sizing: border-box; font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 16px; line-height: 1.5; white-space: pre-wrap; }",
+            init_instance_callback: () => resolve(),
+          });
+        };
+        if (typeof tinymce !== "undefined") {
+          iniciar();
+        } else {
+          const script = document.createElement("script");
+          script.src = "https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js";
+          script.referrerPolicy = "origin";
+          script.onload = iniciar;
+          document.head.appendChild(script);
+        }
       });
+      return _editorTextoCarregando;
+    }
 
+    window.onload = () => {
       // LÓGICA DE CONEXÃO
       const url = "https://azscmfqhqarpudwjcgky.supabase.co";
       const key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6c2NtZnFocWFycHVkd2pjZ2t5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMTg3MDcsImV4cCI6MjA5NjU5NDcwN30.uZdkWQ0hONUfU9gjadxRh8nCWboVX-lseoF2CLBn9_4";
@@ -3492,13 +3517,7 @@
       atualizarUIEditor();
       fecharModal("modal-login");
       mostrarToast("Login realizado!", "sucesso");
-      // Recarrega os dados já no contexto autenticado (permite gravar via RLS).
-      carregarAcervo();
-      carregarRepertorios();
-      carregarDicionario();
-      carregarSolicitacoes();
-      carregarMinisterios();
-      if (ehAdmin) { carregarCadastrosPendentes(); }
+      carregarDadosAutenticados();
     }
 
     async function sair() {
@@ -3614,12 +3633,18 @@
 
       await resolverPapel(data.user.email);
       atualizarUIEditor();
+      carregarDadosAutenticados();
+    }
+
+    // Recarrega todos os dados no contexto autenticado (permite gravar via
+    // RLS) — usado após login, troca de senha e restauração de sessão.
+    function carregarDadosAutenticados() {
       carregarAcervo();
       carregarRepertorios();
       carregarDicionario();
       carregarSolicitacoes();
       carregarMinisterios();
-      if (ehAdmin) { carregarCadastrosPendentes(); }
+      if (ehAdmin) carregarCadastrosPendentes();
     }
 
     // Bloqueia ações de escrita quando não há ninguém logado (defesa extra;
@@ -3653,14 +3678,7 @@
         meuMinisterio = null;
       }
       atualizarUIEditor();
-      if (logado()) {
-        carregarAcervo();
-        carregarRepertorios();
-        carregarDicionario();
-        carregarSolicitacoes();
-        carregarMinisterios();
-        if (ehAdmin) { carregarCadastrosPendentes(); }
-      }
+      if (logado()) carregarDadosAutenticados();
     }
 
     // =========================================
@@ -3921,8 +3939,10 @@
         )
         .forEach((el) => (el.value = ""));
       document.getElementById("cad-tom").value = "E";
-      if (tinymce.get("cad-conteudo"))
+      if (typeof tinymce !== "undefined" && tinymce.get("cad-conteudo"))
         tinymce.get("cad-conteudo").setContent("");
+      else
+        carregarEditorTexto();
       configurarModalMusica(ehAdmin ? "admin" : "ministerio-nova");
       document.getElementById("modal-cadastro-musica").style.display = "flex";
     }
@@ -3942,10 +3962,11 @@
           .map((line) => `<p>${line || "&nbsp;"}</p>`)
           .join("");
       }
-      if (tinymce.get("cad-conteudo")) {
+      if (typeof tinymce !== "undefined" && tinymce.get("cad-conteudo")) {
         tinymce.get("cad-conteudo").setContent(content);
       } else {
         document.getElementById("cad-conteudo").value = content;
+        carregarEditorTexto();
       }
       configurarModalMusica(ehAdmin ? "admin" : "ministerio-edicao", { titulo: "Editar Música" });
       document.getElementById("modal-cadastro-musica").style.display = "flex";
@@ -3953,7 +3974,7 @@
     async function salvarMusica() {
       if (!exigirLogado()) return;
       if (modoModalMusica === "admin-revisao") return aprovarSolicitacao();
-      const conteudoInput = tinymce.get("cad-conteudo")
+      const conteudoInput = (typeof tinymce !== "undefined" && tinymce.get("cad-conteudo"))
         ? tinymce.get("cad-conteudo").getContent()
         : document.getElementById("cad-conteudo").value;
       const p = {
@@ -4211,6 +4232,12 @@
         return alvo.includes(termo);
       });
       renderizarAcervo(filtradas);
+    }
+
+    let _timerFiltroAcervo = null;
+    function debounceFiltrarAcervo() {
+      clearTimeout(_timerFiltroAcervo);
+      _timerFiltroAcervo = setTimeout(filtrarAcervo, 150);
     }
 
     function toggleDropdown(event) {
@@ -4501,12 +4528,11 @@
       if (filtroMinisterioRepertorios === "geral") lista = lista.filter((r) => !r.ministerio_id);
       else if (filtroMinisterioRepertorios !== "todos") lista = lista.filter((r) => r.ministerio_id === filtroMinisterioRepertorios);
 
-      tbody.innerHTML = "";
       if (lista.length === 0) {
         tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--text-muted);">Nenhum repertório cadastrado ainda.</td></tr>`;
         return;
       }
-      lista.forEach((r) => {
+      const linhas = lista.map((r) => {
         const i = repertoriosGlobal.findIndex((item) => item.id === r.id);
         let qtd = Array.isArray(r.musicas) ? r.musicas.length : 0;
         const ministerio = ministeriosGlobal.find((m) => m.id === r.ministerio_id);
@@ -4515,7 +4541,7 @@
           ? `<button class="btn btn-secondary" style="padding: 6px 10px; margin-left: 6px;" onclick="abrirEdicaoRepertorio(${i})" title="Editar"><i class="fa-solid fa-pen"></i></button>
              <button class="btn btn-secondary" style="padding:6px 10px; margin-left:6px; background:#ef4444; border-color:transparent; color:#fff;" onclick="excluirRepertorio('${r.id}')" title="Excluir"><i class="fa-solid fa-trash"></i></button>`
           : "";
-        tbody.innerHTML += `<tr>
+        return `<tr>
           <td style="font-weight: 600;">${r.nome}</td>
           <td><span class="tag-pill">${nomeMinisterio}</span></td>
           <td>${formatarData(r.data_evento)}</td>
@@ -4525,6 +4551,7 @@
             ${acoes}
           </td></tr>`;
       });
+      tbody.innerHTML = linhas.join("");
     }
 
     // =========================================
@@ -4576,12 +4603,11 @@
           ? "Pedidos de música nova ou ajuste enviados pelos ministérios."
           : "Acompanhe o status das músicas que seu ministério solicitou.";
       }
-      tbody.innerHTML = "";
       if (solicitacoesGlobal.length === 0) {
         tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: var(--text-muted);">Nenhuma solicitação por aqui.</td></tr>`;
         return;
       }
-      solicitacoesGlobal.forEach((s) => {
+      const linhas = solicitacoesGlobal.map((s) => {
         const ministerio = ministeriosGlobal.find((m) => m.id === s.ministerio_id);
         const nomeMinisterio = ministerio ? ministerio.nome : "-";
         const tipoLabel = s.tipo === "nova" ? "Nova música" : "Ajuste";
@@ -4594,7 +4620,7 @@
         const obs = s.observacao_admin
           ? `<div style="font-size:12px; color: var(--text-muted); margin-top:4px;">"${s.observacao_admin}"</div>`
           : "";
-        tbody.innerHTML += `<tr>
+        return `<tr>
           <td>${tipoLabel}</td>
           <td style="font-weight:600;">${s.titulo || "-"}</td>
           <td>${nomeMinisterio}</td>
@@ -4603,6 +4629,7 @@
           <td style="text-align: right; white-space: nowrap;">${acoes}</td>
         </tr>`;
       });
+      tbody.innerHTML = linhas.join("");
     }
 
     // Abre o modal de música em modo de revisão, pré-preenchido com o que o
@@ -4621,10 +4648,11 @@
       if (content && !/<[a-z][\s\S]*>/i.test(content)) {
         content = content.split("\n").map((line) => `<p>${line || "&nbsp;"}</p>`).join("");
       }
-      if (tinymce.get("cad-conteudo")) {
+      if (typeof tinymce !== "undefined" && tinymce.get("cad-conteudo")) {
         tinymce.get("cad-conteudo").setContent(content);
       } else {
         document.getElementById("cad-conteudo").value = content;
+        carregarEditorTexto();
       }
       const ministerio = ministeriosGlobal.find((m) => m.id === s.ministerio_id);
       configurarModalMusica("admin-revisao", {
@@ -4651,7 +4679,7 @@
       if (!exigirAdmin()) return;
       const s = solicitacoesGlobal.find((x) => x.id === idSolicitacaoRevisao);
       if (!s) return;
-      const conteudoInput = tinymce.get("cad-conteudo")
+      const conteudoInput = (typeof tinymce !== "undefined" && tinymce.get("cad-conteudo"))
         ? tinymce.get("cad-conteudo").getContent()
         : document.getElementById("cad-conteudo").value;
       const p = {
@@ -5074,21 +5102,21 @@
         (nome) => !termo || normalizarTexto(nome).includes(termo),
       );
 
-      tbody.innerHTML = "";
       if (nomes.length === 0) {
         tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:32px; color:var(--text-muted);">Nenhum acorde encontrado.</td></tr>`;
         return;
       }
 
-      nomes.forEach((nome) => {
+      const linhas = nomes.map((nome) => {
         const variacoes = agrupados[nome];
         const qtdViolao = variacoes.filter((v) => v.instrumento !== "teclado").length;
         const qtdTeclado = variacoes.filter((v) => v.instrumento === "teclado").length;
         const tags = [];
         if (qtdViolao) tags.push(`<span class="tag-pill"><i class="fa-solid fa-guitar"></i> ${qtdViolao}</span>`);
         if (qtdTeclado) tags.push(`<span class="tag-pill"><i class="fa-solid fa-keyboard"></i> ${qtdTeclado}</span>`);
-        tbody.innerHTML += `<tr><td style="font-weight: bold; color: var(--primary); font-size: 16px;">${nome}</td><td><span style="display:inline-flex; gap:6px;">${tags.join("")}</span></td><td style="text-align: right;"><button class="btn btn-secondary" style="padding:8px 14px;" onclick="abrirModalVisualizarAgrupado('${nome}')"><i class="fa-solid fa-eye" style="margin-right: 6px;"></i> Detalhes</button></td></tr>`;
+        return `<tr><td style="font-weight: bold; color: var(--primary); font-size: 16px;">${nome}</td><td><span style="display:inline-flex; gap:6px;">${tags.join("")}</span></td><td style="text-align: right;"><button class="btn btn-secondary" style="padding:8px 14px;" onclick="abrirModalVisualizarAgrupado('${nome}')"><i class="fa-solid fa-eye" style="margin-right: 6px;"></i> Detalhes</button></td></tr>`;
       });
+      tbody.innerHTML = linhas.join("");
     }
 
     function limparBuscaDicionario() {
@@ -5106,14 +5134,13 @@
       const containerEl = document.getElementById("visu-acorde-conteudo");
       if (!tituloEl || !containerEl) return;
       tituloEl.textContent = `Formatos para: ${nome}`;
-      containerEl.innerHTML = "";
       // Violão primeiro, depois teclado
       const ordenadas = variacoes.slice().sort((a, b) => {
         const ia = a.instrumento === "teclado" ? 1 : 0;
         const ib = b.instrumento === "teclado" ? 1 : 0;
         return ia - ib;
       });
-      ordenadas.forEach((v, index) => {
+      const cartoes = ordenadas.map((v, index) => {
         const ehTeclado = v.instrumento === "teclado";
         let diagramaHtml;
         if (ehTeclado && typeof gerarHtmlTecladoDeTeclas === "function") {
@@ -5134,8 +5161,9 @@
         const actionHtml = podeEditarExcluir 
           ? `<div style="display: flex; gap: 8px; width: 100%; justify-content: center; margin-top: auto;"><button class="btn btn-secondary" style="padding: 8px 16px;" onclick="abrirEdicaoAcorde(${v.id})" title="Editar formato"><i class="fa-solid fa-pen"></i></button><button class="btn btn-secondary" style="padding: 8px 16px; color: #ef4444;" onclick="excluirAcordeUnico(${v.id}, '${nome}')" title="Excluir formato"><i class="fa-solid fa-trash"></i></button></div>`
           : "";
-        containerEl.innerHTML += `<div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: var(--card-shadow); display: flex; flex-direction: column; align-items: center; gap: 16px;">${chip}${diagramaHtml}${actionHtml}</div>`;
+        return `<div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: var(--card-shadow); display: flex; flex-direction: column; align-items: center; gap: 16px;">${chip}${diagramaHtml}${actionHtml}</div>`;
       });
+      containerEl.innerHTML = cartoes.join("");
       document.getElementById("modal-visualizar-acorde").style.display =
         "flex";
     }
