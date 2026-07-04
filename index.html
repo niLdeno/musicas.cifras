@@ -4107,6 +4107,17 @@
         card.className = "acervo-card";
         card.tabIndex = 0;
 
+        // ✨ Cada versão só pode ser excluída pelo admin ou pelo ministério
+        // dono dela — nunca pelo dono de uma versão diferente.
+        const versoesExcluiveis = versoes.filter(
+          (v) => ehAdmin || (ehMinisterio && v.ministerio_id === meuMinisterio?.id),
+        );
+        const excluirHtml = versoesExcluiveis.length === 0
+          ? ""
+          : versoesExcluiveis.length === 1
+            ? `<div class="menu-item danger" onclick="excluirMusica('${versoesExcluiveis[0].id}'); closeAllMenus();"><i class="fa-solid fa-trash"></i> Excluir</div>`
+            : versoesExcluiveis.map(v => `<div class="menu-item danger" onclick="excluirMusica('${v.id}'); closeAllMenus();"><i class="fa-solid fa-trash"></i> Excluir (${getNomeDonoMusica(v)})</div>`).join("");
+
         card.innerHTML = `
                     <div class="acervo-left">
                         ${iconHtml}
@@ -4124,7 +4135,7 @@
                         </div>
                         <div class="dropdown-menu" data-music-id="${m.id}">
                             <div class="menu-item" onclick="abrirEdicaoMusica(${i}); closeAllMenus();"><i class="fa-solid fa-pen"></i> Editar</div>
-                            <div class="menu-item danger admin-only" onclick="excluirMusica('${m.id}'); closeAllMenus();"><i class="fa-solid fa-trash"></i> Excluir</div>
+                            ${excluirHtml}
                         </div>
                     </div>`;
         container.appendChild(card);
@@ -5163,14 +5174,20 @@
       mostrarAcorde(fakeEvent, nome);
     }
     async function excluirMusica(id) {
-      if (!exigirAdmin()) return;
-      if (!confirm("Excluir esta música? A ação é irreversível.")) return;
+      if (!exigirLogado()) return;
+      const m = acervoGlobal.find((x) => String(x.id) === String(id));
+      if (!m) return;
+      const podeExcluir = ehAdmin || (ehMinisterio && m.ministerio_id === meuMinisterio?.id);
+      if (!podeExcluir) {
+        return mostrarToast("Você só pode excluir a versão cadastrada pelo seu ministério.", "erro");
+      }
+      if (!confirm("Excluir esta versão da música? A ação é irreversível.")) return;
       if (!supabaseClient) return mostrarToast("Sem conexão.", "erro");
       mostrarCarregando();
       const { error } = await supabaseClient.from("musicas").delete().eq("id", id);
       esconderCarregando();
       if (error) return mostrarToast("Erro ao excluir.", "erro");
-      mostrarToast("Música excluída.", "sucesso");
+      mostrarToast("Versão excluída.", "sucesso");
       carregarAcervo();
     }
     async function excluirRepertorio(id) {

@@ -100,12 +100,28 @@ No **SQL Editor**, rode o bloco inteiro:
 drop policy if exists "escrita autenticada musicas" on public.musicas;
 drop policy if exists "escrita autenticada repertorios" on public.repertorios;
 
--- ---------- MÚSICAS: só o administrador grava ----------
-create policy "escrita somente admin musicas"
+-- ---------- MÚSICAS: admin ou ministério dono da versão ----------
+-- (cada ministério só grava/edita/apaga a própria versão; o admin grava tudo,
+-- incluindo a versão "oficial" com ministerio_id nulo)
+drop policy if exists "escrita somente admin musicas" on public.musicas;
+
+create policy "escrita admin ou dono musicas"
   on public.musicas for all
   to authenticated
-  using (lower(auth.jwt() ->> 'email') = lower('nildeno.aragao@gmail.com'))
-  with check (lower(auth.jwt() ->> 'email') = lower('nildeno.aragao@gmail.com'));
+  using (
+    lower(auth.jwt() ->> 'email') = lower('nildeno.aragao@gmail.com')
+    or ministerio_id in (
+      select id from public.ministerios
+      where lower(email) = lower(auth.jwt() ->> 'email')
+    )
+  )
+  with check (
+    lower(auth.jwt() ->> 'email') = lower('nildeno.aragao@gmail.com')
+    or ministerio_id in (
+      select id from public.ministerios
+      where lower(email) = lower(auth.jwt() ->> 'email')
+    )
+  );
 
 -- ---------- REPERTÓRIOS: admin ou dono do repertório ----------
 create policy "escrita admin ou dono repertorios"
