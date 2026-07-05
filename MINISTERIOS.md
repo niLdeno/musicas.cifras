@@ -348,6 +348,43 @@ conta" e "estar aprovado" são coisas diferentes aqui.
 
 ---
 
+## Passo 6 — Deixar cada ministério gerenciar os próprios acordes
+
+O app já permite que um ministério cadastre/edite/exclua seus próprios
+formatos de acorde (não só o admin), mas isso exige uma coluna
+`ministerio_id` em `dicionario_acordes` — sem ela, salvar um acorde falha
+com "Erro ao salvar o acorde. Tente novamente." (a coluna não existe na
+tabela). A política de escrita também precisa liberar o dono do acorde, não
+só o admin. No **SQL Editor**, rode:
+
+```sql
+-- ===== DICIONÁRIO DE ACORDES GANHA DONO =====
+alter table public.dicionario_acordes
+  add column ministerio_id uuid references public.ministerios(id) on delete set null;
+  -- fica NULL para acordes "oficiais" (cadastrados por você, sem dono)
+
+drop policy if exists "escrita somente admin dicionario" on public.dicionario_acordes;
+create policy "escrita admin ou dono dicionario"
+  on public.dicionario_acordes for all
+  to authenticated
+  using (
+    lower(auth.jwt() ->> 'email') = lower('nildeno.aragao@gmail.com')
+    or ministerio_id in (
+      select id from public.ministerios
+      where lower(email) = lower(auth.jwt() ->> 'email')
+    )
+  )
+  with check (
+    lower(auth.jwt() ->> 'email') = lower('nildeno.aragao@gmail.com')
+    or ministerio_id in (
+      select id from public.ministerios
+      where lower(email) = lower(auth.jwt() ->> 'email')
+    )
+  );
+```
+
+---
+
 ## Como funciona a fila de solicitações (músicas)
 
 - Quando um ministério cria ou ajusta uma música pela aba **Músicas**, o
