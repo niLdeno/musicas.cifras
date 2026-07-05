@@ -5246,6 +5246,8 @@
         esconderCarregando();
         const msg = (err && err.message && /instrumento/i.test(err.message))
           ? "Falta a coluna 'instrumento' na tabela. Rode o SQL indicado no Supabase."
+          : (err && err.message && /ministerio_id/i.test(err.message))
+          ? "Falta a coluna 'ministerio_id' na tabela de acordes. Rode o SQL do Passo 6 no MINISTERIOS.md."
           : "Erro ao salvar o acorde. Tente novamente.";
         mostrarToast(msg, "erro");
       }
