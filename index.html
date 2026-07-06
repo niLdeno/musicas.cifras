@@ -3144,23 +3144,15 @@
             <label>Data</label><input type="date" id="rep-data" />
           </div>
         </div>
-        <div class="form-group admin-only" id="rep-ministerio-group">
-          <label>Ministério (dono do repertório)</label>
-          <select id="rep-ministerio">
-            <option value="">Geral (sem ministério)</option>
-          </select>
-        </div>
-
         <style>
           .builder-container-flex { display: flex; flex-direction: row; gap: 20px; flex: 1; min-height: 0; min-width: 0; height: 100%; }
           @media (max-width: 768px) { .builder-container-flex { flex-direction: column; } }
         </style>
-        <div class="form-group full-width builder-container-flex">
-          <!-- Lado Esquerdo: Busca e Acervo -->
-          <div class="builder-acervo" style="display: flex; flex-direction: column; min-height: 0; min-width: 0; flex: 1;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div class="form-group">
             <label style="margin-bottom: 8px; display: block;">Adicionar Músicas:</label>
             <div
-              style="position: relative; margin-bottom: 12px; width: 100%; box-sizing: border-box; display: flex; gap: 8px; align-items: center;">
+              style="position: relative; width: 100%; box-sizing: border-box; display: flex; gap: 8px; align-items: center;">
               <input type="text" id="rep-busca-musica" placeholder="Buscar no acervo..."
                 oninput="toggleLimparBusca(); debounceFiltroRepertorio()"
                 style="flex: 1; min-width: 0; box-sizing: border-box;" />
@@ -3169,6 +3161,19 @@
                 <i class="fa-solid fa-delete-left"></i>
               </button>
             </div>
+          </div>
+          <div class="form-group admin-only" id="rep-ministerio-group">
+            <label>Ministério</label>
+            <select id="rep-ministerio">
+              <option value="">Geral (sem ministério)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group full-width builder-container-flex">
+          <!-- Lado Esquerdo: Acervo -->
+          <div class="builder-acervo" style="display: flex; flex-direction: column; min-height: 0; min-width: 0; flex: 1;">
+            <label style="margin-bottom: 8px; display: block;">Músicas do Acervo:</label>
             <div class="lista-selecao-musicas" id="lista-disponiveis-repertorio"
               style="flex: 1; min-height: 120px; min-width: 0; overflow-y: auto; overflow-x: hidden;">
             </div>
@@ -3181,6 +3186,7 @@
             </div>
           </div>
         </div>
+      </div>
       </div>
       <button class="btn" style="width: 100%; justify-content: center; flex-shrink: 0; margin-top: 16px;"
         onclick="salvarRepertorio()">
@@ -3316,6 +3322,7 @@
     let gruposRepertoriosAbertos = new Set(); // ids de ministério (ou "geral") com a caixinha expandida
     let musicaSelecionada = null;
     let musicasRepertorioAtual = [];
+    let gruposAcervoRepertorioAbertos = new Set(); // chaves (título normalizado) expandidas no seletor de versões
     let playlistAtual = [];
     let indexPlaylist = 0;
     let semitonsAcumulados = 0;
@@ -4394,15 +4401,31 @@
       if (!divDisp) return;
 
       const termo = normalizarTexto(document.getElementById("rep-busca-musica").value || "");
-      const partes = [];
+
+      // Agrupa por título: uma música com mais de uma versão (dono diferente)
+      // fica colapsada — o usuário clica para abrir e escolher qual versão entra no repertório.
+      const grupos = {};
+      const ordem = [];
       acervoGlobal.forEach(m => {
         if (termo) {
           const campos = normalizarTexto(`${m.titulo} ${m.autor || ""}`);
           if (!campos.includes(termo)) return;
         }
-        const dono = getNomeDonoMusica(m);
-        const tagDonoSpan = `<span class="tag-pill" style="margin-left: 6px; font-size: 10px; background: var(--surface-2); color: var(--text-main); border: 1px solid var(--border); padding: 2px 6px;">Versão: ${dono}</span>`;
-        partes.push(`<div class="item-selecao" style="justify-content: space-between;">
+        const chave = normalizarTexto(m.titulo);
+        if (!grupos[chave]) { grupos[chave] = []; ordem.push(chave); }
+        grupos[chave].push(m);
+      });
+
+      const partes = [];
+      ordem.forEach(chave => {
+        const versoes = grupos[chave];
+        const primeira = versoes[0];
+
+        if (versoes.length === 1) {
+          const m = primeira;
+          const dono = getNomeDonoMusica(m);
+          const tagDonoSpan = `<span class="tag-pill" style="margin-left: 6px; font-size: 10px; background: var(--surface-2); color: var(--text-main); border: 1px solid var(--border); padding: 2px 6px;">Versão: ${dono}</span>`;
+          partes.push(`<div class="item-selecao" style="justify-content: space-between;">
              <div style="flex: 1; min-width: 0;">
                 <div style="display: flex; align-items: center; gap: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                    <strong>${m.titulo}</strong>
@@ -4412,8 +4435,42 @@
              </div>
              <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px; flex-shrink: 0;" onclick="adicionarMusicaRepertorio(${m.id})" title="Adicionar ao Repertório"><i class="fa-solid fa-plus"></i></button>
           </div>`);
+          return;
+        }
+
+        // Várias versões: linha colapsável.
+        const aberto = gruposAcervoRepertorioAbertos.has(chave);
+        const chaveEscapada = chave.replace(/'/g, "\\'");
+        const versoesHtml = versoes.map(v => {
+          const dono = getNomeDonoMusica(v);
+          return `<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;" onclick="event.stopPropagation()">
+                <div style="min-width: 0;">
+                   <span style="font-size: 13px; color: var(--text-main); font-weight: 600;">Versão: ${dono}</span>
+                   <small style="color:var(--text-muted); display: block;">${v.momento_missa || "Geral"}</small>
+                </div>
+                <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px; flex-shrink: 0;" onclick="adicionarMusicaRepertorio(${v.id})" title="Adicionar ao Repertório"><i class="fa-solid fa-plus"></i></button>
+             </div>`;
+        }).join("");
+
+        partes.push(`<div class="item-selecao" style="flex-direction: column; align-items: stretch; gap: 0; cursor: pointer;" onclick="toggleGrupoAcervoRepertorio('${chaveEscapada}')">
+             <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                <div style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                   <strong>${primeira.titulo}</strong>
+                </div>
+                <span class="tag-pill" style="flex-shrink: 0;">${versoes.length} VERSÕES</span>
+                <i class="fa-solid fa-chevron-down" style="transition: transform 0.15s ease; transform: rotate(${aberto ? "180deg" : "0deg"}); color: var(--text-muted); font-size: 12px; flex-shrink: 0;"></i>
+             </div>
+             ${aberto ? `<div style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;">${versoesHtml}</div>` : ""}
+          </div>`);
       });
+
       divDisp.innerHTML = partes.join("");
+    }
+
+    function toggleGrupoAcervoRepertorio(chave) {
+      if (gruposAcervoRepertorioAbertos.has(chave)) gruposAcervoRepertorioAbertos.delete(chave);
+      else gruposAcervoRepertorioAbertos.add(chave);
+      renderizarListaDisponiveis();
     }
 
     function renderizarListaSequencia() {
@@ -4518,6 +4575,7 @@
     function abrirModalCadastroRepertorio() {
       if (!exigirLogado()) return;
       idEdicaoRepertorioAtual = null;
+      gruposAcervoRepertorioAbertos.clear();
       const tituloEl = document.getElementById("modal-titulo-repertorio");
       if (tituloEl) tituloEl.textContent = "Novo Repertório";
 
@@ -4541,6 +4599,7 @@
         return;
       }
       idEdicaoRepertorioAtual = rep.id;
+      gruposAcervoRepertorioAbertos.clear();
 
       const tituloEl = document.getElementById("modal-titulo-repertorio");
       if (tituloEl) tituloEl.textContent = "Editar Repertório";
