@@ -575,6 +575,54 @@
       background-color: #f8fafc;
     }
 
+    .repertorio-grupo {
+      background: var(--surface);
+      border-radius: 16px;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .repertorio-grupo > summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 24px;
+      font-weight: var(--fw-semibold);
+      color: var(--text-main);
+      user-select: none;
+    }
+
+    .repertorio-grupo > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .repertorio-grupo > summary .repertorio-grupo-nome i {
+      transition: transform 0.15s ease;
+      margin-right: 10px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .repertorio-grupo[open] > summary .repertorio-grupo-nome i {
+      transform: rotate(90deg);
+    }
+
+    .repertorio-grupo > summary:hover {
+      background-color: #f8fafc;
+    }
+
+    .repertorio-grupo .card-table {
+      border: none;
+      border-radius: 0;
+      border-top: 1px solid var(--border);
+      box-shadow: none;
+    }
+
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -2681,22 +2729,7 @@
             <i class="fa-solid fa-plus"></i> Novo Repertório
           </button>
         </div>
-        <div id="filtro-ministerios-repertorios" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
-        </div>
-        <div class="card-table">
-          <table>
-            <thead>
-              <tr>
-                <th>Nome do Repertório</th>
-                <th>Ministério</th>
-                <th>Data</th>
-                <th>Qtd. Músicas</th>
-                <th style="text-align: right">Ações</th>
-              </tr>
-            </thead>
-            <tbody id="tabela-repertorios-body"></tbody>
-          </table>
-        </div>
+        <div id="grupos-repertorios"></div>
       </div>
     </div>
 
@@ -3275,8 +3308,8 @@
     let idEdicaoAtual = null;
     let modoModalMusica = "admin"; // 'admin' | 'ministerio-nova' | 'ministerio-edicao' | 'admin-revisao'
     let idSolicitacaoRevisao = null;
-    let filtroMinisterioRepertorios = "todos";
     let idEdicaoRepertorioAtual = null;
+    let gruposRepertoriosAbertos = new Set(); // ids de ministério (ou "geral") com a caixinha expandida
     let musicaSelecionada = null;
     let musicasRepertorioAtual = [];
     let playlistAtual = [];
@@ -3772,7 +3805,6 @@
       if (error) { mostrarToast("Erro ao carregar ministérios.", "erro"); return; }
       ministeriosGlobal = data || [];
       renderizarListaMinisterios();
-      renderizarFiltroMinisteriosRepertorios();
       renderizarTabelaRepertorios();
       renderizarTabelaSolicitacoes();
     }
@@ -4578,63 +4610,80 @@
         .order("created_at", { ascending: false });
       if (error) { mostrarToast("Erro ao carregar repertórios.", "erro"); return; }
       repertoriosGlobal = data || [];
-      renderizarFiltroMinisteriosRepertorios();
       renderizarTabelaRepertorios();
     }
 
-    // Fileira de pílulas "Todos / <cada ministério> / Geral" acima da tabela —
-    // é a "aba dividida por ministério": filtra client-side, sem query extra.
-    function renderizarFiltroMinisteriosRepertorios() {
-      const container = document.getElementById("filtro-ministerios-repertorios");
-      if (!container) return;
-      if (!logado() || repertoriosGlobal.length === 0) { container.innerHTML = ""; return; }
-      const ministeriosComRepertorio = ministeriosGlobal.filter((m) =>
-        repertoriosGlobal.some((r) => r.ministerio_id === m.id));
-      const pills = [{ id: "todos", nome: "Todos" }, ...ministeriosComRepertorio, { id: "geral", nome: "Geral" }];
-      container.innerHTML = pills.map((p) => {
-        const ativo = filtroMinisterioRepertorios === String(p.id);
-        return `<button type="button" class="tag-pill" style="cursor:pointer; border:1px solid var(--border); background:${ativo ? "var(--primary)" : "var(--surface-2)"}; color:${ativo ? "#fff" : "var(--text-main)"};" onclick="filtrarRepertoriosPorMinisterio('${p.id}')">${p.nome}</button>`;
-      }).join("");
-    }
-
-    function filtrarRepertoriosPorMinisterio(id) {
-      filtroMinisterioRepertorios = id;
-      renderizarFiltroMinisteriosRepertorios();
-      renderizarTabelaRepertorios();
-    }
-
+    // Repertórios agrupados por ministério, cada um numa caixinha recolhível
+    // (<details>) — fica mais organizado que uma lista única de todos juntos.
+    // "Geral" reúne os repertórios sem ministério (cadastrados pelo admin).
     function renderizarTabelaRepertorios() {
-      const tbody = document.getElementById("tabela-repertorios-body");
-      if (!tbody) return;
-      let lista = repertoriosGlobal;
-      if (filtroMinisterioRepertorios === "geral") lista = lista.filter((r) => !r.ministerio_id);
-      else if (filtroMinisterioRepertorios !== "todos") lista = lista.filter((r) => r.ministerio_id === filtroMinisterioRepertorios);
+      const container = document.getElementById("grupos-repertorios");
+      if (!container) return;
 
-      if (lista.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--text-muted);">Nenhum repertório cadastrado ainda.</td></tr>`;
+      if (repertoriosGlobal.length === 0) {
+        container.innerHTML = `<div class="card-table" style="padding: 40px; text-align: center; color: var(--text-muted);">Nenhum repertório cadastrado ainda.</div>`;
         return;
       }
-      const linhas = lista.map((r) => {
-        const i = repertoriosGlobal.findIndex((item) => item.id === r.id);
-        let qtd = Array.isArray(r.musicas) ? r.musicas.length : 0;
-        const ministerio = ministeriosGlobal.find((m) => m.id === r.ministerio_id);
-        const nomeMinisterio = ministerio ? ministerio.nome : "Geral";
-        const acoes = podeEditarRepertorio(r)
-          ? `<button class="btn btn-secondary" style="padding: 6px 10px; margin-left: 6px;" onclick="abrirEdicaoRepertorio(${i})" title="Editar"><i class="fa-solid fa-pen"></i></button>
-             <button class="btn btn-secondary" style="padding:6px 10px; margin-left:6px; background:#ef4444; border-color:transparent; color:#fff;" onclick="excluirRepertorio('${r.id}')" title="Excluir"><i class="fa-solid fa-trash"></i></button>`
-          : "";
-        return `<tr>
-          <td style="font-weight: 600;">${r.nome}</td>
-          <td><span class="tag-pill">${nomeMinisterio}</span></td>
-          <td>${formatarData(r.data_evento)}</td>
-          <td><span class="tag-pill">${qtd} música${qtd !== 1 ? "s" : ""}</span></td>
-          <td style="text-align: right; white-space: nowrap;">
-            <button class="btn" style="padding: 6px 12px;" onclick="tocarRepertorio(${i})"><i class="fa-solid fa-play"></i> Iniciar</button>
-            <button class="btn btn-secondary" style="padding: 6px 12px; margin-left: 6px;" onclick="exportarRepertorioPDF(${i})" title="Exportar em PDF"><i class="fa-solid fa-file-pdf"></i> PDF</button>
-            ${acoes}
-          </td></tr>`;
+
+      const grupos = {};
+      repertoriosGlobal.forEach((r) => {
+        const chave = r.ministerio_id || "geral";
+        if (!grupos[chave]) grupos[chave] = [];
+        grupos[chave].push(r);
       });
-      tbody.innerHTML = linhas.join("");
+
+      const chaves = Object.keys(grupos).sort((a, b) => {
+        if (a === "geral") return -1;
+        if (b === "geral") return 1;
+        const nomeA = ministeriosGlobal.find((m) => m.id === a)?.nome || "";
+        const nomeB = ministeriosGlobal.find((m) => m.id === b)?.nome || "";
+        return nomeA.localeCompare(nomeB, "pt-BR");
+      });
+
+      container.innerHTML = chaves.map((chave) => {
+        const lista = grupos[chave];
+        const nomeGrupo = chave === "geral"
+          ? "Geral"
+          : (ministeriosGlobal.find((m) => m.id === chave)?.nome || "Ministério");
+        const linhas = lista.map((r) => {
+          const i = repertoriosGlobal.findIndex((item) => item.id === r.id);
+          let qtd = Array.isArray(r.musicas) ? r.musicas.length : 0;
+          const acoes = podeEditarRepertorio(r)
+            ? `<button class="btn btn-secondary" style="padding: 6px 10px; margin-left: 6px;" onclick="abrirEdicaoRepertorio(${i})" title="Editar"><i class="fa-solid fa-pen"></i></button>
+               <button class="btn btn-secondary" style="padding:6px 10px; margin-left:6px; background:#ef4444; border-color:transparent; color:#fff;" onclick="excluirRepertorio('${r.id}')" title="Excluir"><i class="fa-solid fa-trash"></i></button>`
+            : "";
+          return `<tr>
+            <td style="font-weight: 600;">${r.nome}</td>
+            <td>${formatarData(r.data_evento)}</td>
+            <td><span class="tag-pill">${qtd} música${qtd !== 1 ? "s" : ""}</span></td>
+            <td style="text-align: right; white-space: nowrap;">
+              <button class="btn" style="padding: 6px 12px;" onclick="tocarRepertorio(${i})"><i class="fa-solid fa-play"></i> Iniciar</button>
+              <button class="btn btn-secondary" style="padding: 6px 12px; margin-left: 6px;" onclick="exportarRepertorioPDF(${i})" title="Exportar em PDF"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+              ${acoes}
+            </td></tr>`;
+        }).join("");
+
+        const aberto = gruposRepertoriosAbertos.has(chave);
+        return `<details class="repertorio-grupo" ${aberto ? "open" : ""} ontoggle="this.open ? gruposRepertoriosAbertos.add('${chave}') : gruposRepertoriosAbertos.delete('${chave}')">
+          <summary>
+            <span class="repertorio-grupo-nome"><i class="fa-solid fa-chevron-right"></i>${nomeGrupo}</span>
+            <span class="tag-pill">${lista.length} repertório${lista.length !== 1 ? "s" : ""}</span>
+          </summary>
+          <div class="card-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nome do Repertório</th>
+                  <th>Data</th>
+                  <th>Qtd. Músicas</th>
+                  <th style="text-align: right">Ações</th>
+                </tr>
+              </thead>
+              <tbody>${linhas}</tbody>
+            </table>
+          </div>
+        </details>`;
+      }).join("");
     }
 
     // Monta a lista de músicas completas (com momento) a partir das
