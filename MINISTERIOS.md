@@ -100,12 +100,28 @@ No **SQL Editor**, rode o bloco inteiro:
 drop policy if exists "escrita autenticada musicas" on public.musicas;
 drop policy if exists "escrita autenticada repertorios" on public.repertorios;
 
--- ---------- MÚSICAS: só o administrador grava ----------
-create policy "escrita somente admin musicas"
+-- ---------- MÚSICAS: admin ou ministério dono da versão ----------
+-- (cada ministério só grava/edita/apaga a própria versão; o admin grava tudo,
+-- incluindo a versão "oficial" com ministerio_id nulo)
+drop policy if exists "escrita somente admin musicas" on public.musicas;
+
+create policy "escrita admin ou dono musicas"
   on public.musicas for all
   to authenticated
-  using (lower(auth.jwt() ->> 'email') = lower('nildeno.aragao@gmail.com'))
-  with check (lower(auth.jwt() ->> 'email') = lower('nildeno.aragao@gmail.com'));
+  using (
+    lower(auth.jwt() ->> 'email') = lower('nildeno.aragao@gmail.com')
+    or ministerio_id in (
+      select id from public.ministerios
+      where lower(email) = lower(auth.jwt() ->> 'email')
+    )
+  )
+  with check (
+    lower(auth.jwt() ->> 'email') = lower('nildeno.aragao@gmail.com')
+    or ministerio_id in (
+      select id from public.ministerios
+      where lower(email) = lower(auth.jwt() ->> 'email')
+    )
+  );
 
 -- ---------- REPERTÓRIOS: admin ou dono do repertório ----------
 create policy "escrita admin ou dono repertorios"
@@ -329,6 +345,43 @@ já tem uma conta de login válida no Supabase (criada no auto-cadastro), mas
 essa política de leitura também bloqueia ele — só entra quem está de fato
 na tabela `ministerios` (ou seja, já aprovado). Isso é proposital: "ter
 conta" e "estar aprovado" são coisas diferentes aqui.
+
+---
+
+## Passo 6 — Deixar cada ministério gerenciar os próprios acordes
+
+O app já permite que um ministério cadastre/edite/exclua seus próprios
+formatos de acorde (não só o admin), mas isso exige uma coluna
+`ministerio_id` em `dicionario_acordes` — sem ela, salvar um acorde falha
+com "Erro ao salvar o acorde. Tente novamente." (a coluna não existe na
+tabela). A política de escrita também precisa liberar o dono do acorde, não
+só o admin. No **SQL Editor**, rode:
+
+```sql
+-- ===== DICIONÁRIO DE ACORDES GANHA DONO =====
+alter table public.dicionario_acordes
+  add column ministerio_id uuid references public.ministerios(id) on delete set null;
+  -- fica NULL para acordes "oficiais" (cadastrados por você, sem dono)
+
+drop policy if exists "escrita somente admin dicionario" on public.dicionario_acordes;
+create policy "escrita admin ou dono dicionario"
+  on public.dicionario_acordes for all
+  to authenticated
+  using (
+    lower(auth.jwt() ->> 'email') = lower('nildeno.aragao@gmail.com')
+    or ministerio_id in (
+      select id from public.ministerios
+      where lower(email) = lower(auth.jwt() ->> 'email')
+    )
+  )
+  with check (
+    lower(auth.jwt() ->> 'email') = lower('nildeno.aragao@gmail.com')
+    or ministerio_id in (
+      select id from public.ministerios
+      where lower(email) = lower(auth.jwt() ->> 'email')
+    )
+  );
+```
 
 ---
 

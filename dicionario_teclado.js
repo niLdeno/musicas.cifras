@@ -215,17 +215,28 @@
     if (!info) {
       return `<div style="text-align:center; font-family:sans-serif; font-size:13px; color:var(--text-muted);">Acorde <b>${nomeAcorde}</b><br>não reconhecido.</div>`;
     }
-    const OCTAVES = 2;
+    // ── Voicing "de arranjo": separa os registros pra NÃO empastar com o violão ──
+    // Em vez de uma tríade fechada e grave (que dobra exatamente o que o violão
+    // toca), montamos:
+    //   • MÃO ESQUERDA  = só o baixo (fundamental, ou o baixo invertido em C/E),
+    //                     grave, na 1ª oitava do desenho  → tecla vermelha
+    //   • MÃO DIREITA   = as notas do acorde empilhadas UMA OITAVA ACIMA (2ª
+    //                     oitava), acima da região onde o violão dedilha/bate.
+    //                     É essa separação de registro que "abre" o som.
+    const baixoPc = (info.baixoPc !== null && info.baixoPc !== undefined)
+      ? info.baixoPc
+      : info.rootPc;
+
     const teclasMarcadas = [];
-    info.intervalos.forEach((iv) => {
-      let keyIndex = info.rootPc + iv;
-      while (keyIndex >= 12 * OCTAVES) keyIndex -= 12;
-      teclasMarcadas.push({ keyIndex, cor: iv === 0 ? COR_ROOT : COR_TOM });
+    // Baixo grave (mão esquerda) — 1ª oitava, tecla índice 0..11
+    teclasMarcadas.push({ keyIndex: baixoPc, cor: COR_ROOT });
+
+    // Estrutura da mão direita — mesmas notas do acorde, uma oitava acima
+    // (índices 12..23). Como o baixo fica em 0..11 e a mão direita em 12..23,
+    // os registros nunca se sobrepõem.
+    info.tons.forEach((pc) => {
+      teclasMarcadas.push({ keyIndex: pc + 12, cor: COR_TOM });
     });
-    if (info.baixoPc !== null && info.baixoPc !== info.rootPc) {
-      teclasMarcadas.forEach((t) => { if (t.cor === COR_ROOT) t.cor = COR_TOM; });
-      teclasMarcadas.push({ keyIndex: info.baixoPc, cor: COR_ROOT });
-    }
     const nomes = info.nomes.map((n, idx) => ({ nome: n, cor: idx === 0 ? COR_ROOT : COR_TOM }));
     return desenharPianoSVG(info.nome, teclasMarcadas, nomes, opts);
   }
