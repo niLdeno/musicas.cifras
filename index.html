@@ -3435,7 +3435,7 @@
               "undo redo | formatselect | fontfamily fontsize lineheight | " +
               "bold italic underline | alignleft aligncenter " +
               "alignright alignjustify | outdent indent | " +
-              "numlist bullist | forecolor backcolor | removeformat | help",
+              "numlist bullist | forecolor backcolor | removeformat | code | help",
             menubar: false,
             height: 600,
             paste_as_text: true,
@@ -4788,6 +4788,10 @@
         htmlContent = htmlContent.replace(/\n/g, "<br>");
       }
       let temp = htmlContent
+        // Remove quebras de linha "de formatação" que o TinyMCE insere entre
+        // tags de bloco (ex.: "<p>G</p>\n<p>letra</p>"). Sem isso cada uma virava
+        // uma linha em branco extra, quebrando o pareamento acorde+letra.
+        .replace(/>\s*\n+\s*</g, "><")
         .replace(/<br\s*\/?>/gi, "\n")
         .replace(/<\/(p|div|h[1-6]|li)>/gi, "\n")
         .replace(/<(p|div|h[1-6]|li)[^>]*>/gi, "");
@@ -6118,6 +6122,10 @@
       }
 
       let temp = htmlContent
+        // Remove quebras de linha "de formatação" que o TinyMCE insere entre
+        // tags de bloco (ex.: "<p>G</p>\n<p>letra</p>"). Sem isso cada uma virava
+        // uma linha em branco extra, quebrando o pareamento acorde+letra.
+        .replace(/>\s*\n+\s*</g, "><")
         .replace(/<br\s*\/?>/gi, "\n")
         .replace(/<\/(p|div|h[1-6]|li)>/gi, "\n")
         .replace(/<(p|div|h[1-6]|li)[^>]*>/gi, "");
