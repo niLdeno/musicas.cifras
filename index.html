@@ -4084,9 +4084,10 @@
       configurarModalMusica(ehAdmin ? "admin" : "ministerio-nova");
       document.getElementById("modal-cadastro-musica").style.display = "flex";
     }
-    function abrirEdicaoMusica(index) {
+    function abrirEdicaoMusica(id) {
       if (!exigirLogado()) return;
-      const m = acervoGlobal[index];
+      const m = acervoGlobal.find((item) => String(item.id) === String(id));
+      if (!m) return;
       idEdicaoAtual = m.id;
       idSolicitacaoRevisao = null;
       document.getElementById("cad-titulo").value = m.titulo;
@@ -4276,6 +4277,14 @@
           : versoesExcluiveis.length === 1
             ? `<div class="menu-item danger" onclick="excluirMusica('${versoesExcluiveis[0].id}'); closeAllMenus();"><i class="fa-solid fa-trash"></i> Excluir</div>`
             : versoesExcluiveis.map(v => `<div class="menu-item danger" onclick="excluirMusica('${v.id}'); closeAllMenus();"><i class="fa-solid fa-trash"></i> Excluir (${getNomeDonoMusica(v)})</div>`).join("");
+        // ✨ Editar segue a mesma regra de permissão do Excluir: um item por
+        // versão que o usuário pode gerenciar, com o dono indicado quando
+        // houver mais de uma — evita editar sempre a mesma versão "vencedora".
+        const editarHtml = versoesExcluiveis.length === 0
+          ? ""
+          : versoesExcluiveis.length === 1
+            ? `<div class="menu-item" onclick="abrirEdicaoMusica('${versoesExcluiveis[0].id}'); closeAllMenus();"><i class="fa-solid fa-pen"></i> Editar</div>`
+            : versoesExcluiveis.map(v => `<div class="menu-item" onclick="abrirEdicaoMusica('${v.id}'); closeAllMenus();"><i class="fa-solid fa-pen"></i> Editar (${getNomeDonoMusica(v)})</div>`).join("");
 
         card.innerHTML = `
                     <div class="acervo-left">
@@ -4293,7 +4302,7 @@
                             <button class="action-more logado-only" title="Mais" onclick="toggleDropdown(event)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
                         </div>
                         <div class="dropdown-menu" data-music-id="${m.id}">
-                            <div class="menu-item" onclick="abrirEdicaoMusica(${i}); closeAllMenus();"><i class="fa-solid fa-pen"></i> Editar</div>
+                            ${editarHtml}
                             ${excluirHtml}
                         </div>
                     </div>`;
