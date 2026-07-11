@@ -4110,12 +4110,39 @@
       configurarModalMusica(ehAdmin ? "admin" : "ministerio-edicao", { titulo: "Editar Música" });
       document.getElementById("modal-cadastro-musica").style.display = "flex";
     }
+
+    // ✨ O serializer HTML do TinyMCE colapsa sequências de espaços comuns em
+    // um único espaço ao chamar getContent() — mesmo com white-space: pre-wrap
+    // no editor, que só afeta a exibição durante a digitação, não a serialização.
+    // Isso destrói o alinhamento de acorde+letra feito com espaços na cifra.
+    // Aqui, antes de serializar, trocamos cada espaço de uma sequência de 2+
+    // por &nbsp; (que o serializer nunca colapsa), preservando a contagem exata.
+    function obterConteudoEditor() {
+      if (typeof tinymce === "undefined" || !tinymce.get("cad-conteudo")) {
+        return document.getElementById("cad-conteudo").value;
+      }
+      const editor = tinymce.get("cad-conteudo");
+      const clone = editor.getBody().cloneNode(true);
+      const walker = document.createTreeWalker(clone, NodeFilter.SHOW_TEXT, null, false);
+      const textNodes = [];
+      let node;
+      while ((node = walker.nextNode())) textNodes.push(node);
+      textNodes.forEach((tNode) => {
+        tNode.nodeValue = tNode.nodeValue.replace(/ {2,}/g, (run) => "\u00A0".repeat(run.length));
+      });
+      clone.querySelectorAll("[data-mce-bogus]").forEach((el) => el.remove());
+      clone.querySelectorAll("*").forEach((el) => {
+        [...el.attributes].forEach((attr) => {
+          if (attr.name.startsWith("data-mce-")) el.removeAttribute(attr.name);
+        });
+      });
+      return clone.innerHTML;
+    }
+
     async function salvarMusica() {
       if (!exigirLogado()) return;
       if (modoModalMusica === "admin-revisao") return aprovarSolicitacao();
-      const conteudoInput = (typeof tinymce !== "undefined" && tinymce.get("cad-conteudo"))
-        ? tinymce.get("cad-conteudo").getContent()
-        : document.getElementById("cad-conteudo").value;
+      const conteudoInput = obterConteudoEditor();
       const p = {
         titulo: document.getElementById("cad-titulo").value.trim(),
         autor: document.getElementById("cad-autor").value.trim(),
@@ -4993,9 +5020,7 @@
       if (!exigirAdmin()) return;
       const s = solicitacoesGlobal.find((x) => x.id === idSolicitacaoRevisao);
       if (!s) return;
-      const conteudoInput = (typeof tinymce !== "undefined" && tinymce.get("cad-conteudo"))
-        ? tinymce.get("cad-conteudo").getContent()
-        : document.getElementById("cad-conteudo").value;
+      const conteudoInput = obterConteudoEditor();
       const p = {
         titulo: document.getElementById("cad-titulo").value.trim(),
         autor: document.getElementById("cad-autor").value.trim(),
