@@ -2950,6 +2950,18 @@
           criado antes no painel do Supabase (Authentication → Users). Aqui você só vincula o nome do ministério a esse
           e-mail — veja MINISTERIOS.md.</small>
       </div>
+      <div class="form-group full-width admin-only"
+        style="margin-bottom: 20px; border-top: 1px solid var(--border); padding-top: 16px;">
+        <label style="margin-bottom: 8px; display: block;">Diagnóstico de cifras</label>
+        <small style="color: var(--text-muted); display: block; margin-bottom: 10px;">
+          Verifica quais músicas têm cifra com "cara" de espaçamento de acorde colapsado
+          (bug antigo do editor, já corrigido). Não altera nada — só lista para você reeditar manualmente.
+        </small>
+        <button type="button" class="btn btn-secondary" onclick="diagnosticarCifrasCorrompidas()">
+          <i class="fa-solid fa-magnifying-glass"></i> Verificar cifras afetadas
+        </button>
+        <div id="lista-diagnostico-cifras" style="display: flex; flex-direction: column; gap: 6px; margin-top: 12px;"></div>
+      </div>
       <button class="btn" style="width: 100%; justify-content: center" onclick="salvarConfiguracao()">
         Salvar Configurações
       </button>
@@ -4385,6 +4397,90 @@
       return letras.join(" ");
     }
 
+    // ✨ Mesma extração/classificação linha a linha de extrairLetraParaBusca,
+    // mas devolvendo cada linha (com espaçamento original) e seu tipo — usado
+    // pelo diagnóstico de cifras com espaçamento colapsado (ver diagnosticarCifrasCorrompidas).
+    function linhasClassificadasCifra(html) {
+      if (!html) return [];
+      let temp = String(html)
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<\/(p|div|h[1-6]|li)>/gi, "\n")
+        .replace(/<[^>]+>/g, "");
+      if (temp.indexOf("&") !== -1) {
+        const ta = document.createElement("textarea");
+        ta.innerHTML = temp;
+        temp = ta.value;
+      }
+      return temp.split("\n").map((linha) => {
+        const texto = linha.trim();
+        let m, total = 0;
+        regexAcorde.lastIndex = 0;
+        const acordes = [];
+        while ((m = regexAcorde.exec(texto)) !== null) {
+          total += m[2].length;
+          acordes.push({ texto: m[2], inicio: m.index + m[1].length, fim: m.index + m[1].length + m[2].length });
+        }
+        const semEspaco = texto.replace(/\s/g, "");
+        const isAcorde = semEspaco.length > 0 && total / semEspaco.length > 0.4;
+        return { texto, isAcorde, acordes };
+      }).filter((l) => l.texto !== "");
+    }
+
+    // ✨ Detecta, por heurística, linhas de acorde com "cara" de espaçamento
+    // colapsado pelo bug do TinyMCE (ver commit que criou obterConteudoEditor):
+    // todos os acordes da linha separados por exatamente 1 espaço E a linha de
+    // acorde bem mais curta que a linha de letra correspondente — um padrão
+    // improvável em quem digitou intencionalmente cada acorde com 1 espaço só,
+    // já que normalmente é preciso "empurrar" acordes mais pra frente com
+    // vários espaços pra alinhar com sílabas no meio/fim da frase.
+    function contarLinhasSuspeitas(conteudo) {
+      const linhas = linhasClassificadasCifra(conteudo);
+      let suspeitas = 0;
+      for (let i = 0; i < linhas.length; i++) {
+        const linha = linhas[i];
+        if (!linha.isAcorde || linha.acordes.length < 2) continue;
+        const gapsDeUmEspaco = linha.acordes.every((ac, idx) => {
+          if (idx === 0) return true;
+          return ac.inicio - linha.acordes[idx - 1].fim === 1;
+        });
+        if (!gapsDeUmEspaco) continue;
+        const proxima = linhas[i + 1];
+        const linhaLetra = proxima && !proxima.isAcorde ? proxima.texto : null;
+        if (linhaLetra && linha.texto.length < linhaLetra.length * 0.6) {
+          suspeitas++;
+        }
+      }
+      return suspeitas;
+    }
+
+    // ✨ Diagnóstico (só leitura) do acervo já carregado: lista músicas cuja
+    // cifra parece ter sofrido o colapso de espaçamento do bug do TinyMCE, pra
+    // priorizar reedição manual — não altera nada no banco.
+    function diagnosticarCifrasCorrompidas() {
+      if (!exigirAdmin()) return;
+      const afetadas = acervoGlobal
+        .map((m) => ({ musica: m, suspeitas: contarLinhasSuspeitas(m.conteudo) }))
+        .filter((r) => r.suspeitas > 0)
+        .sort((a, b) => b.suspeitas - a.suspeitas);
+
+      const container = document.getElementById("lista-diagnostico-cifras");
+      if (!container) return;
+      if (afetadas.length === 0) {
+        container.innerHTML = `<small style="color: var(--text-muted);">Nenhuma música com espaçamento suspeito encontrada.</small>`;
+        return;
+      }
+      container.innerHTML = `<small style="color: var(--text-muted); display: block; margin-bottom: 8px;">
+          ${afetadas.length} música(s) com cifra possivelmente afetada — revise e reedite manualmente:
+        </small>` + afetadas.map(({ musica, suspeitas }) => `
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;">
+            <div style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              <strong>${musica.titulo}</strong>
+              <small style="color: var(--text-muted); display: block;">${getNomeDonoMusica(musica)} · ${suspeitas} linha(s) suspeita(s)</small>
+            </div>
+            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px; flex-shrink: 0;" onclick="fecharModal('modal-config'); abrirEdicaoMusica(${musica.id})" title="Editar"><i class="fa-solid fa-pen"></i></button>
+          </div>`).join("");
+    }
+
     // ✨ Indexa cada música uma vez (no carregamento) p/ busca rápida e tolerante
     function construirIndiceBusca() {
       acervoGlobal.forEach((m) => {
@@ -4394,17 +4490,31 @@
       });
     }
 
+    // ✨ Compara um texto de busca (já normalizado) contra um alvo indexado.
+    // Divide em palavras e exige que todas apareçam em qualquer ordem — assim
+    // um trecho de letra (ex.: "onipotente rei dos céus") é encontrado mesmo
+    // que o usuário não lembre a ordem exata das palavras na música.
+    function correspondeBusca(alvo, termoNormalizado) {
+      if (!termoNormalizado) return true;
+      if (!alvo) return false;
+      const palavras = termoNormalizado.split(" ").filter(Boolean);
+      return palavras.every((p) => alvo.includes(p));
+    }
+
+    function textoBuscaMusica(m) {
+      return m._busca != null ? m._busca : normalizarTexto(
+        `${m.titulo || ""} ${m.autor || ""} ${m.momento_missa || ""} ${extrairLetraParaBusca(m.conteudo)} ${m.conteudo || ""}`,
+      );
+    }
+
     // ✨ O "Cérebro" da Busca Inteligente (título, autor, momento e letra entre linhas)
     function filtrarAcervo() {
       const termo = normalizarTexto(
         document.getElementById("acervo-busca").value,
       );
-      const filtradas = acervoGlobal.filter((m) => {
-        const alvo = m._busca != null ? m._busca : normalizarTexto(
-          `${m.titulo || ""} ${m.autor || ""} ${m.momento_missa || ""} ${extrairLetraParaBusca(m.conteudo)} ${m.conteudo || ""}`,
-        );
-        return alvo.includes(termo);
-      });
+      const filtradas = acervoGlobal.filter((m) =>
+        correspondeBusca(textoBuscaMusica(m), termo),
+      );
       renderizarAcervo(filtradas);
     }
 
@@ -4456,10 +4566,9 @@
       const grupos = {};
       const ordem = [];
       acervoGlobal.forEach(m => {
-        if (termo) {
-          const campos = normalizarTexto(`${m.titulo} ${m.autor || ""}`);
-          if (!campos.includes(termo)) return;
-        }
+        // ✨ Busca também por trecho da letra, igual à busca do acervo — antes
+        // só comparava título/autor e não achava a música por um pedaço da letra.
+        if (!correspondeBusca(textoBuscaMusica(m), termo)) return;
         const chave = normalizarTexto(m.titulo);
         if (!grupos[chave]) { grupos[chave] = []; ordem.push(chave); }
         grupos[chave].push(m);
