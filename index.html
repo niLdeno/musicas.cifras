@@ -3010,12 +3010,10 @@
         style="margin-bottom: 20px; border-top: 1px solid var(--border); padding-top: 16px;">
         <label style="margin-bottom: 8px; display: block;">Origem das músicas (aba "Minhas Músicas")</label>
         <small style="color: var(--text-muted); display: block; margin-bottom: 10px;">
-          Algumas das suas músicas foram cadastradas em uma importação automática em lote, outras
-          manualmente pelo app. A aba "Minhas Músicas" só mostra as manuais. Defina abaixo a data/hora
-          de corte: tudo criado até esse momento é tratado como importação automática (fica de fora);
-          o que vier depois conta como manual. Use "Ver datas de cadastro" para localizar o corte certo —
-          normalmente há um salto grande entre um monte de músicas com data/hora quase idêntica (o lote) e as
-          demais espalhadas ao longo do tempo (as manuais).
+          Algumas das suas músicas foram cadastradas em uma importação automática em lote (em 27/06/2026),
+          outras manualmente pelo app. A aba "Minhas Músicas" só mostra as manuais. Tudo criado até a
+          data/hora de corte abaixo é tratado como importação automática (fica de fora); o que vier depois
+          conta como manual. Se precisar ajustar, use "Ver datas de cadastro" para conferir.
         </small>
         <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
           <input type="datetime-local" id="cfg-corte-manual-admin" style="flex: 1; min-width: 220px;" />
@@ -3023,7 +3021,7 @@
             <i class="fa-solid fa-check"></i> Salvar corte
           </button>
           <button type="button" class="btn btn-secondary" onclick="limparCorteManualAdmin()">
-            <i class="fa-solid fa-xmark"></i> Limpar corte
+            <i class="fa-solid fa-rotate-left"></i> Restaurar padrão
           </button>
         </div>
         <button type="button" class="btn btn-secondary" onclick="renderizarDiagnosticoOrigemMusicas()">
@@ -4591,8 +4589,8 @@
       if (!exigirAdmin()) return;
       localStorage.removeItem(CORTE_MANUAL_ADMIN_KEY);
       const input = document.getElementById("cfg-corte-manual-admin");
-      if (input) input.value = "";
-      mostrarToast("Corte removido — todas as suas músicas voltam a aparecer em \"Minhas Músicas\".", "sucesso");
+      if (input) input.value = paraDatetimeLocal(obterCorteManualAdmin());
+      mostrarToast("Corte restaurado para o padrão (27/06/2026).", "sucesso");
       if (ambienteAtual === "minhas-musicas") filtrarMinhasMusicas();
     }
 
@@ -4673,15 +4671,16 @@
 
     // ✨ Dono da música: admin "é dono" das músicas sem ministério (base
     // geral); cada ministério é dono só das versões com o seu ministerio_id.
-    // ✨ Corte data/hora (configurável pelo admin em Configurações) usado para
-    // separar músicas do admin cadastradas manualmente das que vieram de uma
-    // importação automática em lote — não há como diferenciar isso por outro
-    // campo, então o admin escolhe o corte olhando as datas de cadastro.
+    // ✨ Corte data/hora usado para separar músicas do admin cadastradas
+    // manualmente das que vieram da importação automática em lote — não há
+    // campo no banco que marque isso, então usamos a data/hora de criação.
+    // A importação em lote aconteceu em 27/06/2026; esse é o padrão, mas o
+    // admin pode ajustar em Configurações (fica salvo no navegador).
     const CORTE_MANUAL_ADMIN_KEY = "gerecifras_corte_manual_admin";
+    const CORTE_MANUAL_ADMIN_PADRAO = "2026-06-27T23:59:59";
 
     function obterCorteManualAdmin() {
-      const iso = localStorage.getItem(CORTE_MANUAL_ADMIN_KEY);
-      if (!iso) return null;
+      const iso = localStorage.getItem(CORTE_MANUAL_ADMIN_KEY) || CORTE_MANUAL_ADMIN_PADRAO;
       const d = new Date(iso);
       return isNaN(d.getTime()) ? null : d;
     }
