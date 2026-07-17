@@ -2619,6 +2619,9 @@
       <button id="nav-acervo" class="nav-item nav-active" onclick="mudarAmbiente('acervo')">
         <i class="fa-solid fa-database"></i><span>Músicas</span>
       </button>
+      <button id="nav-minhas-musicas" class="nav-item logado-only" onclick="mudarAmbiente('minhas-musicas')">
+        <i class="fa-solid fa-music"></i><span>Minhas Músicas</span>
+      </button>
       <button id="nav-repertorios" class="nav-item" onclick="mudarAmbiente('repertorios')">
         <i class="fa-solid fa-list"></i><span>Repertórios</span>
       </button>
@@ -2727,6 +2730,47 @@
     <button class="fab logado-only" onclick="abrirModalCadastroMusica()" title="Nova Música" id="fab-nova-musica">
       <i class="fa-solid fa-plus"></i>
     </button>
+
+    <div id="tela-minhas-musicas" style="display: none">
+      <div class="main-area">
+        <div style="
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+              gap: 20px;
+              margin-bottom: 24px;
+              flex-wrap: wrap;
+            ">
+          <div class="header-title-area">
+            <h2>Minhas Músicas</h2>
+            <p>Só as músicas cadastradas por você.</p>
+          </div>
+          <div class="acervo-busca-area" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <div class="search-wrapper" style="min-width: 260px; max-width: 340px;">
+              <input id="minhas-busca" placeholder="Buscar por título, autor, trecho da letra..."
+                oninput="debounceFiltrarMinhasMusicas(); atualizarBotaoLimpar('minhas-busca', 'btn-limpar-busca-minhas')"
+                style="width: 100%" />
+            </div>
+            <button class="btn btn-secondary btn-limpar-busca" id="btn-limpar-busca-minhas" title="Limpar busca"
+              onclick="limparBusca('minhas-busca', 'btn-limpar-busca-minhas', filtrarMinhasMusicas)" style="display: none;">
+              <i class="fa-solid fa-xmark"></i> Limpar
+            </button>
+            <button class="btn btn-primary btn-nova-musica-desktop logado-only" onclick="abrirModalCadastroMusica()">
+              <i class="fa-solid fa-plus"></i> Nova Música
+            </button>
+          </div>
+        </div>
+
+        <div id="minhas-cards" class="acervo-list"></div>
+
+        <div style="height: 32px"></div>
+        <div style="display: flex; justify-content: center; align-items: center;">
+          <div style="color: var(--text-muted); font-size: 14px;">
+            <span id="minhas-count">0</span> música(s) encontrada(s)
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div id="tela-repertorios">
       <div class="main-area">
@@ -3414,16 +3458,16 @@
     }
 
     // === BUSCA ===
-    function atualizarBotaoLimpar() {
-      const val = document.getElementById("acervo-busca").value;
-      const btn = document.getElementById("btn-limpar-busca");
+    function atualizarBotaoLimpar(inputId = "acervo-busca", btnId = "btn-limpar-busca") {
+      const val = document.getElementById(inputId).value;
+      const btn = document.getElementById(btnId);
       if (btn) btn.style.display = val.length > 0 ? "inline-flex" : "none";
     }
-    function limparBusca() {
-      const input = document.getElementById("acervo-busca");
+    function limparBusca(inputId = "acervo-busca", btnId = "btn-limpar-busca", filtrarFn = filtrarAcervo) {
+      const input = document.getElementById(inputId);
       input.value = "";
-      filtrarAcervo();
-      atualizarBotaoLimpar();
+      filtrarFn();
+      atualizarBotaoLimpar(inputId, btnId);
       input.focus();
     }
 
@@ -4013,13 +4057,16 @@
       if (activeNav) activeNav.classList.add("nav-active");
 
       document.getElementById("tela-acervo").style.display = ambiente === "acervo" ? "block" : "none";
+      document.getElementById("tela-minhas-musicas").style.display = ambiente === "minhas-musicas" ? "block" : "none";
       document.getElementById("tela-repertorios").style.display = ambiente === "repertorios" ? "block" : "none";
       document.getElementById("tela-dicionario").style.display = ambiente === "dicionario" ? "block" : "none";
       document.getElementById("tela-solicitacoes").style.display = ambiente === "solicitacoes" ? "block" : "none";
       document.getElementById("tela-visor").style.display = "none";
 
+      if (ambiente === "minhas-musicas") filtrarMinhasMusicas();
+
       const fab = document.getElementById("fab-nova-musica");
-      if (fab) fab.style.display = ambiente === "acervo" ? "" : "none";
+      if (fab) fab.style.display = (ambiente === "acervo" || ambiente === "minhas-musicas") ? "" : "none";
     }
     function fecharModal(id) {
       document.getElementById(id).style.display = "none";
@@ -4215,7 +4262,8 @@
       if (error) { mostrarToast("Erro ao carregar músicas.", "erro"); return; }
       acervoGlobal = data || [];
       construirIndiceBusca();
-      renderizarAcervo(acervoGlobal);
+      filtrarAcervo();
+      if (ambienteAtual === "minhas-musicas") filtrarMinhasMusicas();
     }
 
     function getNomeDonoMusica(m) {
@@ -4241,15 +4289,18 @@
     }
 
     // ✨ NOVA FUNÇÃO: Desenha as músicas na tela (separada para ser muito mais rápida)
-    function renderizarAcervo(lista) {
-      const container = document.getElementById("acervo-cards");
+    function renderizarAcervo(lista, containerId = "acervo-cards", countId = "acervo-count", buscaId = "acervo-busca") {
+      const container = document.getElementById(containerId);
       container.innerHTML = "";
 
       if (lista.length === 0) {
-        const busca = document.getElementById("acervo-busca").value;
+        const busca = document.getElementById(buscaId).value;
+        const msgVazio = containerId === "minhas-cards"
+          ? "Você ainda não cadastrou nenhuma música."
+          : "Nenhuma música cadastrada ainda.";
         container.innerHTML = busca
           ? `<div class="empty-state"><i class="fa-solid fa-magnifying-glass"></i><p>Nenhuma música encontrada para "<strong>${busca}</strong>"</p><small>Tente outro termo de busca.</small></div>`
-          : `<div class="empty-state"><i class="fa-solid fa-music"></i><p>Nenhuma música cadastrada ainda.</p><small>Clique em "Nova Música" para começar.</small></div>`;
+          : `<div class="empty-state"><i class="fa-solid fa-music"></i><p>${msgVazio}</p><small>Clique em "Nova Música" para começar.</small></div>`;
       }
 
       // Agrupar por titulo
@@ -4347,7 +4398,7 @@
                     </div>`;
         container.appendChild(card);
       });
-      const countEl = document.getElementById("acervo-count");
+      const countEl = document.getElementById(countId);
       if (countEl) countEl.textContent = String(chavesOrdenadas.length || 0);
     }
 
@@ -4522,6 +4573,30 @@
     function debounceFiltrarAcervo() {
       clearTimeout(_timerFiltroAcervo);
       _timerFiltroAcervo = setTimeout(filtrarAcervo, 150);
+    }
+
+    // ✨ Dono da música: admin "é dono" das músicas sem ministério (base
+    // geral); cada ministério é dono só das versões com o seu ministerio_id.
+    function musicaEhMinha(m) {
+      if (ehAdmin) return !m.ministerio_id;
+      return ehMinisterio && !!meuMinisterio && m.ministerio_id === meuMinisterio.id;
+    }
+
+    function filtrarMinhasMusicas() {
+      const termo = normalizarTexto(
+        document.getElementById("minhas-busca").value,
+      );
+      const minhas = acervoGlobal.filter(musicaEhMinha);
+      const filtradas = minhas.filter((m) =>
+        correspondeBusca(textoBuscaMusica(m), termo),
+      );
+      renderizarAcervo(filtradas, "minhas-cards", "minhas-count", "minhas-busca");
+    }
+
+    let _timerFiltroMinhas = null;
+    function debounceFiltrarMinhasMusicas() {
+      clearTimeout(_timerFiltroMinhas);
+      _timerFiltroMinhas = setTimeout(filtrarMinhasMusicas, 150);
     }
 
     function toggleDropdown(event) {
