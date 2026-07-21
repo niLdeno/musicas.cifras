@@ -4404,6 +4404,16 @@
             ? `<div class="menu-item" onclick="abrirEdicaoMusica('${versoesExcluiveis[0].id}'); closeAllMenus();"><i class="fa-solid fa-pen"></i> Editar</div>`
             : versoesExcluiveis.map(v => `<div class="menu-item" onclick="abrirEdicaoMusica('${v.id}'); closeAllMenus();"><i class="fa-solid fa-pen"></i> Editar (${getNomeDonoMusica(v)})</div>`).join("");
 
+        // ✨ Cada versão que ainda não é minha vira uma opção de copiar pra
+        // Minhas Músicas — assim dá pra pegar a cifra de outro ministério (ou
+        // do admin) como ponto de partida da minha própria versão.
+        const versoesCopiaveis = versoes.filter((v) => !ehDonoVersao(v));
+        const copiarHtml = versoesCopiaveis.length === 0
+          ? ""
+          : versoesCopiaveis.length === 1
+            ? `<div class="menu-item" onclick="copiarMusicaParaMeuAcervo('${versoesCopiaveis[0].id}'); closeAllMenus();"><i class="fa-solid fa-copy"></i> Copiar para Minhas Músicas</div>`
+            : versoesCopiaveis.map(v => `<div class="menu-item" onclick="copiarMusicaParaMeuAcervo('${v.id}'); closeAllMenus();"><i class="fa-solid fa-copy"></i> Copiar (${getNomeDonoMusica(v)})</div>`).join("");
+
         card.innerHTML = `
                     <div class="acervo-left">
                         ${iconHtml}
@@ -4421,6 +4431,7 @@
                         </div>
                         <div class="dropdown-menu" data-music-id="${m.id}">
                             ${editarHtml}
+                            ${copiarHtml}
                             ${excluirHtml}
                         </div>
                     </div>`;
@@ -4694,9 +4705,18 @@
       return !isNaN(d.getTime()) && d > corte;
     }
 
+    // ✨ Dono "de fato" da versão (sem o corte manual/automático, que só serve
+    // pra filtrar a aba). Usado pra saber quais versões já são minhas —
+    // diferente de "posso editar/excluir", que pro admin vale pra qualquer
+    // versão (ele é superusuário, não dono de tudo).
+    function ehDonoVersao(v) {
+      if (ehAdmin) return !v.ministerio_id;
+      return ehMinisterio && !!meuMinisterio && v.ministerio_id === meuMinisterio.id;
+    }
+
     function musicaEhMinha(m) {
       if (ehAdmin) return !m.ministerio_id && musicaEhManualAdmin(m);
-      return ehMinisterio && !!meuMinisterio && m.ministerio_id === meuMinisterio.id;
+      return ehDonoVersao(m);
     }
 
     function filtrarMinhasMusicas() {
@@ -5860,6 +5880,46 @@
       mostrarToast("Versão excluída.", "sucesso");
       carregarAcervo();
     }
+
+    // ✨ Copia uma versão de outro ministério (ou do admin) para o acervo do
+    // usuário logado — cria uma versão nova e independente em "Minhas
+    // Músicas", sem alterar a original. Se o usuário já tiver uma versão
+    // dessa mesma música, pergunta antes de sobrescrever o conteúdo dela.
+    async function copiarMusicaParaMeuAcervo(id) {
+      if (!exigirLogado()) return;
+      const origem = acervoGlobal.find((x) => String(x.id) === String(id));
+      if (!origem) return;
+      if (ehDonoVersao(origem)) return;
+
+      const tituloNormalizado = (origem.titulo || "").trim().toLowerCase();
+      const minhaVersaoExistente = acervoGlobal.find(
+        (m) => (m.titulo || "").trim().toLowerCase() === tituloNormalizado && ehDonoVersao(m),
+      );
+      if (minhaVersaoExistente && !confirm(`Você já tem uma versão de "${origem.titulo}" em Minhas Músicas. Substituir o conteúdo dela pela versão copiada de ${getNomeDonoMusica(origem)}?`)) {
+        return;
+      }
+
+      if (!supabaseClient) return mostrarToast("Sem conexão.", "erro");
+      const payload = {
+        titulo: origem.titulo,
+        autor: origem.autor,
+        tom_original: origem.tom_original,
+        momento_missa: origem.momento_missa,
+        conteudo: origem.conteudo,
+        ministerio_id: ehAdmin ? null : meuMinisterio.id,
+      };
+
+      mostrarCarregando();
+      const { error } = minhaVersaoExistente
+        ? await supabaseClient.from("musicas").update(payload).eq("id", minhaVersaoExistente.id)
+        : await supabaseClient.from("musicas").insert([payload]);
+      esconderCarregando();
+      if (error) return mostrarToast("Erro ao copiar: " + error.message, "erro");
+      mostrarToast("Música copiada para Minhas Músicas!", "sucesso");
+      await carregarAcervo();
+      mudarAmbiente("minhas-musicas");
+    }
+
     async function excluirRepertorio(id) {
       if (!exigirLogado()) return;
       const rep = repertoriosGlobal.find((r) => r.id === id);
