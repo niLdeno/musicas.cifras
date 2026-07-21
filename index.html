@@ -5891,12 +5891,15 @@
       if (!origem) return;
       if (ehDonoVersao(origem)) return;
 
+      // ✨ Se eu já tenho uma versão dessa música, só avisa e não faz nada —
+      // nunca sobrescreve minha cópia (ela é independente da origem a partir
+      // daqui: some ou muda a original, a minha continua do jeito que está).
       const tituloNormalizado = (origem.titulo || "").trim().toLowerCase();
-      const minhaVersaoExistente = acervoGlobal.find(
+      const jaTenho = acervoGlobal.some(
         (m) => (m.titulo || "").trim().toLowerCase() === tituloNormalizado && ehDonoVersao(m),
       );
-      if (minhaVersaoExistente && !confirm(`Você já tem uma versão de "${origem.titulo}" em Minhas Músicas. Substituir o conteúdo dela pela versão copiada de ${getNomeDonoMusica(origem)}?`)) {
-        return;
+      if (jaTenho) {
+        return mostrarToast(`Você já tem "${origem.titulo}" em Minhas Músicas.`, "info");
       }
 
       if (!supabaseClient) return mostrarToast("Sem conexão.", "erro");
@@ -5910,9 +5913,7 @@
       };
 
       mostrarCarregando();
-      const { error } = minhaVersaoExistente
-        ? await supabaseClient.from("musicas").update(payload).eq("id", minhaVersaoExistente.id)
-        : await supabaseClient.from("musicas").insert([payload]);
+      const { error } = await supabaseClient.from("musicas").insert([payload]);
       esconderCarregando();
       if (error) return mostrarToast("Erro ao copiar: " + error.message, "erro");
       mostrarToast("Música copiada para Minhas Músicas!", "sucesso");
