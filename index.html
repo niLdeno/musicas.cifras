@@ -3254,6 +3254,10 @@
                 <i class="fa-solid fa-delete-left"></i>
               </button>
             </div>
+            <div style="display: flex; gap: 8px; align-items: center; margin-top: 8px;">
+              <input type="checkbox" id="rep-apenas-minhas" onchange="toggleFiltroRepertorioApenasMinhas()" />
+              <label for="rep-apenas-minhas" style="margin: 0; font-size: 13px; font-weight: normal;">Mostrar apenas Minhas Músicas</label>
+            </div>
           </div>
           <div class="form-group admin-only" id="rep-ministerio-group" style="min-width: 0;">
             <label>Ministério</label>
@@ -3415,6 +3419,7 @@
     let musicaSelecionada = null;
     let musicasRepertorioAtual = [];
     let gruposAcervoRepertorioAbertos = new Set(); // chaves (título normalizado) expandidas no seletor de versões
+    let filtroRepertorioApenasMinhas = false; // toggle "só minhas músicas" no construtor de repertório
     let playlistAtual = [];
     let indexPlaylist = 0;
     let semitonsAcumulados = 0;
@@ -4808,7 +4813,8 @@
       // fica colapsada — o usuário clica para abrir e escolher qual versão entra no repertório.
       const grupos = {};
       const ordem = [];
-      acervoGlobal.forEach(m => {
+      const fonte = filtroRepertorioApenasMinhas ? acervoGlobal.filter(musicaEhMinha) : acervoGlobal;
+      fonte.forEach(m => {
         // ✨ Busca também por trecho da letra, igual à busca do acervo — antes
         // só comparava título/autor e não achava a música por um pedaço da letra.
         if (!correspondeBusca(textoBuscaMusica(m), termo)) return;
@@ -4917,6 +4923,13 @@
       renderizarListaDisponiveis();
     }
 
+    function toggleFiltroRepertorioApenasMinhas() {
+      const chk = document.getElementById("rep-apenas-minhas");
+      filtroRepertorioApenasMinhas = !!(chk && chk.checked);
+      gruposAcervoRepertorioAbertos.clear();
+      renderizarListaDisponiveis();
+    }
+
     function toggleLimparBusca() {
       const input = document.getElementById('rep-busca-musica');
       const btn = document.getElementById('btn-limpar-busca-rep');
@@ -4985,6 +4998,9 @@
       preencherSelectMinisterioRepertorio("");
       const inputBusca = document.getElementById("rep-busca-musica");
       if (inputBusca) inputBusca.value = "";
+      filtroRepertorioApenasMinhas = false;
+      const chkApenasMinhas = document.getElementById("rep-apenas-minhas");
+      if (chkApenasMinhas) chkApenasMinhas.checked = false;
 
       musicasRepertorioAtual = [];
       renderizarConstrutorRepertorio();
@@ -5011,6 +5027,9 @@
 
       const inputBusca = document.getElementById("rep-busca-musica");
       if (inputBusca) inputBusca.value = "";
+      filtroRepertorioApenasMinhas = false;
+      const chkApenasMinhas = document.getElementById("rep-apenas-minhas");
+      if (chkApenasMinhas) chkApenasMinhas.checked = false;
 
       const musicasSalvas = rep.musicas || [];
       musicasRepertorioAtual = musicasSalvas.map(item => {
