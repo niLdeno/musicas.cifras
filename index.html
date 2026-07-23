@@ -3157,7 +3157,7 @@
         </div>
         <div class="form-group">
           <label>Tom *</label>
-          <select id="cad-tom">
+          <select id="cad-tom" onchange="cadTomTocadoManualmente = true;">
             <option value="C">C</option>
             <option value="C#">C#</option>
             <option value="D">D</option>
@@ -3423,6 +3423,8 @@
     let qtdColunas = 1;
     let instrumentoAtual = localStorage.getItem("gerecifras_instrumento") || "violao";
 
+    let cadTomTocadoManualmente = false; // true assim que o usuário mexe no seletor Tom por conta própria
+
     let idEdicaoAcordeAtual = null;
     let cordasAcordeAtual = [0, 0, 0, 0, 0, 0];
     let dedosAcordeAtual = [null, null, null, null, null, null];
@@ -3495,6 +3497,23 @@
       input.focus();
     }
 
+    // ✨ Ao colar uma cifra que já traz uma linha "Tom: G" (formato comum de
+    // cifras copiadas de outros lugares), detecta e pré-seleciona o campo Tom
+    // automaticamente — só não sobrescreve se o usuário já escolheu o tom à mão.
+    const FLAT_PARA_SUSTENIDO = { C: "B", D: "C#", E: "D#", F: "E", G: "F#", A: "G#", B: "A#" };
+    function detectarTomAutomatico(texto) {
+      if (cadTomTocadoManualmente || !texto) return;
+      const m = texto.match(/\bTom\s*:\s*([A-G])\s*(#|b)?/i);
+      if (!m) return;
+      let tom = m[1].toUpperCase();
+      if (m[2] === "b") tom = FLAT_PARA_SUSTENIDO[tom];
+      else if (m[2] === "#") tom += "#";
+      const select = document.getElementById("cad-tom");
+      if ([...select.options].some((o) => o.value === tom)) {
+        select.value = tom;
+      }
+    }
+
     // ✨ TinyMCE só é baixado/inicializado quando o modal de música é aberto
     // pela 1ª vez (economiza ~1MB de JS/CSS no carregamento da página para
     // quem só está lendo cifras). Enquanto não carrega, o `<textarea>` comum
@@ -3522,6 +3541,11 @@
             lineheight_formats: '1 1.1 1.2 1.3 1.4 1.5 1.6 1.8 2 2.5 3',
             content_style:
               "body { margin: 0; padding: 16px; box-sizing: border-box; font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 16px; line-height: 1.5; white-space: pre-wrap; }",
+            setup: (editor) => {
+              editor.on("paste", () => {
+                setTimeout(() => detectarTomAutomatico(editor.getContent({ format: "text" })), 50);
+              });
+            },
             init_instance_callback: () => resolve(),
           });
         };
@@ -3537,6 +3561,11 @@
       });
       return _editorTextoCarregando;
     }
+
+    // Fallback: enquanto o TinyMCE não carregou, o <textarea> comum recebe o paste direto.
+    document.getElementById("cad-conteudo").addEventListener("paste", () => {
+      setTimeout(() => detectarTomAutomatico(document.getElementById("cad-conteudo").value), 50);
+    });
 
     window.onload = () => {
       // LÓGICA DE CONEXÃO
@@ -4164,6 +4193,7 @@
         )
         .forEach((el) => (el.value = ""));
       document.getElementById("cad-tom").value = "E";
+      cadTomTocadoManualmente = false;
       if (typeof tinymce !== "undefined" && tinymce.get("cad-conteudo"))
         tinymce.get("cad-conteudo").setContent("");
       else
@@ -4180,6 +4210,7 @@
       document.getElementById("cad-titulo").value = m.titulo;
       document.getElementById("cad-autor").value = m.autor || "";
       document.getElementById("cad-tom").value = m.tom_original;
+      cadTomTocadoManualmente = false;
       document.getElementById("cad-momento").value = m.momento_missa || "";
       let content = m.conteudo;
       if (!/<[a-z][\s\S]*>/i.test(content)) {
@@ -6360,16 +6391,17 @@
         while (estIdx < estrofes.length) {
           const est = estrofes[estIdx];
           const isColar = est.classList.contains("colar-proxima");
+          const forcarQuebra = est.classList.contains("quebra-forcada");
           const grupos = Array.from(est.querySelectorAll(".linha-grupo"));
 
           if (isColar && estIdx + 1 < estrofes.length) {
             const proxEst = estrofes[estIdx + 1];
             const proxGrupos = Array.from(proxEst.querySelectorAll(".linha-grupo"));
             const todos = grupos.concat(proxGrupos);
-            todos.forEach(g => unidades.push({ el: g, estId: estIdx, colar: true }));
+            todos.forEach((g, idx) => unidades.push({ el: g, estId: estIdx, colar: true, forcar: idx === 0 && forcarQuebra }));
             estIdx += 2;
           } else {
-            grupos.forEach(g => unidades.push({ el: g, estId: estIdx, colar: false }));
+            grupos.forEach((g, idx) => unidades.push({ el: g, estId: estIdx, colar: false, forcar: idx === 0 && forcarQuebra }));
             estIdx++;
           }
 
@@ -6409,6 +6441,13 @@
           if (u.type === "break") {
             colunasItens[colAtual].push(u);
             continue;
+          }
+
+          // Quebra forçada (--- ou linha em branco dupla): pula p/ próxima
+          // coluna já, sem esperar o balanceamento automático por peso.
+          if (u.forcar && colAtual < numColunas - 1 && linhasNaCol > 0) {
+            colAtual++;
+            linhasNaCol = 0;
           }
 
           if (colAtual < numColunas - 1 && linhasNaCol >= limites[colAtual]) {
@@ -6603,6 +6642,7 @@
         estrofe = null;
       };
 
+      let brancosSeguidos = 0;
       for (let i = 0; i < childrenProcessados.length; i++) {
         const block = childrenProcessados[i];
         const txt = (block.textContent || "").trim();
@@ -6611,18 +6651,25 @@
         if (/^[-=]{3,}$/.test(txt)) {
           fecharEstrofe();
           quebraProxima = true;
+          brancosSeguidos = 0;
           continue;
         }
 
-        // Linha em branco: encerra a estrofe (fronteira segura p/ trocar de coluna)
+        // Linha em branco: encerra a estrofe (fronteira segura p/ trocar de coluna).
+        // Uma 2ª linha em branco seguida (verso com respiro extra) força a
+        // próxima estrofe a começar em nova coluna — mesmo mecanismo do "---".
         if (txt === "") {
           fecharEstrofe();
+          brancosSeguidos++;
+          if (brancosSeguidos >= 2) quebraProxima = true;
           continue;
         }
+        brancosSeguidos = 0;
 
         if (!estrofe) {
           estrofe = document.createElement("div");
           estrofe.className = "estrofe-bloco";
+          if (quebraProxima) estrofe.classList.add("quebra-forcada");
           quebraProxima = false;
         }
 
