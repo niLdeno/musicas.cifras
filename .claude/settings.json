@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chromium-cli --help)",
+      "Bash(node -e ' *)",
+      "Bash(timeout 30 '/c/Program Files/Google/Chrome/Application/chrome.exe' --headless=new --disable-gpu --no-sandbox --screenshot=C:/Users/Nildeno/AppData/Local/Temp/claude/c--Users-Nildeno-Desktop-musica/dcfe7cdf-7a0f-444a-9737-8c6249551ead/scratchpad/preview2.png --window-size=1600,1050 --virtual-time-budget=6000 http://localhost:8791/preview_direct.html)",
+      "Bash(timeout 30 '/c/Program Files/Google/Chrome/Application/chrome.exe' --headless=new --disable-gpu --no-sandbox --screenshot=C:/Users/Nildeno/AppData/Local/Temp/claude/c--Users-Nildeno-Desktop-musica/dcfe7cdf-7a0f-444a-9737-8c6249551ead/scratchpad/preview3.png --window-size=1600,1050 --virtual-time-budget=6000 http://localhost:8791/preview_direct.html)",
+      "Bash(timeout 30 '/c/Program Files/Google/Chrome/Application/chrome.exe' --headless=new --disable-gpu --no-sandbox --screenshot=C:/Users/Nildeno/AppData/Local/Temp/claude/c--Users-Nildeno-Desktop-musica/dcfe7cdf-7a0f-444a-9737-8c6249551ead/scratchpad/preview4.png --window-size=1600,1050 --virtual-time-budget=8000 http://localhost:8791/preview_direct.html)",
+      "Bash(rm -f \"c:/Users/Nildeno/Desktop/musica/preview_direct.html\")",
+      "Bash(pkill -f \"http.server 8791\")",
+      "Bash(pkill -f \"chrome.exe\")",
+      "Bash(timeout 30 \"/c/Program Files/Google/Chrome/Application/chrome.exe\" --headless=new --disable-gpu --no-sandbox --dump-dom --virtual-time-budget=8000 \"http://localhost:8792/test_render2.html\")"
+    ]
+  }
+}

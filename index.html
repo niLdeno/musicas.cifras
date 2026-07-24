@@ -1415,6 +1415,68 @@
       accent-color: var(--primary);
     }
 
+    .switch-filter {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .switch-filter input[type="checkbox"] {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .switch-filter .switch-track {
+      position: relative;
+      width: 38px;
+      height: 22px;
+      flex-shrink: 0;
+      background: var(--border);
+      border-radius: 999px;
+      transition: background 0.2s ease;
+    }
+
+    .switch-filter .switch-track::before {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      transition: transform 0.2s ease;
+    }
+
+    .switch-filter input[type="checkbox"]:checked+.switch-track {
+      background: var(--primary);
+    }
+
+    .switch-filter input[type="checkbox"]:checked+.switch-track::before {
+      transform: translateX(16px);
+    }
+
+    .switch-filter input[type="checkbox"]:focus-visible+.switch-track {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    .switch-filter .switch-label {
+      font-size: 13px;
+      color: var(--text-color);
+      transition: color 0.2s ease;
+    }
+
+    .switch-filter input[type="checkbox"]:checked~.switch-label {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
     #acervo-busca {
       padding: 12px 16px;
       border-radius: 10px;
@@ -3254,10 +3316,11 @@
                 <i class="fa-solid fa-delete-left"></i>
               </button>
             </div>
-            <div style="display: flex; gap: 8px; align-items: center; margin-top: 8px;">
+            <label class="switch-filter" for="rep-apenas-minhas" style="margin-top: 10px;">
               <input type="checkbox" id="rep-apenas-minhas" onchange="toggleFiltroRepertorioApenasMinhas()" />
-              <label for="rep-apenas-minhas" style="margin: 0; font-size: 13px; font-weight: normal;">Mostrar apenas Minhas Músicas</label>
-            </div>
+              <span class="switch-track"></span>
+              <span class="switch-label">Minhas Músicas</span>
+            </label>
           </div>
           <div class="form-group admin-only" id="rep-ministerio-group" style="min-width: 0;">
             <label>Ministério</label>
@@ -3545,7 +3608,8 @@
             paste_as_text: true,
             lineheight_formats: '1 1.1 1.2 1.3 1.4 1.5 1.6 1.8 2 2.5 3',
             content_style:
-              "body { margin: 0; padding: 16px; box-sizing: border-box; font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 16px; line-height: 1.5; white-space: pre-wrap; }",
+              "body { margin: 0; padding: 16px; box-sizing: border-box; font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 16px; line-height: 1.5; white-space: pre-wrap; } " +
+              "p, div, h1, h2, h3, h4, h5, h6, li { margin: 0; }",
             setup: (editor) => {
               editor.on("paste", () => {
                 setTimeout(() => detectarTomAutomatico(editor.getContent({ format: "text" })), 50);
@@ -6649,6 +6713,7 @@
 
       let estrofe = null;
       let quebraProxima = false;
+      let ultimoEstrofeFechado = null;
       const fecharEstrofe = () => {
         if (estrofe && estrofe.children.length > 0) {
           const txtEstrofe = (estrofe.textContent || "").trim();
@@ -6657,6 +6722,7 @@
             estrofe.classList.add("colar-proxima");
           }
           visor.appendChild(estrofe);
+          ultimoEstrofeFechado = estrofe;
         }
         estrofe = null;
       };
@@ -6683,6 +6749,15 @@
           if (brancosSeguidos >= 2) quebraProxima = true;
           continue;
         }
+
+        // Preserva o respiro extra que o usuário deu de propósito: cada linha em
+        // branco além da 1ª soma espaço ao gap padrão da estrofe anterior (sem
+        // isso, 1 ou 5 linhas em branco produziam sempre o mesmo espaçamento fixo).
+        if (brancosSeguidos > 1 && ultimoEstrofeFechado) {
+          const extra = Math.min(brancosSeguidos - 1, 4) * 14;
+          ultimoEstrofeFechado.style.marginBottom = 18 + extra + "px";
+        }
+        ultimoEstrofeFechado = null;
         brancosSeguidos = 0;
 
         if (!estrofe) {
