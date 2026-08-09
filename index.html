@@ -3488,6 +3488,7 @@
     let semitonsAcumulados = 0;
     let tamanhoFonteAtual = 18;
     let fonteAtual = "'Courier New', Courier, monospace";
+    let tonsPersonalizados = {}; // ✨ tom (semitons) que o usuário deixou configurado, por música (persiste entre navegações e sessões)
     let qtdColunas = 1;
     let instrumentoAtual = localStorage.getItem("gerecifras_instrumento") || "violao";
 
@@ -3674,6 +3675,13 @@
       // ✨ PREFERÊNCIA DE TAMANHO DA CIFRA (fonte fixa: Courier)
       const tamanhoSalvo = parseInt(localStorage.getItem("gerecifras_fonte_tamanho") || "");
       if (!isNaN(tamanhoSalvo)) tamanhoFonteAtual = tamanhoSalvo;
+
+      // ✨ PREFERÊNCIA DE TOM POR MÚSICA (mantém o tom que o usuário deixou ao navegar/voltar)
+      try {
+        tonsPersonalizados = JSON.parse(localStorage.getItem("gerecifras_tons_musicas") || "{}");
+      } catch (e) {
+        tonsPersonalizados = {};
+      }
     };
 
     function salvarConfiguracao() {
@@ -6383,7 +6391,7 @@
           seletorWrap.style.display = "flex";
         }
       }
-      semitonsAcumulados = 0;
+      semitonsAcumulados = tonsPersonalizados[musicaSelecionada.id] || 0;
       const { tituloLimpo: tituloVisorLimpo, album: albumVisor } = extrairAlbumDoTitulo(musicaSelecionada.titulo);
       let tituloMomento = tituloVisorLimpo;
       if (musicaSelecionada.momento_repertorio) {
@@ -6412,12 +6420,17 @@
       if (novaM) {
         musicaSelecionada = novaM;
         playlistAtual[indexPlaylist] = novaM;
-        semitonsAcumulados = 0;
+        semitonsAcumulados = tonsPersonalizados[novaM.id] || 0;
         renderizarTextoTransposto();
       }
     }
     function alterarTom(modificador) {
       semitonsAcumulados += modificador;
+      if (musicaSelecionada) {
+        if (semitonsAcumulados) tonsPersonalizados[musicaSelecionada.id] = semitonsAcumulados;
+        else delete tonsPersonalizados[musicaSelecionada.id];
+        localStorage.setItem("gerecifras_tons_musicas", JSON.stringify(tonsPersonalizados));
+      }
       renderizarTextoTransposto();
     }
     function mudarTamanhoFonte(delta) {
