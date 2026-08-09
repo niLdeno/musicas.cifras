@@ -3589,6 +3589,100 @@
     // por trás do editor guarda o conteúdo normalmente (ver `tinymce.get`
     // checado em toda leitura/escrita de `cad-conteudo`) e o TinyMCE lê esse
     // valor como conteúdo inicial assim que termina de inicializar.
+    // ✨ Pincel de Formatação — mesmo comportamento do Word: seleciona um
+    // trecho já formatado, clica no pincel (um clique = usar uma vez; duplo
+    // clique = manter ativo pra aplicar em vários trechos até apertar Esc ou
+    // clicar de novo) e depois seleciona o trecho que deve receber a mesma
+    // formatação (negrito/itálico/sublinhado/tachado, cor do texto, cor de
+    // fundo, fonte, tamanho de fonte e alinhamento do parágrafo).
+    function configurarPincelDeFormatacao(editor) {
+      const FORMATOS_INLINE = ["bold", "italic", "underline", "strikethrough"];
+      const ALINHAMENTOS = ["alignleft", "aligncenter", "alignright", "alignjustify"];
+      let formatoCopiado = null;
+      let pincelAtivo = false;
+      let pincelFixo = false;
+      let ultimoCliqueEm = 0;
+
+      function desativarPincel() {
+        pincelAtivo = false;
+        pincelFixo = false;
+        editor.getBody().style.cursor = "";
+      }
+
+      function capturarFormato() {
+        const node = editor.selection.getNode();
+        const estilo = window.getComputedStyle(node);
+        const formato = {
+          fontFamily: estilo.fontFamily,
+          fontSize: estilo.fontSize,
+          color: estilo.color,
+          backgroundColor: estilo.backgroundColor,
+          alinhamento: ALINHAMENTOS.find((a) => editor.formatter.match(a)) || null,
+        };
+        FORMATOS_INLINE.forEach((f) => (formato[f] = editor.formatter.match(f)));
+        return formato;
+      }
+
+      function aplicarFormato(formato) {
+        if (!formato) return;
+        editor.undoManager.transact(() => {
+          FORMATOS_INLINE.forEach((f) => {
+            const ativo = editor.formatter.match(f);
+            if (formato[f] && !ativo) editor.formatter.apply(f);
+            else if (!formato[f] && ativo) editor.formatter.remove(f);
+          });
+          editor.formatter.apply("forecolor", { value: formato.color });
+          if (formato.backgroundColor && formato.backgroundColor !== "rgba(0, 0, 0, 0)" && formato.backgroundColor !== "transparent") {
+            editor.formatter.apply("hilitecolor", { value: formato.backgroundColor });
+          }
+          editor.formatter.apply("fontname", { value: formato.fontFamily });
+          editor.formatter.apply("fontsize", { value: formato.fontSize });
+          if (formato.alinhamento) editor.formatter.apply(formato.alinhamento);
+        });
+      }
+
+      editor.ui.registry.addToggleButton("pincelformatacao", {
+        icon: "paste",
+        tooltip: "Pincel de Formatação (clique: usar 1 vez · duplo clique: manter ativo)",
+        onAction: () => {
+          const agora = Date.now();
+          const duploClique = agora - ultimoCliqueEm < 400;
+          ultimoCliqueEm = agora;
+
+          if (pincelAtivo) {
+            if (duploClique) {
+              pincelFixo = true;
+              return;
+            }
+            desativarPincel();
+            return;
+          }
+          if (editor.selection.isCollapsed()) {
+            mostrarToast("Selecione um trecho da cifra para copiar a formatação.", "erro");
+            return;
+          }
+          formatoCopiado = capturarFormato();
+          pincelAtivo = true;
+          editor.getBody().style.cursor = "copy";
+        },
+        onSetup: (api) => {
+          const aoMudar = () => api.setActive(pincelAtivo);
+          editor.on("NodeChange", aoMudar);
+          return () => editor.off("NodeChange", aoMudar);
+        },
+      });
+
+      editor.on("mouseup", () => {
+        if (!pincelAtivo || editor.selection.isCollapsed()) return;
+        aplicarFormato(formatoCopiado);
+        if (!pincelFixo) desativarPincel();
+      });
+
+      editor.on("keydown", (e) => {
+        if (pincelAtivo && e.key === "Escape") desativarPincel();
+      });
+    }
+
     let _editorTextoCarregando = null;
     function carregarEditorTexto() {
       if (typeof tinymce !== "undefined" && tinymce.get("cad-conteudo")) return Promise.resolve();
@@ -3603,18 +3697,48 @@
               "undo redo | formatselect | fontfamily fontsize lineheight | " +
               "bold italic underline | alignleft aligncenter " +
               "alignright alignjustify | outdent indent | " +
-              "numlist bullist | forecolor backcolor | removeformat | code | help",
+              "numlist bullist | forecolor backcolor | pincelformatacao | removeformat | code | help",
             menubar: false,
             height: 600,
             paste_as_text: true,
+            paste_block_drop: false,
+            smart_paste: false,
             lineheight_formats: '1 1.1 1.2 1.3 1.4 1.5 1.6 1.8 2 2.5 3',
             content_style:
               "body { margin: 0; padding: 16px; box-sizing: border-box; font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 16px; line-height: 1.5; white-space: pre-wrap; } " +
               "p, div, h1, h2, h3, h4, h5, h6, li { margin: 0; }",
             setup: (editor) => {
-              editor.on("paste", () => {
+              // ✨ Colar de Word/outros sites entrega HTML cheio de <span> com
+              // "mso-*", fontes/cores herdadas e, principalmente, espaços que o
+              // parser de HTML do navegador colapsa — destruindo o alinhamento
+              // acorde+letra. Em vez de deixar o TinyMCE interpretar esse HTML,
+              // pegamos sempre o texto puro do clipboard (que preserva cada
+              // espaço exatamente como foi copiado) e montamos o HTML nós
+              // mesmos, no mesmo formato usado ao carregar/salvar a cifra
+              // (1 <p> por linha, sequências de 2+ espaços viram &nbsp;).
+              editor.on("paste", (e) => {
+                const clipboard = e.clipboardData || window.clipboardData;
+                if (!clipboard) return; // sem clipboardData: deixa o comportamento padrão (paste_as_text) agir
+                const texto = clipboard.getData("text/plain");
+                if (texto === "" || texto == null) return;
+                e.preventDefault();
+                const html = texto
+                  .replace(/\r\n?/g, "\n")
+                  .split("\n")
+                  .map((linha) => {
+                    const escapada = linha
+                      .replace(/&/g, "&amp;")
+                      .replace(/</g, "&lt;")
+                      .replace(/>/g, "&gt;")
+                      .replace(/ {2,}/g, (run) => " ".repeat(run.length));
+                    return `<p>${escapada || "&nbsp;"}</p>`;
+                  })
+                  .join("");
+                editor.insertContent(html);
                 setTimeout(() => detectarTomAutomatico(editor.getContent({ format: "text" })), 50);
               });
+
+              configurarPincelDeFormatacao(editor);
             },
             init_instance_callback: () => resolve(),
           });
