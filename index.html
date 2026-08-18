@@ -3683,12 +3683,114 @@
       });
     }
 
+    // ✨ Alguns sites de cifra injetam um "watermark" no texto que vai para a
+    // área de transferência (proteção anticópia): cada linha de acorde perde
+    // seu último acorde (às vezes com lixo extra grudado, tipo "B )") e, logo
+    // depois, aparece uma linha só com `">resto` + a MESMA linha anterior
+    // repetida. Isso já vem pronto no clipboard (dá pra confirmar colando no
+    // Bloco de Notas) — não é HTML mal interpretado.
+    // Quando acha a marca seguida da duplicata exata, remove as duas e
+    // devolve o conteúdo recuperado ao fim da linha de acordes anterior (só
+    // age nesse caso exato, pra nunca arriscar apagar uma repetição de letra
+    // genuína, tipo refrão). Quando a marca aparece mas a duplicata não bate
+    // logo em seguida (o site às vezes intercala com outro trecho no meio),
+    // não arrisca apagar nada ao redor — só troca `">resto` por `resto`, pra
+    // nunca deixar o `">` literal visível na cifra.
+    function limparArtefatosDeColagem(texto) {
+      const linhas = texto.split("\n");
+      const resultado = [];
+      let idxUltimaNaoVazia = -1;
+      let idxPenultimaNaoVazia = -1;
+
+      for (let i = 0; i < linhas.length; i++) {
+        const linha = linhas[i];
+        const artefato = linha.trim().match(/^">(.+)$/);
+
+        if (artefato) {
+          const resto = artefato[1].trim();
+          let j = i + 1;
+          while (j < linhas.length && linhas[j].trim() === "") j++;
+          const duplicaUltima =
+            idxUltimaNaoVazia !== -1 &&
+            j < linhas.length &&
+            linhas[j].trim() === resultado[idxUltimaNaoVazia].trim();
+
+          if (duplicaUltima) {
+            if (idxPenultimaNaoVazia !== -1) {
+              resultado[idxPenultimaNaoVazia] += "  " + resto;
+            } else {
+              // Não há linha de acordes anterior pra anexar (ex.: a marca é a
+              // 1ª linha não-vazia do texto colado) — cria uma nova linha só
+              // com o conteúdo recuperado, em vez de descartá-lo em silêncio.
+              resultado.splice(idxUltimaNaoVazia, 0, resto);
+              idxPenultimaNaoVazia = idxUltimaNaoVazia;
+              idxUltimaNaoVazia += 1;
+            }
+            i = j; // pula a marca, as linhas em branco e a linha duplicada
+            continue;
+          }
+
+          // Marca sem duplicata reconhecível logo depois: mantém o resto da
+          // linha (sem o `">`) em vez de arriscar apagar algo ao redor.
+          if (resto !== "") {
+            resultado.push(resto);
+            idxPenultimaNaoVazia = idxUltimaNaoVazia;
+            idxUltimaNaoVazia = resultado.length - 1;
+          }
+          continue;
+        }
+
+        resultado.push(linha);
+        if (linha.trim() !== "") {
+          idxPenultimaNaoVazia = idxUltimaNaoVazia;
+          idxUltimaNaoVazia = resultado.length - 1;
+        }
+      }
+
+      return resultado.join("\n");
+    }
+
+    // ✨ Converte texto puro de cifra em HTML seguro para o TinyMCE: 1 <p> por
+    // linha, escapando &, < e >. Sem isso, anotações com "<" ou ">" (tablatura,
+    // bends, etc.) viram tags quebradas quando o TinyMCE lê o HTML — apagando
+    // trechos e deixando sobras como `">` no texto (ver uso abaixo).
+    function textoCifraParaHtml(texto) {
+      return limparArtefatosDeColagem((texto || "").replace(/\r\n?/g, "\n"))
+        .split("\n")
+        .map((linha) => {
+          const escapada = linha
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/ {2,}/g, (run) => "\u00A0".repeat(run.length));
+          return `<p>${escapada || "&nbsp;"}</p>`;
+        })
+        .join("");
+    }
+    // Reconhece HTML que este app mesmo gerou, testando se o bloco raiz é uma
+    // das tags que o TinyMCE pode produzir (p, listas, títulos, tabela...), em
+    // vez de "existe uma tag em qualquer lugar do texto" — essa checagem mais
+    // ampla dá falso positivo com texto puro que só contenha "<algo...>" no meio.
+    function conteudoJaEhHtml(texto) {
+      return /^\s*<(p|ul|ol|li|h[1-6]|div|table|blockquote)[\s>]/i.test(texto || "");
+    }
+
     let _editorTextoCarregando = null;
     function carregarEditorTexto() {
       if (typeof tinymce !== "undefined" && tinymce.get("cad-conteudo")) return Promise.resolve();
       if (_editorTextoCarregando) return _editorTextoCarregando;
       _editorTextoCarregando = new Promise((resolve) => {
         const iniciar = () => {
+          // ✨ Fecha a "janela de corrida": entre o modal abrir e o TinyMCE
+          // terminar de carregar (script do CDN), um paste nativo cai direto e
+          // sem escapar no <textarea> de baixo (ver listener de fallback logo
+          // depois desta função). O TinyMCE, ao inicializar, lê esse `.value`
+          // como HTML — então, se sobrou texto puro não-escapado aqui, ele
+          // corrompe o parser. Sanitiza antes de entregar pro tinymce.init.
+          const campo = document.getElementById("cad-conteudo");
+          if (campo && campo.value && !conteudoJaEhHtml(campo.value)) {
+            campo.value = textoCifraParaHtml(campo.value);
+          }
           tinymce.init({
             selector: "#cad-conteudo",
             plugins:
@@ -3708,33 +3810,20 @@
               "body { margin: 0; padding: 16px; box-sizing: border-box; font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 16px; line-height: 1.5; white-space: pre-wrap; } " +
               "p, div, h1, h2, h3, h4, h5, h6, li { margin: 0; }",
             setup: (editor) => {
-              // ✨ Colar de Word/outros sites entrega HTML cheio de <span> com
-              // "mso-*", fontes/cores herdadas e, principalmente, espaços que o
-              // parser de HTML do navegador colapsa — destruindo o alinhamento
-              // acorde+letra. Em vez de deixar o TinyMCE interpretar esse HTML,
-              // pegamos sempre o texto puro do clipboard (que preserva cada
-              // espaço exatamente como foi copiado) e montamos o HTML nós
-              // mesmos, no mesmo formato usado ao carregar/salvar a cifra
-              // (1 <p> por linha, sequências de 2+ espaços viram &nbsp;).
+              // COLAR: sites/editores costumam entregar HTML cheio de <span> com
+              // "mso-*", fontes/cores herdadas e espacos que o parser de HTML do
+              // navegador colapsa - destruindo o alinhamento acorde+letra. Em vez
+              // de deixar o TinyMCE interpretar esse HTML, pegamos sempre o texto
+              // puro do clipboard e montamos o HTML nos mesmos, via
+              // textoCifraParaHtml (mesmo formato usado ao carregar a cifra -
+              // ver conteudoJaEhHtml/textoCifraParaHtml acima).
               editor.on("paste", (e) => {
                 const clipboard = e.clipboardData || window.clipboardData;
-                if (!clipboard) return; // sem clipboardData: deixa o comportamento padrão (paste_as_text) agir
+                if (!clipboard) return; // sem clipboardData: deixa o comportamento padrao (paste_as_text) agir
                 const texto = clipboard.getData("text/plain");
                 if (texto === "" || texto == null) return;
                 e.preventDefault();
-                const html = texto
-                  .replace(/\r\n?/g, "\n")
-                  .split("\n")
-                  .map((linha) => {
-                    const escapada = linha
-                      .replace(/&/g, "&amp;")
-                      .replace(/</g, "&lt;")
-                      .replace(/>/g, "&gt;")
-                      .replace(/ {2,}/g, (run) => " ".repeat(run.length));
-                    return `<p>${escapada || "&nbsp;"}</p>`;
-                  })
-                  .join("");
-                editor.insertContent(html);
+                editor.insertContent(textoCifraParaHtml(texto));
                 setTimeout(() => detectarTomAutomatico(editor.getContent({ format: "text" })), 50);
               });
 
@@ -4414,11 +4503,8 @@
       cadTomTocadoManualmente = false;
       document.getElementById("cad-momento").value = m.momento_missa || "";
       let content = m.conteudo;
-      if (!/<[a-z][\s\S]*>/i.test(content)) {
-        content = content
-          .split("\n")
-          .map((line) => `<p>${line || "&nbsp;"}</p>`)
-          .join("");
+      if (!conteudoJaEhHtml(content)) {
+        content = textoCifraParaHtml(content);
       }
       if (typeof tinymce !== "undefined" && tinymce.get("cad-conteudo")) {
         tinymce.get("cad-conteudo").setContent(content);
@@ -5387,7 +5473,7 @@
     // marcadas como acorde/letra, no tom original, para a versão impressa.
     function gerarLinhasCifraHtml(conteudoOriginal) {
       let htmlContent = conteudoOriginal || "";
-      if (!/<[a-z][\s\S]*>/i.test(htmlContent)) {
+      if (!conteudoJaEhHtml(htmlContent)) {
         htmlContent = htmlContent.replace(/\n/g, "<br>");
       }
       let temp = htmlContent
@@ -5553,8 +5639,8 @@
       document.getElementById("cad-tom").value = s.tom_original || "E";
       document.getElementById("cad-momento").value = s.momento_missa || "";
       let content = s.conteudo || "";
-      if (content && !/<[a-z][\s\S]*>/i.test(content)) {
-        content = content.split("\n").map((line) => `<p>${line || "&nbsp;"}</p>`).join("");
+      if (content && !conteudoJaEhHtml(content)) {
+        content = textoCifraParaHtml(content);
       }
       if (typeof tinymce !== "undefined" && tinymce.get("cad-conteudo")) {
         tinymce.get("cad-conteudo").setContent(content);
@@ -6034,7 +6120,27 @@
     }
 
     function abrirModalVisualizarAgrupado(nome) {
-      const variacoes = dicionarioGlobal.filter((a) => a.nome === nome);
+      const variacoesSupabase = dicionarioGlobal.filter((a) => a.nome === nome);
+
+      // Formatos da biblioteca embutida (dicionario_br.js) - somados aos do Supabase,
+      // sem duplicar um formato de violão que já exista igualzinho no banco.
+      const jaExistentes = new Set(
+        variacoesSupabase
+          .filter((a) => a.instrumento !== "teclado")
+          .map((a) => JSON.stringify(a.posicoes || []))
+      );
+      let variacoesLocais = [];
+      if (typeof DICIONARIO_BRASIL !== "undefined" && DICIONARIO_BRASIL[nome]) {
+        const dados = DICIONARIO_BRASIL[nome];
+        const lista = (Array.isArray(dados) && typeof dados[0] === 'object' && dados[0] !== null)
+          ? dados
+          : (Array.isArray(dados) ? [{ posicoes: dados, dedos: null }] : []);
+        variacoesLocais = lista
+          .filter((f) => !jaExistentes.has(JSON.stringify(f.posicoes || [])))
+          .map((f) => ({ ...f, instrumento: "violao", _local: true }));
+      }
+
+      const variacoes = [...variacoesSupabase, ...variacoesLocais];
       if (variacoes.length === 0) {
         return;
       }
@@ -6062,10 +6168,12 @@
             { width: 280, height: 160, numCasas: v.num_casas || 5 },
           );
         }
-        const chip = ehTeclado
+        const chip = v._local
+          ? '<span class="tag-pill" style="background: rgba(107,112,136,0.12); color: var(--text-muted); border-color: rgba(107,112,136,0.3);"><i class="fa-solid fa-book"></i> Padrão do sistema</span>'
+          : ehTeclado
           ? '<span class="tag-pill" style="background: rgba(226,59,46,0.12); color:#e23b2e; border-color: rgba(226,59,46,0.3);"><i class="fa-solid fa-keyboard"></i> Teclado</span>'
           : '<span class="tag-pill" style="background: rgba(109,93,252,0.12); color: var(--primary); border-color: rgba(109,93,252,0.3);"><i class="fa-solid fa-guitar"></i> Violão</span>';
-        const podeEditarExcluir = ehAdmin || (ehMinisterio && v.ministerio_id === meuMinisterio?.id);
+        const podeEditarExcluir = !v._local && (ehAdmin || (ehMinisterio && v.ministerio_id === meuMinisterio?.id));
         const actionHtml = podeEditarExcluir 
           ? `<div style="display: flex; gap: 8px; width: 100%; justify-content: center; margin-top: auto;"><button class="btn btn-secondary" style="padding: 8px 16px;" onclick="abrirEdicaoAcorde(${v.id})" title="Editar formato"><i class="fa-solid fa-pen"></i></button><button class="btn btn-secondary" style="padding: 8px 16px; color: #ef4444;" onclick="excluirAcordeUnico(${v.id}, '${nome}')" title="Excluir formato"><i class="fa-solid fa-trash"></i></button></div>`
           : "";
@@ -6188,23 +6296,34 @@
 
     // Traz todas as variações daquele acorde em formato de Lista
     function obterTodasPosicoesAcorde(nomeAcorde) {
-      const acordeCustom = dicionarioGlobal.filter((a) => a.nome === nomeAcorde);
-      if (acordeCustom && acordeCustom.length > 0) {
-        return acordeCustom.map(a => ({ posicoes: a.posicoes, dedos: a.dedos, start_fret: a.start_fret, num_casas: a.num_casas }));
-      }
+      // 1. Formatos cadastrados no Supabase (ministérios/admin) - vêm primeiro,
+      //    pois foram adicionados manualmente e o instrumento marca "instrumento" (violao/teclado);
+      //    aqui só nos interessam os de violão, o teclado tem seu próprio gerador.
+      const acordeCustom = (dicionarioGlobal || [])
+        .filter((a) => a.nome === nomeAcorde && a.instrumento !== "teclado")
+        .map(a => ({ posicoes: a.posicoes, dedos: a.dedos, start_fret: a.start_fret, num_casas: a.num_casas }));
 
+      // 2. Formatos do dicionário local (dicionario_br.js) - biblioteca embutida no app
+      let acordeLocal = [];
       if (typeof DICIONARIO_BRASIL !== "undefined" && DICIONARIO_BRASIL[nomeAcorde]) {
         const dados = DICIONARIO_BRASIL[nomeAcorde];
-        // Retorna a lista de opções (Opção 1, Opção 2...)
         if (Array.isArray(dados) && typeof dados[0] === 'object' && dados[0] !== null) {
-          return dados;
-        }
-        // Retrocompatibilidade
-        else if (Array.isArray(dados)) {
-          return [{ posicoes: dados, dedos: null }];
+          acordeLocal = dados;
+        } else if (Array.isArray(dados)) {
+          // Retrocompatibilidade (formato antigo: array simples de casas, sem dedos)
+          acordeLocal = [{ posicoes: dados, dedos: null }];
         }
       }
-      return [];
+
+      // 3. Junta as duas listas, removendo duplicatas (mesmo array de "posicoes")
+      const combinado = [...acordeCustom, ...acordeLocal];
+      const vistos = new Set();
+      return combinado.filter((f) => {
+        const chave = JSON.stringify(f.posicoes || []);
+        if (vistos.has(chave)) return false;
+        vistos.add(chave);
+        return true;
+      });
     }
 
     // Mantida para a tela do Dicionário não quebrar
@@ -6773,7 +6892,7 @@
       visor.className = "";
 
       let htmlContent = musicaSelecionada.conteudo;
-      if (!/<[a-z][\s\S]*>/i.test(htmlContent)) {
+      if (!conteudoJaEhHtml(htmlContent)) {
         htmlContent = htmlContent.replace(/\n/g, "<br>");
       }
 

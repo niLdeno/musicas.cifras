@@ -2,6 +2,7 @@ const DICIONARIO_BRASIL = {
   // === FAMÍLIA DÓ (C) ===
   'C': [
     { posicoes: [-1, 3, 2, 0, 1, 0], dedos: [null, 3, 2, null, 1, null] },
+    { posicoes: [-1, 3, 2, 0, 1, 3], dedos: [null, 3, 2, null, 1, 4] },  // Aberta alt. (Sol agudo no lugar do Mi solto)
     { posicoes: [-1, 3, 5, 5, 5, 3], dedos: [null, 1, 2, 3, 4, 1] }, // Pestana 3ª
     { posicoes: [8, 10, 10, 9, 8, 8], dedos: [1, 3, 4, 2, 1, 1] }    // Pestana 8ª
   ],
@@ -9,8 +10,14 @@ const DICIONARIO_BRASIL = {
     { posicoes: [-1, 3, 5, 5, 4, 3], dedos: [null, 1, 3, 4, 2, 1] },
     { posicoes: [8, 10, 10, 8, 8, 8], dedos: [1, 3, 4, 1, 1, 1] }
   ],
-  'C7': [{ posicoes: [-1, 3, 2, 3, 1, 0], dedos: [null, 3, 2, 4, 1, null] }],
-  'C7M': [{ posicoes: [-1, 3, 2, 0, 0, 0], dedos: [null, 3, 2, null, null, null] }],
+  'C7': [
+    { posicoes: [-1, 3, 2, 3, 1, 0], dedos: [null, 3, 2, 4, 1, null] },
+    { posicoes: [-1, 3, 2, 3, 1, 3], dedos: [null, 3, 2, 4, 1, 4] } // Aberta alt., mais cheia
+  ],
+  'C7M': [
+    { posicoes: [-1, 3, 2, 0, 0, 0], dedos: [null, 3, 2, null, null, null] },
+    { posicoes: [-1, 3, 2, 0, 0, 3], dedos: [null, 3, 2, null, null, 4] } // Aberta alt., mais cheia
+  ],
   'Cm7': [{ posicoes: [-1, 3, 5, 3, 4, 3], dedos: [null, 1, 3, 1, 2, 1] }],
   'C9': [{ posicoes: [-1, 3, 2, 3, 3, -1], dedos: [null, 2, 1, 3, 4, null] }],
   'Cdim': [{ posicoes: [-1, 3, 4, 2, 4, -1], dedos: [null, 2, 3, 1, 4, null] }],
@@ -80,7 +87,10 @@ const DICIONARIO_BRASIL = {
   ],
   'E7': [{ posicoes: [0, 2, 0, 1, 0, 0], dedos: [null, 2, null, 1, null, null] }],
   'E7M': [{ posicoes: [0, 2, 1, 1, 0, 0], dedos: [null, 3, 1, 2, null, null] }],
-  'Em7': [{ posicoes: [0, 2, 2, 0, 3, 0], dedos: [null, 1, 2, null, 4, null] }],
+  'Em7': [
+    { posicoes: [0, 2, 2, 0, 3, 0], dedos: [null, 1, 2, null, 4, null] },
+    { posicoes: [0, 2, 0, 0, 0, 0], dedos: [null, 2, null, null, null, null] } // Aberta "fácil" - só 1 dedo
+  ],
   'E9': [{ posicoes: [0, 2, 0, 1, 0, 2], dedos: [null, 2, null, 1, null, 4] }],
   'Edim': [{ posicoes: [0, 1, 2, 0, 2, 0], dedos: [null, 1, 2, null, 3, null] }],
   'Em7(b5)': [{ posicoes: [0, 1, 0, 0, 3, 0], dedos: [null, 1, null, null, 4, null] }],
@@ -123,6 +133,8 @@ const DICIONARIO_BRASIL = {
   // === FAMÍLIA SOL (G) ===
   'G': [
     { posicoes: [3, 2, 0, 0, 0, 3], dedos: [3, 2, null, null, null, 4] },
+    { posicoes: [3, 2, 0, 0, 0, 0], dedos: [3, 2, null, null, null, null] }, // Aberta "fácil" - só 2 dedos
+    { posicoes: [3, 2, 0, 0, 3, 3], dedos: [3, 2, null, null, 4, 4] },       // Aberta "completa" - 4 dedos
     { posicoes: [3, 5, 5, 4, 3, 3], dedos: [1, 3, 4, 2, 1, 1] }
   ],
   'Gm': [
@@ -202,6 +214,71 @@ const DICIONARIO_BRASIL = {
   'Bdim': [{ posicoes: [-1, 2, 3, 1, 3, -1], dedos: [null, 2, 4, 1, 3, null] }],
   'Bm7(b5)': [{ posicoes: [-1, 2, 3, 2, 3, -1], dedos: [null, 1, 3, 2, 4, null] }],
   'Bsus4': [{ posicoes: [-1, 2, 4, 4, 5, 2], dedos: [null, 1, 2, 3, 4, 1] }],
+
+  // =======================================================
+  // Acordes extras extraídos do e-book "80 Passagens Mais
+  // Usadas no Violão" (Daniel Gomes / Canal do Violão e
+  // Guitarra) - Mini Dicionário de Acordes.
+  // Formas geradas seguindo o mesmo padrão CAGED já usado
+  // acima (aberta para C/D/E/G/A, pestana A/E para o resto)
+  // e conferidas nota a nota contra a fórmula de cada acorde.
+  // =======================================================
+
+  // === X6 - maior com sexta ===
+  'C6': [{ posicoes: [-1, 3, 2, 2, 1, 0], dedos: [null, 3, 2, 2, 1, null] }],
+  'C#6': [{ posicoes: [-1, 4, 6, 6, 6, 6], dedos: [null, 1, 2, 2, 2, 2] }],
+  'D6': [{ posicoes: [-1, -1, 0, 2, 0, 2], dedos: [null, null, null, 1, null, 2] }],
+  'D#6': [{ posicoes: [-1, 6, 8, 8, 8, 8], dedos: [null, 1, 2, 2, 2, 2] }],
+  'E6': [{ posicoes: [0, 2, 2, 1, 2, 0], dedos: [null, 2, 3, 1, 4, null] }],
+  'F6': [{ posicoes: [1, 3, 3, 2, 3, 1], dedos: [1, 3, 4, 2, 3, 1] }],
+  'F#6': [{ posicoes: [2, 4, 4, 3, 4, 2], dedos: [1, 3, 4, 2, 3, 1] }],
+  'G6': [{ posicoes: [3, 2, 0, 0, 0, 0], dedos: [2, 1, null, null, null, null] }],
+  'G#6': [{ posicoes: [4, 6, 6, 5, 6, 4], dedos: [1, 3, 4, 2, 3, 1] }],
+  'A6': [{ posicoes: [-1, 0, 2, 2, 2, 2], dedos: [null, null, 1, 1, 1, 1] }],
+  'A#6': [{ posicoes: [-1, 1, 3, 3, 3, 3], dedos: [null, 1, 2, 2, 2, 2] }],
+  'B6': [{ posicoes: [-1, 2, 4, 4, 4, 4], dedos: [null, 1, 2, 2, 2, 2] }],
+
+  // === Xm6 - menor com sexta ===
+  'Cm6': [{ posicoes: [-1, 3, 5, 5, 4, 5], dedos: [null, 1, 3, 3, 2, 4] }],
+  'C#m6': [{ posicoes: [-1, 4, 6, 6, 5, 6], dedos: [null, 1, 3, 3, 2, 4] }],
+  'Dm6': [{ posicoes: [-1, -1, 0, 2, 0, 1], dedos: [null, null, null, 2, null, 1] }],
+  'D#m6': [{ posicoes: [-1, 6, 8, 8, 7, 8], dedos: [null, 1, 3, 3, 2, 4] }],
+  'Em6': [{ posicoes: [0, 2, 2, 0, 2, 0], dedos: [null, 1, 2, null, 3, null] }],
+  'Fm6': [{ posicoes: [1, 3, 3, 1, 3, 1], dedos: [1, 2, 3, 1, 4, 1] }],
+  'F#m6': [{ posicoes: [2, 4, 4, 2, 4, 2], dedos: [1, 2, 3, 1, 4, 1] }],
+  'Gm6': [{ posicoes: [3, 5, 5, 3, 5, 3], dedos: [1, 2, 3, 1, 4, 1] }],
+  'G#m6': [{ posicoes: [4, 6, 6, 4, 6, 4], dedos: [1, 2, 3, 1, 4, 1] }],
+  'Am6': [{ posicoes: [-1, 0, 2, 2, 1, 2], dedos: [null, null, 2, 3, 1, 4] }],
+  'A#m6': [{ posicoes: [-1, 1, 3, 3, 2, 3], dedos: [null, 1, 3, 4, 2, 4] }],
+  'Bm6': [{ posicoes: [-1, 2, 4, 4, 3, 4], dedos: [null, 1, 3, 4, 2, 4] }],
+
+  // === Xm7M - menor com sétima maior ===
+  'Cm7M': [{ posicoes: [-1, 3, 5, 4, 4, 3], dedos: [null, 1, 4, 2, 3, 1] }],
+  'C#m7M': [{ posicoes: [-1, 4, 6, 5, 5, 4], dedos: [null, 1, 4, 2, 3, 1] }],
+  'Dm7M': [{ posicoes: [-1, -1, 0, 2, 2, 1], dedos: [null, null, null, 3, 2, 1] }],
+  'D#m7M': [{ posicoes: [-1, 6, 8, 7, 7, 6], dedos: [null, 1, 4, 2, 3, 1] }],
+  'Em7M': [{ posicoes: [0, 2, 1, 0, 0, 0], dedos: [null, 3, 1, null, null, null] }],
+  'Fm7M': [{ posicoes: [1, 3, 2, 1, 1, 1], dedos: [1, 4, 2, 1, 1, 1] }],
+  'F#m7M': [{ posicoes: [2, 4, 3, 2, 2, 2], dedos: [1, 4, 2, 1, 1, 1] }],
+  'Gm7M': [{ posicoes: [3, 5, 4, 3, 3, 3], dedos: [1, 4, 2, 1, 1, 1] }],
+  'G#m7M': [{ posicoes: [4, 6, 5, 4, 4, 4], dedos: [1, 4, 2, 1, 1, 1] }],
+  'Am7M': [{ posicoes: [-1, 0, 2, 1, 1, 0], dedos: [null, null, 3, 1, 2, null] }],
+  'A#m7M': [{ posicoes: [-1, 1, 3, 2, 2, 1], dedos: [null, 1, 4, 2, 3, 1] }],
+  'Bm7M': [{ posicoes: [-1, 2, 4, 3, 3, 2], dedos: [null, 1, 4, 2, 3, 1] }],
+
+  // === X7M(#5) - maior com sétima maior e quinta aumentada ===
+  'C7M(#5)': [{ posicoes: [-1, 3, 6, 4, 5, -1], dedos: [null, 1, 4, 2, 3, null] }],
+  'C#7M(#5)': [{ posicoes: [-1, 4, 7, 5, 6, -1], dedos: [null, 1, 4, 2, 3, null] }],
+  'D7M(#5)': [{ posicoes: [-1, 5, 8, 6, 7, -1], dedos: [null, 1, 4, 2, 3, null] }],
+  'D#7M(#5)': [{ posicoes: [-1, 6, 9, 7, 8, -1], dedos: [null, 1, 4, 2, 3, null] }],
+  'E7M(#5)': [{ posicoes: [0, 3, 1, 1, -1, -1], dedos: [null, 3, 1, 2, null, null] }],
+  'F7M(#5)': [{ posicoes: [1, 4, 2, 2, -1, -1], dedos: [1, 4, 2, 3, null, null] }],
+  'F#7M(#5)': [{ posicoes: [2, 5, 3, 3, -1, -1], dedos: [1, 4, 2, 3, null, null] }],
+  'G7M(#5)': [{ posicoes: [3, 6, 4, 4, -1, -1], dedos: [1, 4, 2, 3, null, null] }],
+  'G#7M(#5)': [{ posicoes: [4, 7, 5, 5, -1, -1], dedos: [1, 4, 2, 3, null, null] }],
+  'A7M(#5)': [{ posicoes: [-1, 0, 3, 1, 2, -1], dedos: [null, null, 4, 1, 2, null] }],
+  'A#7M(#5)': [{ posicoes: [-1, 1, 4, 2, 3, -1], dedos: [null, 1, 4, 2, 3, null] }],
+  'B7M(#5)': [{ posicoes: [-1, 2, 5, 3, 4, -1], dedos: [null, 1, 4, 2, 3, null] }],
 };
 
 // =======================================================
