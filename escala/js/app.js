@@ -33,22 +33,25 @@ const ROTAS = {
 let rotaAtual = 'escala';
 
 // ---------------------------------------------------------------------------
-async function iniciar() {
-  aplicarTemaSalvo();
-  await initStore();
-
-  store.auth.aoMudar(async (usuario) => {
-    appState.usuario = usuario;
-    appState.ehGestor = !!usuario && (usuario.papel === 'admin' || usuario.papel === 'coordenador');
-    document.body.classList.toggle('eh-gestor', appState.ehGestor);
-    if (usuario) montarApp(); else mostrarLogin();
-  });
-
-  const usuario = await store.auth.usuarioAtual();
+function aplicarUsuario(usuario) {
   appState.usuario = usuario;
   appState.ehGestor = !!usuario && (usuario.papel === 'admin' || usuario.papel === 'coordenador');
   document.body.classList.toggle('eh-gestor', appState.ehGestor);
   if (usuario) montarApp(); else mostrarLogin();
+}
+
+async function iniciar() {
+  aplicarTemaSalvo();
+  window.addEventListener('hashchange', rotear); // registrado UMA vez (evita listeners duplicados)
+  await initStore();
+
+  // O Supabase dispara um evento inicial no `aoMudar` (INITIAL_SESSION); por isso,
+  // nesse modo NÃO fazemos bootstrap manual — evitaria montar a app duas vezes.
+  // O mock não emite evento inicial, então lá buscamos o usuário atual na mão.
+  store.auth.aoMudar(aplicarUsuario);
+  if (store.modo === 'demo') {
+    aplicarUsuario(await store.auth.usuarioAtual());
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -109,8 +112,9 @@ function loginSupabase() {
 }
 
 function campoLogin(label, input) {
+  if (!input.id) input.id = 'login-' + Math.random().toString(36).slice(2, 9);
   const c = el('div', { class: 'campo', style: 'text-align:left' });
-  c.append(el('label', { text: label }), input);
+  c.append(el('label', { text: label, for: input.id }), input);
   return c;
 }
 
@@ -125,7 +129,6 @@ function montarApp() {
   app.classList.add('pronto');
 
   app.append(sidebar(), topbar(), mainEl(), tabbar());
-  window.addEventListener('hashchange', rotear);
   rotear();
 }
 
@@ -148,15 +151,22 @@ function sidebar() {
   });
   aside.appendChild(nav);
 
-  const user = el('div', { class: 'side-user', title: 'Sair' }, [
-    el('div', { class: 'av', text: (appState.usuario?.nome || '?').charAt(0).toUpperCase() }),
+  const temaBtn = el('button', { class: 'side-tema', 'aria-label': 'Alternar tema claro ou escuro', title: 'Tema claro/escuro',
+    html: '<i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i><span>Tema claro/escuro</span>' });
+  temaBtn.addEventListener('click', alternarTema);
+  aside.appendChild(temaBtn);
+
+  const user = el('div', { class: 'side-user', role: 'button', tabindex: '0',
+    'aria-label': `Sair da conta de ${appState.usuario?.nome || ''}`, title: 'Sair' }, [
+    el('div', { class: 'av', text: (appState.usuario?.nome || '?').charAt(0).toUpperCase(), 'aria-hidden': 'true' }),
     el('div', { style: 'flex:1;min-width:0' }, [
       el('b', { text: appState.usuario?.nome || '' }),
       el('small', { text: appState.ehGestor ? 'Coordenação' : 'Músico' }),
     ]),
-    el('i', { class: 'fa-solid fa-right-from-bracket', style: 'color:#a9abd6' }),
+    el('i', { class: 'fa-solid fa-right-from-bracket', style: 'color:#a9abd6', 'aria-hidden': 'true' }),
   ]);
   user.addEventListener('click', sair);
+  user.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sair(); } });
   aside.appendChild(user);
   return aside;
 }
@@ -168,9 +178,9 @@ function topbar() {
     el('div', {}, [el('b', { text: 'Escala' }), el('small', { text: CONFIG.SIGLA })]),
   );
   const acoes = el('div', { class: 'acoes' });
-  const tema = el('button', { class: 'icon-btn', html: '<i class="fa-solid fa-circle-half-stroke"></i>', title: 'Tema' });
+  const tema = el('button', { class: 'icon-btn', html: '<i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i>', title: 'Tema', 'aria-label': 'Alternar tema claro ou escuro' });
   tema.addEventListener('click', alternarTema);
-  const out = el('button', { class: 'icon-btn', html: '<i class="fa-solid fa-right-from-bracket"></i>', title: 'Sair' });
+  const out = el('button', { class: 'icon-btn', html: '<i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>', title: 'Sair', 'aria-label': 'Sair da conta' });
   out.addEventListener('click', sair);
   acoes.append(tema, out);
   bar.appendChild(acoes);

@@ -10,12 +10,18 @@ import {
 import { abrirModal, toast, confirmar } from '../ui.js';
 
 let ctx; // { ano, mes, usuario, ehGestor, navegarMes }
+let meusGrupos = new Set(); // ids dos grupos do usuário logado (destaque "quando eu toco")
 
 export async function renderEscala(container, appState) {
   ctx = appState;
   const { ano, mes, ehGestor } = ctx;
   const { escala, itens } = await store.escala.obter(ano, mes);
   const grupos = await store.grupos.listar();
+
+  meusGrupos = new Set(
+    (ctx.usuario ? grupos.filter((g) => (g.integrantes || []).some((p) => p.id === ctx.usuario.id)) : [])
+      .map((g) => g.id)
+  );
 
   const itemPorChave = {};
   itens.forEach((i) => (itemPorChave[`${i.data}|${i.horario}`] = i));
@@ -31,6 +37,13 @@ export async function renderEscala(container, appState) {
   if (!escala.publicada && !ehGestor) {
     container.appendChild(estadoVazio(false, true));
     return;
+  }
+
+  // Aviso pessoal: quantas missas o músico logado tem no mês (destacadas em roxo).
+  const minhas = itens.filter((i) => i.grupo_id && meusGrupos.has(i.grupo_id)).length;
+  if (minhas > 0) {
+    container.appendChild(el('div', { class: 'banner-meu', html:
+      `<i class="fa-solid fa-hand-point-right" aria-hidden="true"></i><span>Você toca <b>${minhas}</b> ${minhas === 1 ? 'vez' : 'vezes'} este mês — destacadas em roxo.</span>` }));
   }
   if (!escala.publicada && ehGestor) {
     container.appendChild(
@@ -65,9 +78,13 @@ function cabecalho(escala) {
 }
 
 function legenda() {
-  const box = el('div', { class: 'legenda' });
+  const box = el('div', { class: 'legenda', role: 'list', 'aria-label': 'Legenda de status' });
+  box.appendChild(el('span', { class: 'chip', role: 'listitem' }, [
+    el('span', { class: 'dot', style: 'background:var(--st-ok)' }),
+    'Confirmada (normal)',
+  ]));
   STATUS_LEGENDA.forEach((k) => {
-    box.appendChild(el('span', { class: 'chip' }, [
+    box.appendChild(el('span', { class: 'chip', role: 'listitem' }, [
       el('span', { class: 'dot', style: `background:${STATUS[k].cor}` }),
       STATUS[k].legenda,
     ]));
@@ -101,7 +118,7 @@ function gradeDesktop(semanas, itemPorChave, grupos, escala) {
   const hoje = new Date();
   semanas.forEach((sem) => {
     const tr = el('tr');
-    tr.appendChild(el('td', { class: 'wk-cell', html: `<span>${sem.semana}ª semana</span>` }));
+    tr.appendChild(el('th', { class: 'wk-cell', scope: 'row', html: `<span>${sem.semana}ª semana</span>` }));
     for (let col = 0; col < 7; col++) {
       const dia = sem.dias.find((d) => d.coluna === col);
       if (!dia) { tr.appendChild(el('td', { class: 'dia-cell vazio' })); continue; }
@@ -142,13 +159,26 @@ function gradeMobile(semanas, itemPorChave, grupos, escala) {
 function slotEl(item, dia, horario, grupos, escala) {
   const st = item ? item.status : 'confirmada';
   const clic = ctx.ehGestor;
-  const s = el('div', { class: `slot st-${st}` + (clic ? ' clicavel' : '') + (item ? '' : ' vazio-slot') });
+  const meu = item && item.grupo_id && meusGrupos.has(item.grupo_id);
+  const s = el('div', { class: `slot st-${st}` + (clic ? ' clicavel' : '') + (item ? '' : ' vazio-slot') + (meu ? ' meu' : '') });
   const meta = STATUS[st];
   const tag = item && st !== 'confirmada' ? `<span class="tag ${st}">${esc(meta.curta)}</span>` : '';
+  const marca = meu ? '<span class="voce">Você</span>' : '';
   const nome = item ? esc(item.grupoNome || item.rotulo || 'A definir') : 'A definir';
-  s.innerHTML = `<span class="hora">${horario}</span><span class="nome">${nome}</span>${tag}` +
+  s.innerHTML = `<span class="hora">${horario}</span><span class="nome">${nome}</span>${tag}${marca}` +
     (item && item.observacao ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">${esc(item.observacao)}</div>` : '');
-  if (clic) s.addEventListener('click', () => editarItem(item, dia, horario, grupos, escala));
+  if (meu) s.setAttribute('aria-current', 'true');
+  // rótulo acessível: leitor de tela lê "12h, Isaac, substituição, você"
+  const partes = [`${horario}`, nome, st !== 'confirmada' ? meta.label : null, meu ? 'você toca' : null].filter(Boolean);
+  s.setAttribute('aria-label', partes.join(', '));
+  if (clic) {
+    s.setAttribute('role', 'button');
+    s.setAttribute('tabindex', '0');
+    s.addEventListener('click', () => editarItem(item, dia, horario, grupos, escala));
+    s.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); editarItem(item, dia, horario, grupos, escala); }
+    });
+  }
   return s;
 }
 
@@ -209,8 +239,9 @@ async function editarItem(item, dia, horario, grupos, escala) {
 }
 
 function campo(label, controle) {
+  if (!controle.id) controle.id = 'campo-' + Math.random().toString(36).slice(2, 9);
   const c = el('div', { class: 'campo' });
-  c.appendChild(el('label', { text: label }));
+  c.appendChild(el('label', { text: label, for: controle.id }));
   c.appendChild(controle);
   return c;
 }

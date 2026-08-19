@@ -16,8 +16,8 @@
   --surface: #ffffff;
   --surface-2: #faf9fd;
   --text: #1b1c30;
-  --muted: #6a6d85;
-  --faint: #9a9db4;
+  --muted: #5c5f78;
+  --faint: #71748c;
   --border: #e7e6f0;
   --border-strong: #d6d4e4;
 
@@ -47,10 +47,10 @@
   :root:not([data-theme="light"]) {
     --bg: #131426;
     --surface: #1c1d33;
-    --surface-2: #23244020;
+    --surface-2: #232440;
     --text: #ececf5;
-    --muted: #a3a6c2;
-    --faint: #74769a;
+    --muted: #b4b7d0;
+    --faint: #9498b8;
     --border: #2c2d48;
     --border-strong: #3a3b5c;
     --primary-050: #262657;
@@ -65,7 +65,7 @@
 }
 :root[data-theme="dark"] {
   --bg: #131426; --surface: #1c1d33; --surface-2: #232440; --text: #ececf5;
-  --muted: #a3a6c2; --faint: #74769a; --border: #2c2d48; --border-strong: #3a3b5c;
+  --muted: #b4b7d0; --faint: #9498b8; --border: #2c2d48; --border-strong: #3a3b5c;
   --primary-050: #262657; --gold-050: #3a2f16;
   --st-red-bg:#3a201e; --st-green-bg:#10301f; --st-blue-bg:#172a45; --st-orange-bg:#3a2a12;
   --st-ok:#3d3f5e; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 26px -12px rgba(0,0,0,.55);
@@ -84,7 +84,7 @@ body {
 h1, h2, h3, h4 { margin: 0; letter-spacing: -.02em; line-height: 1.2; }
 a { color: var(--primary); }
 button { font-family: inherit; }
-:focus-visible { outline: none; box-shadow: var(--ring); border-radius: 10px; }
+:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; border-radius: 8px; }
 
 /* ---------- Botões ---------- */
 .btn {
@@ -136,6 +136,13 @@ button { font-family: inherit; }
 .nav .badge { margin-left: auto; background: var(--gold); color: #23130a; font-size: 11px; font-weight: 800; border-radius: 999px; padding: 1px 8px; }
 .nav .grupo-admin { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.09); }
 .nav .grupo-admin .rot { font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; color: #8082b3; padding: 4px 14px; }
+.side-tema {
+  display: flex; align-items: center; gap: 13px; width: 100%; padding: 11px 14px; margin-bottom: 8px;
+  border-radius: 11px; background: transparent; border: none; color: #c4c5e8; font-weight: 500;
+  font-size: 15px; font-family: inherit; cursor: pointer; transition: .18s;
+}
+.side-tema:hover { background: rgba(255,255,255,.06); color: #fff; }
+.side-tema i { width: 20px; text-align: center; opacity: .8; }
 .side-user {
   display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px;
   background: rgba(255,255,255,.05); cursor: pointer; transition: .18s;
@@ -194,13 +201,13 @@ button { font-family: inherit; }
 
 /* ---------- Seletor de mês ---------- */
 .mes-nav { display: inline-flex; align-items: center; gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 4px; box-shadow: var(--shadow); }
-.mes-nav button { border: none; background: transparent; color: var(--text); width: 34px; height: 34px; border-radius: 9px; cursor: pointer; font-size: 15px; }
+.mes-nav button { border: none; background: transparent; color: var(--text); width: 42px; height: 42px; border-radius: 10px; cursor: pointer; font-size: 16px; }
 .mes-nav button:hover { background: var(--surface-2); color: var(--primary); }
 .mes-nav .rot { min-width: 148px; text-align: center; font-weight: 700; font-size: 14.5px; text-transform: capitalize; }
 
 /* ---------- GRADE DA ESCALA (desktop) ---------- */
 .grade-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); background: var(--surface); }
-table.grade { border-collapse: collapse; width: 100%; min-width: 920px; }
+table.grade { border-collapse: collapse; width: 100%; min-width: 860px; }
 table.grade th, table.grade td { border: 1px solid var(--border); vertical-align: top; }
 table.grade thead th {
   background: var(--primary-700); color: #fff; font-size: 12px; font-weight: 700; text-transform: capitalize;
@@ -227,8 +234,13 @@ td.dia-cell.vazio { background: repeating-linear-gradient(45deg, var(--surface),
 .slot.st-substituicao{ background: var(--st-blue-bg);   border-color: color-mix(in srgb, var(--st-blue) 40%, transparent); }
 .slot.st-solenidade  { background: var(--st-orange-bg); border-color: color-mix(in srgb, var(--st-orange) 40%, transparent); }
 .slot.vazio-slot { color: var(--faint); font-style: italic; background: transparent; border-style: dashed; }
-.slot .tag { font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .03em; padding: 1px 5px; border-radius: 5px; margin-left: 4px; color: #fff; }
-.tag.sem_grupo{background:var(--st-red)} .tag.inversao{background:var(--st-green)} .tag.substituicao{background:var(--st-blue)} .tag.solenidade{background:var(--st-orange)}
+.slot.meu { box-shadow: inset 0 0 0 2px var(--primary); }
+.slot .voce { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .02em; padding: 1px 6px; border-radius: 5px; margin-left: 4px; color: #fff; background: var(--primary); }
+.banner-meu { display: flex; gap: 10px; align-items: center; padding: 11px 14px; border-radius: 12px; background: var(--primary-050); border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent); font-size: 13.5px; font-weight: 600; color: var(--primary-700); margin-bottom: 14px; }
+.banner-meu i { color: var(--primary); }
+.slot .tag { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .02em; padding: 1px 6px; border-radius: 5px; margin-left: 4px; color: #fff; white-space: nowrap; }
+/* Fundos escurecidos: texto branco passa no contraste AA (>=4.5:1) e vale nos dois temas. */
+.tag.sem_grupo{background:#b3241b} .tag.inversao{background:#0f6e3a} .tag.substituicao{background:#1f59b0} .tag.solenidade{background:#a1560d}
 
 /* GRADE mobile: cartões por dia */
 .dias-mobile { display: none; flex-direction: column; gap: 10px; }
@@ -319,7 +331,9 @@ td.dia-cell.vazio { background: repeating-linear-gradient(45deg, var(--surface),
   .main { padding: 26px 30px 40px; }
   .page-head h1 { font-size: 26px; }
 }
-@media (max-width: 859px) {
+/* Até 1180px (celular, tablet e notebooks menores) usamos os cartões por dia,
+   que nunca rolam na horizontal; a grade em tabela entra só em telas largas. */
+@media (max-width: 1180px) {
   .grade-wrap { display: none; }
   .dias-mobile { display: flex; }
 }

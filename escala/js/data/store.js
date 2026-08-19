@@ -13,7 +13,7 @@ export async function initStore() {
     store = criarMockStore();
   } else {
     const { criarSupaStore } = await import('./supa.js');
-    store = await criarSupaStore(CONFIG);
+    store = await criarSupaStore();
   }
   return store;
 }

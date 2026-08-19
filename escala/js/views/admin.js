@@ -91,9 +91,9 @@ async function secaoGrupos(alvo, appState) {
         el('div', { class: 'sub', text: (g.integrantes && g.integrantes.length) ? g.integrantes.map((p) => p.nome).join(', ') : 'Sem integrantes' }),
       ]),
     );
-    const edit = el('button', { class: 'icon-btn', style: 'width:34px;height:34px', html: '<i class="fa-solid fa-pen"></i>' });
+    const edit = el('button', { class: 'icon-btn', 'aria-label': `Editar grupo ${g.nome}`, title: 'Editar grupo', html: '<i class="fa-solid fa-pen" aria-hidden="true"></i>' });
     edit.addEventListener('click', () => editarGrupo(g, pessoas, appState));
-    const del = el('button', { class: 'icon-btn', style: 'width:34px;height:34px', html: '<i class="fa-solid fa-trash"></i>' });
+    const del = el('button', { class: 'icon-btn', 'aria-label': `Excluir grupo ${g.nome}`, title: 'Excluir grupo', html: '<i class="fa-solid fa-trash" aria-hidden="true"></i>' });
     del.addEventListener('click', async () => {
       if (await confirmar({ titulo: 'Excluir grupo', mensagem: `Excluir "${g.nome}"?`, okLabel: 'Excluir', perigo: true })) {
         await store.grupos.remover(g.id); toast('Grupo excluído.', 'ok'); appState.recarregar();
@@ -154,9 +154,9 @@ async function secaoPessoas(alvo, appState) {
         el('div', { class: 'sub', text: [p.email, p.telefone].filter(Boolean).join(' · ') || 'Sem contato' }),
       ]),
     );
-    const edit = el('button', { class: 'icon-btn', style: 'width:34px;height:34px', html: '<i class="fa-solid fa-pen"></i>' });
+    const edit = el('button', { class: 'icon-btn', 'aria-label': `Editar ${p.nome}`, title: 'Editar pessoa', html: '<i class="fa-solid fa-pen" aria-hidden="true"></i>' });
     edit.addEventListener('click', () => editarPessoa(p, appState));
-    const del = el('button', { class: 'icon-btn', style: 'width:34px;height:34px', html: '<i class="fa-solid fa-trash"></i>' });
+    const del = el('button', { class: 'icon-btn', 'aria-label': `Excluir ${p.nome}`, title: 'Excluir pessoa', html: '<i class="fa-solid fa-trash" aria-hidden="true"></i>' });
     del.addEventListener('click', async () => {
       if (await confirmar({ titulo: 'Excluir pessoa', mensagem: `Excluir "${p.nome}"?`, okLabel: 'Excluir', perigo: true })) {
         await store.pessoas.remover(p.id); toast('Pessoa excluída.', 'ok'); appState.recarregar();
@@ -192,7 +192,8 @@ function editarPessoa(p, appState) {
 }
 
 function campo(label, controle) {
+  if (!controle.id) controle.id = 'campo-' + Math.random().toString(36).slice(2, 9);
   const c = el('div', { class: 'campo' });
-  c.append(el('label', { text: label }), controle);
+  c.append(el('label', { text: label, for: controle.id }), controle);
   return c;
 }

@@ -179,7 +179,9 @@ export function criarMockStore() {
           const i = s.pessoas.findIndex((x) => x.id === p.id);
           if (i >= 0) s.pessoas[i] = { ...s.pessoas[i], ...p };
         } else {
-          s.pessoas.push({ id: uid(), ativo: true, papel: 'musico', criado_em: agoraISO(), ...p });
+          // id/criado_em por ÚLTIMO: o spread de `p` traz `id: undefined` das telas
+          // (id: entidade ? entidade.id : undefined) e sobrescreveria o uid() gerado.
+          s.pessoas.push({ ativo: true, papel: 'musico', ...p, id: uid(), criado_em: agoraISO() });
         }
         salvar(s);
         return espelhar();
@@ -213,7 +215,7 @@ export function criarMockStore() {
           const i = s.grupos.findIndex((x) => x.id === g.id);
           if (i >= 0) s.grupos[i] = { ...s.grupos[i], ...g, membros: g.membros || s.grupos[i].membros };
         } else {
-          s.grupos.push({ id: uid(), ativo: true, membros: [], criado_em: agoraISO(), ...g });
+          s.grupos.push({ ativo: true, membros: [], ...g, id: uid(), criado_em: agoraISO() });
         }
         salvar(s);
         return espelhar();
@@ -257,7 +259,7 @@ export function criarMockStore() {
         const chave = (i) => i.escala_id === item.escala_id && i.data === item.data && i.horario === item.horario;
         const i = s.itens.findIndex((x) => (item.id ? x.id === item.id : chave(x)));
         if (i >= 0) s.itens[i] = { ...s.itens[i], ...item };
-        else s.itens.push({ id: uid(), status: 'confirmada', criado_em: agoraISO(), ...item });
+        else s.itens.push({ status: 'confirmada', ...item, id: uid(), criado_em: agoraISO() });
         salvar(s);
         return espelhar();
       },
@@ -289,7 +291,7 @@ export function criarMockStore() {
       },
       async registrar(a) {
         const s = db();
-        s.alteracoes.push({ id: uid(), criado_em: agoraISO(), ...a });
+        s.alteracoes.push({ ...a, id: uid(), criado_em: agoraISO() });
         salvar(s);
         return espelhar();
       },
@@ -298,7 +300,7 @@ export function criarMockStore() {
     // ---- COMUNICADOS ----
     comunicados: {
       async listar() {
-        return clone(db().comunicados).sort(
+        return clone(db().comunicados.filter((c) => c.publicado !== false)).sort(
           (a, b) => (b.fixado - a.fixado) || (new Date(b.criado_em) - new Date(a.criado_em))
         );
       },
@@ -308,7 +310,7 @@ export function criarMockStore() {
           const i = s.comunicados.findIndex((x) => x.id === c.id);
           if (i >= 0) s.comunicados[i] = { ...s.comunicados[i], ...c };
         } else {
-          s.comunicados.push({ id: uid(), publicado: true, fixado: false, criado_em: agoraISO(), ...c });
+          s.comunicados.push({ publicado: true, fixado: false, ...c, id: uid(), criado_em: agoraISO() });
         }
         salvar(s);
         return espelhar();

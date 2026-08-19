@@ -41,9 +41,9 @@ function cardComunicado(c, appState) {
   if (c.fixado) top.appendChild(el('i', { class: 'fa-solid fa-thumbtack pin', title: 'Fixado' }));
   top.appendChild(el('h3', { text: c.titulo, style: 'flex:1' }));
   if (appState.ehGestor) {
-    const edit = el('button', { class: 'icon-btn', style: 'width:32px;height:32px', html: '<i class="fa-solid fa-pen"></i>' });
+    const edit = el('button', { class: 'icon-btn', 'aria-label': 'Editar comunicado', title: 'Editar comunicado', html: '<i class="fa-solid fa-pen" aria-hidden="true"></i>' });
     edit.addEventListener('click', () => editar(c, appState));
-    const del = el('button', { class: 'icon-btn', style: 'width:32px;height:32px', html: '<i class="fa-solid fa-trash"></i>' });
+    const del = el('button', { class: 'icon-btn', 'aria-label': 'Excluir comunicado', title: 'Excluir comunicado', html: '<i class="fa-solid fa-trash" aria-hidden="true"></i>' });
     del.addEventListener('click', async () => {
       if (await confirmar({ titulo: 'Excluir comunicado', mensagem: `Excluir "${c.titulo}"?`, okLabel: 'Excluir', perigo: true })) {
         await store.comunicados.remover(c.id);
@@ -96,7 +96,8 @@ function editar(c, appState) {
 }
 
 function campo(label, controle) {
+  if (!controle.id) controle.id = 'campo-' + Math.random().toString(36).slice(2, 9);
   const c = el('div', { class: 'campo' });
-  c.append(el('label', { text: label }), controle);
+  c.append(el('label', { text: label, for: controle.id }), controle);
   return c;
 }

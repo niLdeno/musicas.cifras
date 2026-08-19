@@ -32,11 +32,19 @@ self.addEventListener('fetch', (e) => {
     return;
   }
   e.respondWith(
-    caches.match(req).then((hit) => hit || fetch(req).then((res) => {
-      const copia = res.clone();
-      caches.open(CACHE).then((c) => c.put(req, copia)).catch(() => {});
-      return res;
-    }).catch(() => hit))
+    caches.match(req).then((hit) => {
+      if (hit) return hit;
+      return fetch(req)
+        .then((res) => {
+          // Só guarda respostas válidas (evita cachear erros e respostas opacas).
+          if (res.ok && res.type !== 'opaque') {
+            const copia = res.clone();
+            caches.open(CACHE).then((c) => c.put(req, copia)).catch(() => {});
+          }
+          return res;
+        })
+        .catch(() => hit || Response.error());
+    })
   );
 });
 

@@ -97,8 +97,13 @@ supabase secrets set \
   VAPID_SUBJECT="mailto:voce@exemplo.com"
 ```
 
-Depois, no **SQL Editor**, rode `supabase/cron.sql` — **trocando** `<PROJECT_REF>`
-pela referência do seu projeto e `<CRON_SECRET>` pela mesma senha do passo (d).
+Depois, no **SQL Editor**:
+1. Guarde o segredo do cron no **Vault** (não em texto puro), com a mesma senha do passo (d):
+   ```sql
+   select vault.create_secret('a-mesma-senha-do-CRON_SECRET', 'cron_secret');
+   ```
+2. Rode `supabase/cron.sql` — **trocando** `<PROJECT_REF>` pela referência do seu projeto.
+   (A função lê o segredo do Vault em tempo de execução e não fica executável por usuários comuns.)
 
 **Quando os avisos saem** (horário de Brasília):
 - **Segunda, 08:00** → a todos os escalados da semana (sábado a sexta).

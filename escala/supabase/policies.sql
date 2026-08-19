@@ -39,14 +39,46 @@ alter table public.push_subscriptions enable row level security;
 alter table public.avisos_enviados  enable row level security;
 
 -- ===== PESSOAS ============================================================
--- Todo logado vê a lista de pessoas (para montar grupos / ver quem toca).
+-- Todo logado vê a lista de pessoas (nome é necessário para montar grupos e
+-- para o músico ver "quem toca"). Observação: email/telefone ficam visíveis a
+-- qualquer logado — aceitável numa pastoral onde os membros se conhecem; se
+-- quiser esconder contatos dos demais, mova-os para uma tabela própria só do gestor.
 create policy "pessoas leitura logado" on public.pessoas
   for select to authenticated using (true);
--- A própria pessoa edita o próprio cadastro; gestor edita todos.
-create policy "pessoas escrita gestor ou dono" on public.pessoas
+
+-- Gestor cria/edita/remove qualquer pessoa.
+create policy "pessoas escrita gestor" on public.pessoas
   for all to authenticated
-  using (public.eh_gestor() or user_id = auth.uid())
-  with check (public.eh_gestor() or user_id = auth.uid());
+  using (public.eh_gestor()) with check (public.eh_gestor());
+
+-- A própria pessoa atualiza SÓ a própria linha (dados de contato). A troca de
+-- papel/ativo/user_id é barrada pelo trigger abaixo — sem isso, um músico se
+-- autopromoveria a gestor via UPDATE direto no PostgREST (escalada de privilégio).
+create policy "pessoas dono atualiza contato" on public.pessoas
+  for update to authenticated
+  using (user_id = auth.uid())
+  with check (user_id = auth.uid());
+
+create or replace function public.trava_privilegios_pessoa()
+  returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if not public.eh_gestor() then
+    if tg_op = 'INSERT' and (new.papel <> 'musico' or new.ativo is distinct from true) then
+      raise exception 'sem permissão para definir papel/ativo';
+    end if;
+    if tg_op = 'UPDATE' and (new.papel is distinct from old.papel
+        or new.ativo is distinct from old.ativo
+        or new.user_id is distinct from old.user_id) then
+      raise exception 'sem permissão para alterar papel/ativo/vínculo';
+    end if;
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists trg_trava_privilegios_pessoa on public.pessoas;
+create trigger trg_trava_privilegios_pessoa
+  before insert or update on public.pessoas
+  for each row execute function public.trava_privilegios_pessoa();
 
 -- ===== GRUPOS / MEMBROS ===================================================
 create policy "grupos leitura logado" on public.grupos

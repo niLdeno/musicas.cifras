@@ -179,3 +179,11 @@ create or replace view public.v_escalados as
   left join public.grupos g       on g.id = i.grupo_id
   left join public.grupo_membros gm on gm.grupo_id = g.id
   left join public.pessoas p      on p.id = gm.pessoa_id and p.ativo = true;
+
+-- IMPORTANTE (segurança): por padrão uma view roda com as permissões do dono e
+-- IGNORA o RLS das tabelas base — o que vazaria email/telefone a qualquer um.
+-- `security_invoker` faz a view respeitar o RLS de quem consulta, e revogamos o
+-- acesso de anon/authenticated: só a Edge Function (service_role, que ignora RLS)
+-- precisa ler esta view para montar os avisos.
+alter view public.v_escalados set (security_invoker = on);
+revoke all on public.v_escalados from anon, authenticated;

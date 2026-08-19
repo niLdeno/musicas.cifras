@@ -37,10 +37,21 @@ function semanaSabSex(iso: string): { inicio: string; fim: string; chave: string
   return { inicio: f(inicio), fim: f(fim), chave: `sem-${f(inicio)}` };
 }
 
+// Comparação de tempo constante (evita timing attack sobre o segredo).
+function segredoIgual(a: string, b: string): boolean {
+  const ea = new TextEncoder().encode(a);
+  const eb = new TextEncoder().encode(b);
+  if (ea.length !== eb.length) return false;
+  let diff = 0;
+  for (let i = 0; i < ea.length; i++) diff |= ea[i] ^ eb[i];
+  return diff === 0;
+}
+
 Deno.serve(async (req) => {
   // --- Autenticação do cron ---
   const secret = Deno.env.get('CRON_SECRET');
-  if (!secret || req.headers.get('x-cron-secret') !== secret) {
+  const recebido = req.headers.get('x-cron-secret') || '';
+  if (!secret || !segredoIgual(recebido, secret)) {
     return new Response('Não autorizado', { status: 401 });
   }
 
@@ -78,44 +89,59 @@ Deno.serve(async (req) => {
     corpoBase = `Hoje você toca na missa das ${horario}. Bom ministério! 🎶`;
   }
 
-  // --- Idempotência: já enviado? ---
-  const { data: jaEnviado } = await supabase
-    .from('avisos_enviados').select('id').eq('tipo', tipo).eq('referencia', referencia).maybeSingle();
-  if (jaEnviado) {
+  // --- Idempotência ATÔMICA: reserva a chave ANTES de enviar. Se outra execução
+  //     (retry do cron, chamada concorrente) já reservou, o unique(tipo,referencia)
+  //     faz o insert falhar e abortamos sem reenviar. ---
+  const { data: reserva, error: reservaErr } = await supabase
+    .from('avisos_enviados')
+    .insert({ tipo, referencia, destinatarios: 0 })
+    .select('id')
+    .maybeSingle();
+  if (reservaErr || !reserva) {
     return Response.json({ ok: true, pulado: 'já enviado', tipo, referencia });
   }
 
   // --- Destinatários (pessoas únicas com contato de push) ---
   const { data: escalados, error } = await query;
-  if (error) return Response.json({ ok: false, error: error.message }, { status: 500 });
+  if (error) {
+    console.error('enviar-avisos: falha ao consultar escalados:', error.message);
+    return Response.json({ ok: false, erro: 'falha ao consultar escalados' }, { status: 500 });
+  }
 
   const pessoaIds = [...new Set((escalados || []).map((e: any) => e.pessoa_id).filter(Boolean))];
   if (pessoaIds.length === 0) {
-    await supabase.from('avisos_enviados').insert({ tipo, referencia, destinatarios: 0 });
     return Response.json({ ok: true, tipo, referencia, destinatarios: 0, obs: 'ninguém escalado com contato' });
   }
 
   const { data: subs } = await supabase
     .from('push_subscriptions').select('*').in('pessoa_id', pessoaIds);
 
+  // --- Envio em LOTES com concorrência limitada (evita timeout no fan-out) ---
   const titulo = '🎶 Escala da Música — CSCB';
+  const payload = JSON.stringify({ title: titulo, body: corpoBase, url: './', tag: `cscb-${tipo}` });
+  const LOTE = 30;
+  const lista = subs || [];
+  const expiradas: string[] = [];
   let enviados = 0;
-  for (const s of subs || []) {
-    const payload = JSON.stringify({ title: titulo, body: corpoBase, url: './', tag: `cscb-${tipo}` });
-    try {
-      await webpush.sendNotification(
-        { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-        payload,
-      );
-      enviados++;
-    } catch (err: any) {
-      // 404/410 => inscrição expirada: remove
-      if (err?.statusCode === 404 || err?.statusCode === 410) {
-        await supabase.from('push_subscriptions').delete().eq('id', s.id);
-      }
-    }
-  }
 
-  await supabase.from('avisos_enviados').insert({ tipo, referencia, destinatarios: enviados });
+  for (let i = 0; i < lista.length; i += LOTE) {
+    const bloco = lista.slice(i, i + LOTE);
+    const resultados = await Promise.allSettled(
+      bloco.map((s) =>
+        webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, payload)
+      )
+    );
+    resultados.forEach((r, j) => {
+      if (r.status === 'fulfilled') enviados++;
+      else {
+        const code = (r.reason as any)?.statusCode;
+        if (code === 404 || code === 410) expiradas.push(bloco[j].id); // inscrição expirada
+      }
+    });
+  }
+  if (expiradas.length) await supabase.from('push_subscriptions').delete().in('id', expiradas);
+
+  // Atualiza a contagem na linha já reservada.
+  await supabase.from('avisos_enviados').update({ destinatarios: enviados }).eq('id', reserva.id);
   return Response.json({ ok: true, tipo, referencia, pessoas: pessoaIds.length, notificacoes: enviados });
 });
