@@ -109,8 +109,8 @@ function gradeDesktop(semanas, itemPorChave, grupos, escala) {
 
   const thead = el('thead');
   const trh = el('tr');
-  trh.appendChild(el('th', { text: 'Semana' }));
-  DIAS_SEMANA.forEach((d) => trh.appendChild(el('th', { text: d })));
+  trh.appendChild(el('th', { 'aria-label': 'Semana', html: '<span aria-hidden="true"></span>' }));
+  DIAS_SEMANA.forEach((d) => trh.appendChild(el('th', { scope: 'col', text: d })));
   thead.appendChild(trh);
   tabela.appendChild(thead);
 
@@ -144,7 +144,7 @@ function gradeMobile(semanas, itemPorChave, grupos, escala) {
       const nomeSem = DIAS_SEMANA[dia.coluna];
       card.appendChild(el('div', { class: 'cab' }, [
         el('div', { class: 'dnum', html: `<b>${dia.date.getDate()}</b><small>${DIAS_CURTOS[dia.coluna]}</small>` }),
-        el('div', { class: 'dsem', html: `${capitalizar(nomeSem)}<small>${nomeMes(ctx.mes)} · ${dia.horarios.join(' e ')}</small>` }),
+        el('div', { class: 'dsem', html: `${capitalizar(nomeSem)}<small>${nomeMes(ctx.mes)} · ${dia.horarios.map((h) => h.replace(':00', 'h')).join(' e ')}</small>` }),
         el('div', { class: 'semtag', text: `${sem.semana}ª sem.` }),
       ]));
       const corpo = el('div', { class: 'corpo' });
@@ -165,8 +165,9 @@ function slotEl(item, dia, horario, grupos, escala) {
   const tag = item && st !== 'confirmada' ? `<span class="tag ${st}">${esc(meta.curta)}</span>` : '';
   const marca = meu ? '<span class="voce">Você</span>' : '';
   const nome = item ? esc(item.grupoNome || item.rotulo || 'A definir') : 'A definir';
-  s.innerHTML = `<span class="hora">${horario}</span><span class="nome">${nome}</span>${tag}${marca}` +
-    (item && item.observacao ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">${esc(item.observacao)}</div>` : '');
+  const hora = horario.replace(':00', 'h');
+  s.innerHTML = `<span class="hora">${hora}</span><span class="nome">${nome}</span>${tag}${marca}` +
+    (item && item.observacao ? `<div class="obs">${esc(item.observacao)}</div>` : '');
   if (meu) s.setAttribute('aria-current', 'true');
   // rótulo acessível: leitor de tela lê "12h, Isaac, substituição, você"
   const partes = [`${horario}`, nome, st !== 'confirmada' ? meta.label : null, meu ? 'você toca' : null].filter(Boolean);
