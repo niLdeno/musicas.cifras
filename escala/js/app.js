@@ -128,7 +128,9 @@ function montarApp() {
   app.innerHTML = '';
   app.classList.add('pronto');
 
+  if (localStorage.getItem('cscb.sidebar') === '1') document.body.classList.add('sidebar-recolhida');
   app.append(sidebar(), topbar(), mainEl(), tabbar());
+  sincronizarToggle();
   rotear();
 }
 
@@ -142,10 +144,16 @@ function sidebar() {
     el('div', { class: 'mark', html: '<i class="fa-solid fa-music"></i>' }),
     el('div', {}, [el('b', { text: 'Escala' }), el('small', { text: CONFIG.SIGLA })]),
   ]));
+
+  const toggle = el('button', { class: 'side-toggle', title: 'Recolher menu', 'aria-label': 'Recolher ou expandir o menu',
+    html: '<i class="fa-solid fa-angles-left" aria-hidden="true"></i><span>Recolher menu</span>' });
+  toggle.addEventListener('click', alternarSidebar);
+  aside.appendChild(toggle);
+
   const nav = el('nav', { class: 'nav' });
   itensNav().forEach(([k, r]) => {
     const wrapAdmin = r.gestor;
-    const a = el('a', { dataset: { rota: k }, href: `#${k}`, html: `<i class="fa-solid fa-${r.icone}"></i> <span>${r.titulo}</span>` });
+    const a = el('a', { dataset: { rota: k }, href: `#${k}`, title: r.titulo, html: `<i class="fa-solid fa-${r.icone}" aria-hidden="true"></i> <span>${r.titulo}</span>` });
     if (wrapAdmin) { const g = el('div', { class: 'grupo-admin' }); g.append(el('div', { class: 'rot', text: 'Coordenação' }), a); nav.appendChild(g); }
     else nav.appendChild(a);
   });
@@ -236,6 +244,18 @@ async function sair() {
 function aplicarTemaSalvo() {
   const t = localStorage.getItem('cscb.tema');
   if (t) document.documentElement.setAttribute('data-theme', t);
+}
+function alternarSidebar() {
+  const recolhida = document.body.classList.toggle('sidebar-recolhida');
+  localStorage.setItem('cscb.sidebar', recolhida ? '1' : '0');
+  sincronizarToggle();
+}
+function sincronizarToggle() {
+  const recolhida = document.body.classList.contains('sidebar-recolhida');
+  const i = document.querySelector('.side-toggle i');
+  const s = document.querySelector('.side-toggle span');
+  if (i) i.className = `fa-solid fa-angles-${recolhida ? 'right' : 'left'}`;
+  if (s) s.textContent = recolhida ? 'Expandir menu' : 'Recolher menu';
 }
 function alternarTema() {
   const atual = document.documentElement.getAttribute('data-theme');
