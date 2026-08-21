@@ -5,10 +5,9 @@
 import { initStore, store } from './data/store.js';
 import { CONFIG, modoDemo } from './config.js';
 import { el, esc, nomeMes, capitalizar } from './util.js';
-import { toast } from './ui.js';
+import { toast, abrirModal } from './ui.js';
 import { renderEscala } from './views/escala.js';
 import { renderComunicados } from './views/comunicados.js';
-import { renderAlteracoes } from './views/alteracoes.js';
 import { renderNotificacoes } from './views/notificacoes.js';
 import { renderAdmin } from './views/admin.js';
 
@@ -24,8 +23,7 @@ const appState = {
 
 const ROTAS = {
   escala:       { titulo: 'Escala',        icone: 'calendar-days',      render: renderEscala },
-  comunicados:  { titulo: 'Comunicados',   icone: 'bullhorn',           render: renderComunicados },
-  alteracoes:   { titulo: 'Alterações',    icone: 'clock-rotate-left',  render: renderAlteracoes },
+  avisos:       { titulo: 'Avisos',        icone: 'bullhorn',           render: renderComunicados },
   notificacoes: { titulo: 'Notificações',  icone: 'bell',               render: renderNotificacoes },
   admin:        { titulo: 'Gestão',        icone: 'sliders',            render: renderAdmin, gestor: true },
 };
@@ -75,6 +73,10 @@ function mostrarLogin() {
     const bMusico = el('button', { class: 'btn btn-ghost btn-block', html: '<i class="fa-solid fa-guitar"></i> Entrar como Músico' });
     bMusico.addEventListener('click', () => store.auth.entrarDemo('musico'));
     card.append(bAdmin, bMusico);
+    card.append(el('div', { class: 'login-sep', text: 'ou' }));
+    const bCadastro = el('button', { class: 'btn-ghost btn btn-block', html: '<i class="fa-solid fa-user-plus"></i> Cadastre-se como músico' });
+    bCadastro.addEventListener('click', abrirCadastroMusico);
+    card.append(bCadastro);
     card.append(el('div', { class: 'rodape-cred', text: 'Demonstração offline — os dados ficam só neste navegador.' }));
   } else {
     card.append(loginSupabase());
@@ -83,6 +85,32 @@ function mostrarLogin() {
   const wrap = el('div', { class: 'login' });
   wrap.appendChild(card);
   raiz.appendChild(wrap);
+}
+
+// Autocadastro do músico (Nome, Sobrenome, Telefone, E-mail).
+function abrirCadastroMusico() {
+  const form = el('div');
+  const nome = el('input', { type: 'text', placeholder: 'Seu nome' });
+  const sobrenome = el('input', { type: 'text', placeholder: 'Seu sobrenome' });
+  const tel = el('input', { type: 'tel', placeholder: '(00) 00000-0000' });
+  const email = el('input', { type: 'email', placeholder: 'email@exemplo.com' });
+  form.append(campoLogin('Nome', nome), campoLogin('Sobrenome', sobrenome), campoLogin('Telefone (WhatsApp)', tel), campoLogin('E-mail', email));
+  abrirModal({
+    titulo: 'Cadastro de músico', icone: 'user-plus', conteudo: form,
+    acoes: [
+      { label: 'Cancelar', classe: 'btn-ghost' },
+      { label: 'Cadastrar', classe: 'btn', onClick: async () => {
+        if (!nome.value.trim()) { toast('Informe pelo menos o seu nome.', 'erro'); return false; }
+        try {
+          await store.auth.cadastrarMusico({
+            nome: nome.value.trim(), sobrenome: sobrenome.value.trim(),
+            telefone: tel.value.trim(), email: email.value.trim(),
+          });
+          toast('Cadastro concluído. Bem-vindo(a)! 🎶', 'ok');
+        } catch (e) { toast(e.message || 'Não foi possível cadastrar.', 'erro'); return false; }
+      }},
+    ],
+  });
 }
 
 function loginSupabase() {
@@ -233,7 +261,7 @@ function navegarMes(delta) {
   let m = appState.mes + delta, a = appState.ano;
   if (m < 1) { m = 12; a--; } else if (m > 12) { m = 1; a++; }
   appState.mes = m; appState.ano = a;
-  if (rotaAtual === 'escala' || rotaAtual === 'alteracoes' || rotaAtual === 'admin' || rotaAtual === 'notificacoes') rotear();
+  if (rotaAtual === 'escala' || rotaAtual === 'admin' || rotaAtual === 'notificacoes') rotear();
 }
 
 async function sair() {

@@ -13,6 +13,10 @@ function agoraISO() {
   return new Date().toISOString();
 }
 
+function nomeCompleto(p) {
+  return [p.nome, p.sobrenome].filter(Boolean).join(' ');
+}
+
 function semear() {
   // Uma "pessoa" para cada unidade escalada (para os avisos alcançarem alguém),
   // mais a coordenação e um músico de exemplo.
@@ -27,7 +31,7 @@ function semear() {
     criado_em: agoraISO(),
   }));
   const coord = {
-    id: uid(), user_id: 'demo-admin', nome: 'Nildeno Aragão',
+    id: uid(), user_id: 'demo-admin', nome: 'Nildeno', sobrenome: 'Aragão',
     email: 'nildeno.aragao@gmail.com', telefone: null,
     papel: 'admin', ativo: true, criado_em: agoraISO(),
   };
@@ -40,8 +44,10 @@ function semear() {
   const grupoPorNome = Object.fromEntries(grupos.map((g) => [g.nome, g]));
 
   const escala = {
-    id: uid(), ano: ANO, mes: MES, versao: 2, publicada: true,
-    publicada_em: agoraISO(), observacoes: null, criado_em: agoraISO(),
+    id: uid(), ano: ANO, mes: MES, versao: 1, publicada: true,
+    publicada_em: agoraISO(),
+    observacoes: 'Cheguem 20 min antes para a passagem de som. Dúvidas sobre a escala, falar com a coordenação.',
+    criado_em: agoraISO(),
   };
 
   const itens = escalaAgosto2026.map((it) => ({
@@ -136,7 +142,7 @@ export function criarMockStore() {
         const s = db();
         if (papel === 'admin') {
           const coord = s.pessoas.find((p) => p.papel === 'admin');
-          s.usuario = { id: coord.id, nome: coord.nome, email: coord.email, papel: 'admin' };
+          s.usuario = { id: coord.id, nome: nomeCompleto(coord), email: coord.email, papel: 'admin' };
         } else {
           // entra como um músico que ainda tem missas à frente no mês (demo mais rica);
           // se ninguém tiver, cai no primeiro músico da lista.
@@ -149,12 +155,35 @@ export function criarMockStore() {
             (grupoAlvo && s.pessoas.find((p) => p.id === grupoAlvo.membros[0])) ||
             s.pessoas.find((p) => p.papel === 'musico') ||
             s.pessoas[0];
-          s.usuario = { id: musico.id, nome: musico.nome, email: musico.email, papel: 'musico' };
+          s.usuario = { id: musico.id, nome: nomeCompleto(musico), email: musico.email, papel: 'musico' };
           s.prefsNotif.pessoaId = musico.id;
         }
         salvar(s);
         notificar();
         return clone(s.usuario);
+      },
+      // Autocadastro do músico: cria a pessoa e um "grupo" solo com o mesmo nome
+      // (assim ele já vira uma unidade selecionável na escala) e entra no app.
+      async cadastrarMusico({ nome, sobrenome, telefone, email }) {
+        const s = db();
+        const completo = [nome, sobrenome].filter(Boolean).join(' ');
+        if (s.pessoas.some((p) => p.email && email && p.email.toLowerCase() === email.toLowerCase())) {
+          throw new Error('Já existe um cadastro com esse e-mail.');
+        }
+        const pessoa = {
+          id: uid(), user_id: null, nome, sobrenome: sobrenome || null,
+          email: email || null, telefone: telefone || null,
+          papel: 'musico', ativo: true, criado_em: agoraISO(),
+        };
+        s.pessoas.push(pessoa);
+        if (!s.grupos.some((g) => g.nome.toLowerCase() === completo.toLowerCase())) {
+          s.grupos.push({ id: uid(), nome: completo, cor: null, ativo: true, membros: [pessoa.id], criado_em: agoraISO() });
+        }
+        s.usuario = { id: pessoa.id, nome: completo, email: pessoa.email, papel: 'musico' };
+        s.prefsNotif.pessoaId = pessoa.id;
+        salvar(s);
+        notificar();
+        return clone(pessoa);
       },
       async sair() {
         const s = db();
@@ -248,11 +277,55 @@ export function criarMockStore() {
         const s = db();
         let escala = s.escalas.find((e) => e.ano === ano && e.mes === mes);
         if (!escala) {
-          escala = { id: uid(), ano, mes, versao: 1, publicada: false, publicada_em: null, observacoes: null, criado_em: agoraISO() };
+          // versao 0 = rascunho ainda não publicado; a 1ª publicação vira v1.
+          escala = { id: uid(), ano, mes, versao: 0, publicada: false, publicada_em: null, observacoes: null, criado_em: agoraISO() };
           s.escalas.push(escala);
           salvar(s);
         }
         return clone(escala);
+      },
+      // PRÉ-ESCALA: usa uma escala já montada de outro mês como base. Copia por
+      // (dia da semana + nª ocorrência no mês + horário), preservando o padrão
+      // (ex.: "1ª segunda 12h = Isaac"). O status volta a "confirmada".
+      async copiarDe(sourceEscalaId, ano, mes) {
+        const s = db();
+        const alvo = s.escalas.find((e) => e.ano === ano && e.mes === mes)
+          || (s.escalas.push({ id: uid(), ano, mes, versao: 0, publicada: false, publicada_em: null, observacoes: null, criado_em: agoraISO() }), s.escalas[s.escalas.length - 1]);
+
+        const chaveDia = (iso, horario) => {
+          const [y, m, d] = iso.split('-').map(Number);
+          const dt = new Date(y, m - 1, d);
+          const dow = dt.getDay();
+          const ocorrencia = Math.floor((d - 1) / 7) + 1; // nª vez desse dia da semana no mês
+          return `${dow}|${ocorrencia}|${horario}`;
+        };
+        const fonte = {};
+        s.itens.filter((i) => i.escala_id === sourceEscalaId).forEach((i) => {
+          fonte[chaveDia(i.data, i.horario)] = { grupo_id: i.grupo_id, rotulo: i.rotulo };
+        });
+
+        const totalDias = new Date(ano, mes, 0).getDate();
+        let copiados = 0;
+        for (let d = 1; d <= totalDias; d++) {
+          const iso = `${ano}-${String(mes).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          for (const horario of ['12:00', '19:00']) {
+            const base = fonte[chaveDia(iso, horario)];
+            if (!base || (!base.grupo_id && !base.rotulo)) continue;
+            const jaExiste = s.itens.some((i) => i.escala_id === alvo.id && i.data === iso && i.horario === horario);
+            if (jaExiste) continue;
+            s.itens.push({ id: uid(), escala_id: alvo.id, data: iso, horario, grupo_id: base.grupo_id || null, rotulo: base.rotulo || null, status: 'confirmada', observacao: null, criado_em: agoraISO() });
+            copiados++;
+          }
+        }
+        salvar(s);
+        return { escala: clone(alvo), copiados };
+      },
+      async salvarObservacoes(escalaId, texto) {
+        const s = db();
+        const e = s.escalas.find((x) => x.id === escalaId);
+        if (e) e.observacoes = texto || null;
+        salvar(s);
+        return espelhar();
       },
       async salvarItem(item) {
         const s = db();
@@ -275,7 +348,7 @@ export function criarMockStore() {
         if (e) {
           e.publicada = publicar;
           e.publicada_em = publicar ? agoraISO() : null;
-          if (publicar) e.versao += 1;
+          if (publicar) e.versao = (e.versao || 0) + 1; // 1ª publicação = v1; ajustes seguintes incrementam
         }
         salvar(s);
         return espelhar();

@@ -43,6 +43,7 @@ create table if not exists public.pessoas (
   id          uuid primary key default gen_random_uuid(),
   user_id     uuid unique references auth.users(id) on delete set null, -- vínculo com o login (pode ser nulo se ainda não tem conta)
   nome        text not null,
+  sobrenome   text,
   email       text,
   telefone    text,
   papel       papel_usuario not null default 'musico',
@@ -80,7 +81,7 @@ create table if not exists public.escalas (
   id           uuid primary key default gen_random_uuid(),
   ano          int  not null,
   mes          int  not null check (mes between 1 and 12),
-  versao       int  not null default 1,
+  versao       int  not null default 0,   -- 0 = rascunho; a 1ª publicação vira v1
   publicada    boolean not null default false,
   publicada_em timestamptz,
   observacoes  text,

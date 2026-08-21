@@ -16,12 +16,15 @@ funciona no computador. Substitui a escala em PDF que era refeita a cada mudanç
 
 | Recurso | Músico | Coordenação |
 |---|---|---|
+| Cadastrar-se como músico (nome, sobrenome, telefone, e-mail) | ✅ (autocadastro) | — |
 | Ver a escala do mês (grade igual à oficial, com as cores da legenda) | ✅ | ✅ |
-| Ver comunicados e o histórico de alterações | ✅ | ✅ |
+| Ver os avisos do mês e os avisos gerais | ✅ | ✅ |
+| Ver o histórico de versões da escala (em um modal, sem poluir a tela) | ✅ | ✅ |
 | Receber lembretes automáticos (push) | ✅ | ✅ |
-| Ver "minha próxima escala" | ✅ | ✅ |
-| Montar/editar a escala, publicar versões | ❌ | ✅ |
-| Criar comunicados | ❌ | ✅ |
+| Ver "minha próxima escala" e o próprio nome destacado na grade | ✅ | ✅ |
+| Montar/editar a escala e publicar versões (v1, v2, …) | ❌ | ✅ |
+| Pré-escala: partir de um mês já montado e só ajustar | ❌ | ✅ |
+| Escrever os avisos do mês e os avisos gerais | ❌ | ✅ |
 | Cadastrar grupos e pessoas | ❌ | ✅ |
 
 **Legenda de status** (mesma da escala em PDF):
@@ -132,7 +135,7 @@ escala/
 │   ├── util.js, ui.js    Datas/grade e componentes (toast/modal)
 │   ├── push.js           Web Push (permissão/inscrição)
 │   ├── data/             Camada de dados: mock (demo) + supa (Supabase)
-│   └── views/            Telas: escala, comunicados, alterações, notificações, gestão
+│   └── views/            Telas: escala, comunicados (avisos), notificações, gestão
 ├── icons/                Ícones do PWA
 └── supabase/
     ├── schema.sql · policies.sql · seed_agosto_2026.sql · cron.sql

@@ -146,9 +146,38 @@ export async function criarSupaStore() {
       async publicar(escalaId, publicar = true) {
         const { data: atual } = await sb.from('escalas').select('versao').eq('id', escalaId).single();
         const patch = { publicada: publicar, publicada_em: publicar ? new Date().toISOString() : null };
-        if (publicar) patch.versao = (atual?.versao || 1) + 1;
+        if (publicar) patch.versao = (atual?.versao || 0) + 1; // 1ª publicação = v1
         const { error } = await sb.from('escalas').update(patch).eq('id', escalaId);
         if (error) throw error;
+      },
+      async salvarObservacoes(escalaId, texto) {
+        const { error } = await sb.from('escalas').update({ observacoes: texto || null }).eq('id', escalaId);
+        if (error) throw error;
+      },
+      // Pré-escala: copia o padrão (dia da semana + nª ocorrência + horário) de outra escala.
+      async copiarDe(sourceEscalaId, ano, mes) {
+        const { data: alvo } = await sb.from('escalas').upsert({ ano, mes }, { onConflict: 'ano,mes' }).select().single();
+        const { data: origem } = await sb.from('escala_itens').select('data,horario,grupo_id,rotulo').eq('escala_id', sourceEscalaId);
+        const chave = (iso, horario) => {
+          const [y, m, d] = iso.split('-').map(Number);
+          const dow = new Date(y, m - 1, d).getDay();
+          return `${dow}|${Math.floor((d - 1) / 7) + 1}|${horario}`;
+        };
+        const fonte = {};
+        (origem || []).forEach((i) => (fonte[chave(i.data, i.horario)] = { grupo_id: i.grupo_id, rotulo: i.rotulo }));
+        const totalDias = new Date(ano, mes, 0).getDate();
+        const novos = [];
+        for (let d = 1; d <= totalDias; d++) {
+          const iso = `${ano}-${String(mes).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          for (const horario of ['12:00', '19:00']) {
+            const base = fonte[chave(iso, horario)];
+            if (base && (base.grupo_id || base.rotulo)) {
+              novos.push({ escala_id: alvo.id, data: iso, horario, grupo_id: base.grupo_id, rotulo: base.rotulo, status: 'confirmada' });
+            }
+          }
+        }
+        if (novos.length) await sb.from('escala_itens').upsert(novos, { onConflict: 'escala_id,data,horario', ignoreDuplicates: true });
+        return { escala: alvo, copiados: novos.length };
       },
     },
 

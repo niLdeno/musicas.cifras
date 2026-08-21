@@ -113,15 +113,14 @@ button { font-family: inherit; }
 .app.pronto { display: block; }
 
 .sidebar {
-  width: var(--sidebar-w); flex: none; display: none; white-space: nowrap; overflow: hidden;
+  width: var(--sidebar-w); flex: none; display: none; flex-direction: column; white-space: nowrap; overflow: hidden;
   background: linear-gradient(178deg, #16173a, #23255a); color: #e9e9fb;
   transition: width .28s cubic-bezier(.4, 0, .2, 1);
 }
-/* Conteúdo grudado no topo (100vh), enquanto a coluna escura acompanha toda a
-   altura da página — assim a barra "chega até o fim" mesmo com o calendário longo. */
+/* Coluna de altura total: a navegação fica no topo e o perfil/tema no rodapé
+   (o nav ocupa o espaço central e empurra o usuário para o fim da barra). */
 .sidebar-sticky {
-  position: sticky; top: 0; height: 100vh; height: 100dvh;
-  display: flex; flex-direction: column; padding: 22px 16px; overflow: hidden;
+  flex: 1; display: flex; flex-direction: column; padding: 22px 16px; overflow: hidden;
 }
 .brand { display: flex; gap: 12px; align-items: center; padding: 4px 8px 20px; }
 .brand .mark {
@@ -352,6 +351,16 @@ table.grade .slot .obs { text-align: center; }
 .aviso-box { display: flex; gap: 10px; padding: 12px 14px; border-radius: 12px; background: var(--primary-050); border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent); font-size: 13.5px; }
 .aviso-box i { color: var(--primary); margin-top: 2px; }
 
+/* Avisos do mês (topo da escala) */
+.aviso-mes { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; margin-bottom: 16px; border-radius: 14px;
+  background: var(--gold-050); border: 1px solid color-mix(in srgb, var(--gold) 38%, transparent); }
+.aviso-mes > i { color: var(--gold); font-size: 18px; margin-top: 2px; flex: none; }
+.aviso-mes b { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: #7a5a15; margin-bottom: 3px; }
+.aviso-mes .txt { white-space: pre-wrap; color: var(--text); font-size: 14px; }
+.aviso-mes .btn { flex: none; align-self: center; }
+:root[data-theme="dark"] .aviso-mes b { color: var(--gold); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .aviso-mes b { color: var(--gold); } }
+
 /* ---------- Formulários ---------- */
 .campo { margin-bottom: 13px; }
 .campo label { display: block; font-size: 12.5px; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
@@ -368,7 +377,7 @@ table.grade .slot .obs { text-align: center; }
 .check-list label:has(input:checked) { background: var(--primary-050); border-color: var(--primary); color: var(--primary-700); }
 
 /* ---------- Modal ---------- */
-.modal-bg { position: fixed; inset: 0; z-index: 90; background: rgba(15, 14, 35, .55); backdrop-filter: blur(3px); display: none; align-items: center; justify-content: center; padding: 16px; }
+.modal-bg { position: fixed; inset: 0; z-index: 200; background: rgba(15, 14, 35, .55); backdrop-filter: blur(3px); display: none; align-items: center; justify-content: center; padding: 16px; }
 .modal-bg.aberto { display: flex; }
 .modal { background: var(--surface); border-radius: 18px; box-shadow: var(--shadow-lg); width: 100%; max-width: 480px; max-height: 90vh; overflow: auto; }
 .modal .cab { display: flex; align-items: center; gap: 10px; padding: 16px 18px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); }
@@ -377,7 +386,7 @@ table.grade .slot .obs { text-align: center; }
 .modal .rodape { padding: 14px 18px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; position: sticky; bottom: 0; background: var(--surface); }
 
 /* ---------- Toast ---------- */
-.toasts { position: fixed; left: 50%; bottom: calc(var(--nav-h) + 16px); transform: translateX(-50%); z-index: 120; display: flex; flex-direction: column; gap: 8px; align-items: center; width: max-content; max-width: 92vw; }
+.toasts { position: fixed; left: 50%; bottom: calc(var(--nav-h) + 16px); transform: translateX(-50%); z-index: 300; display: flex; flex-direction: column; gap: 8px; align-items: center; width: max-content; max-width: 92vw; }
 .toast { padding: 11px 16px; border-radius: 12px; background: #1c1d33; color: #fff; font-size: 13.5px; font-weight: 500; box-shadow: var(--shadow-lg); display: flex; gap: 9px; align-items: center; animation: toast-in .25s ease; }
 .toast.ok { background: #167a48; } .toast.erro { background: #b92c24; }
 @keyframes toast-in { from { opacity: 0; transform: translateY(10px); } }
@@ -400,7 +409,7 @@ table.grade .slot .obs { text-align: center; }
   .topbar { display: none; }
   .tabbar { display: none; }
   .app.pronto { display: flex; align-items: stretch; }
-  .sidebar { display: block; }
+  .sidebar { display: flex; }
   .main { flex: 1; min-width: 0; padding: 26px 30px 40px; }
   .page-head h1 { font-size: 26px; }
 }

@@ -52,6 +52,9 @@ export async function renderEscala(container, appState) {
     );
   }
 
+  const ab = avisosBox(escala);
+  if (ab) container.appendChild(ab);
+
   const semanas = semanasDoMes(ano, mes);
   container.appendChild(gradeDesktop(semanas, itemPorChave, grupos, escala));
   container.appendChild(gradeMobile(semanas, itemPorChave, grupos, escala));
@@ -61,7 +64,7 @@ function cabecalho(escala) {
   const head = el('div', { class: 'page-head' });
   head.appendChild(el('div', {}, [
     el('h1', { text: 'Escala' }),
-    el('div', { class: 'sub', html: `${esc(nomeMes(ctx.mes))} de ${ctx.ano} · Missas 12h e 19h${escala && escala.versao ? ` · v${escala.versao}` : ''}` }),
+    el('div', { class: 'sub', html: `${esc(nomeMes(ctx.mes))} de ${ctx.ano} · Missas 12h e 19h` }),
   ]));
 
   const nav = el('div', { class: 'mes-nav' });
@@ -72,9 +75,66 @@ function cabecalho(escala) {
   nav.append(antes, el('div', { class: 'rot', text: `${capitalizar(nomeMes(ctx.mes))} ${ctx.ano}` }), depois);
 
   const push = el('div', { class: 'push' });
+  if (escala && escala.publicada && escala.versao) {
+    const hist = el('button', { class: 'btn-ghost btn btn-sm', title: 'Ver histórico de versões',
+      html: `<i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> v${escala.versao} · histórico` });
+    hist.addEventListener('click', () => abrirHistorico(escala));
+    push.appendChild(hist);
+  }
   push.appendChild(nav);
   head.appendChild(push);
   return head;
+}
+
+async function abrirHistorico(escala) {
+  const lista = await store.alteracoes.listar(escala.id);
+  const corpo = el('div');
+  corpo.appendChild(el('p', { class: 'sub', style: 'margin:0 0 14px',
+    text: `Versão atual: v${escala.versao}. Cada ajuste publicado ao longo do mês fica registrado aqui.` }));
+  if (!lista.length) {
+    corpo.appendChild(el('div', { class: 'sub', text: 'Nenhuma alteração registrada ainda.' }));
+  } else {
+    const tl = el('div', { class: 'timeline' });
+    lista.forEach((a) => tl.appendChild(el('div', { class: 'item' }, [
+      el('div', { class: 'desc', text: a.descricao }),
+      el('div', { class: 'quando', text: `${new Date(a.criado_em).toLocaleString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })} · ${a.autor || 'Coordenação'}` }),
+    ])));
+    corpo.appendChild(tl);
+  }
+  abrirModal({ titulo: 'Histórico da escala', icone: 'clock-rotate-left', conteudo: corpo, largura: '520px',
+    acoes: [{ label: 'Fechar', classe: 'btn' }] });
+}
+
+function avisosBox(escala) {
+  const texto = (escala.observacoes || '').trim();
+  if (!texto && !ctx.ehGestor) return null;
+  const box = el('div', { class: 'aviso-mes' });
+  const corpo = el('div', { style: 'flex:1;min-width:0' }, [
+    el('b', { text: 'Avisos do mês' }),
+    el('div', { class: 'txt', text: texto || 'Nenhum aviso para este mês.' }),
+  ]);
+  box.append(el('i', { class: 'fa-solid fa-bullhorn', 'aria-hidden': 'true' }), corpo);
+  if (ctx.ehGestor) {
+    const btn = el('button', { class: 'btn-ghost btn btn-sm', html: `<i class="fa-solid fa-pen" aria-hidden="true"></i> ${texto ? 'Editar' : 'Adicionar'}` });
+    btn.addEventListener('click', () => editarAvisosMes(escala));
+    box.appendChild(btn);
+  }
+  return box;
+}
+
+function editarAvisosMes(escala) {
+  const ta = el('textarea', { placeholder: 'Ex.: Cheguem 20 min antes para a passagem de som. Ensaio geral dia 15 às 16h.', text: escala.observacoes || '' });
+  ta.style.minHeight = '120px';
+  const wrap = el('div', { class: 'campo' });
+  ta.id = 'aviso-mes-ta';
+  wrap.append(el('label', { text: 'Avisos do mês (aparecem no topo da escala)', for: ta.id }), ta);
+  abrirModal({ titulo: 'Avisos do mês', icone: 'bullhorn', conteudo: wrap, acoes: [
+    { label: 'Cancelar', classe: 'btn-ghost' },
+    { label: 'Salvar', classe: 'btn', onClick: async () => {
+      await store.escala.salvarObservacoes(escala.id, ta.value.trim());
+      toast('Avisos do mês salvos.', 'ok'); ctx.recarregar();
+    } },
+  ] });
 }
 
 function legenda() {
@@ -129,8 +189,7 @@ function gradeDesktop(semanas, itemPorChave, grupos, escala) {
       if (!dia) { tr.appendChild(el('td', { class: 'dia-cell vazio' })); continue; }
       const ehHoje = mesmaData(dia.date, hoje);
       const td = el('td', { class: 'dia-cell' + (ehHoje ? ' hoje' : '') });
-      const badge = ehHoje ? '<span class="hoje-badge">Hoje</span>' : '';
-      td.appendChild(el('div', { class: 'dia-num', html: `<span><b>${dia.date.getDate()}</b> de ${nomeMes(ctx.mes)}</span>${badge}` }));
+      td.appendChild(el('div', { class: 'dia-num', html: `<b>${dia.date.getDate()}</b> de ${nomeMes(ctx.mes)}` }));
       dia.horarios.forEach((h) => td.appendChild(slotEl(itemPorChave[`${dia.iso}|${h}`], dia, h, grupos, escala)));
       tr.appendChild(td);
     }
@@ -153,7 +212,7 @@ function gradeMobile(semanas, itemPorChave, grupos, escala) {
       card.appendChild(el('div', { class: 'cab' }, [
         el('div', { class: 'dnum', html: `<b>${dia.date.getDate()}</b><small>${DIAS_CURTOS[dia.coluna]}</small>` }),
         el('div', { class: 'dsem', html: `${capitalizar(nomeSem)}<small>${nomeMes(ctx.mes)} · ${dia.horarios.map((h) => h.replace(':00', 'h')).join(' e ')}</small>` }),
-        el('div', { class: 'semtag', html: ehHoje ? '<span class="hoje-badge">Hoje</span>' : `${sem.semana}ª sem.` }),
+        el('div', { class: 'semtag', text: `${sem.semana}ª sem.` }),
       ]));
       const corpo = el('div', { class: 'corpo' });
       dia.horarios.forEach((h) => corpo.appendChild(slotEl(itemPorChave[`${dia.iso}|${h}`], dia, h, grupos, escala)));
