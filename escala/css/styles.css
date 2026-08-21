@@ -113,11 +113,15 @@ button { font-family: inherit; }
 .app.pronto { display: block; }
 
 .sidebar {
-  position: fixed; inset: 0 auto 0 0; width: var(--sidebar-w);
-  background: linear-gradient(178deg, #16173a, #23255a);
-  color: #e9e9fb; padding: 22px 16px; display: none; flex-direction: column; z-index: 40;
-  overflow: hidden; white-space: nowrap;
-  transition: width .28s cubic-bezier(.4, 0, .2, 1), padding .28s cubic-bezier(.4, 0, .2, 1);
+  width: var(--sidebar-w); flex: none; display: none; white-space: nowrap; overflow: hidden;
+  background: linear-gradient(178deg, #16173a, #23255a); color: #e9e9fb;
+  transition: width .28s cubic-bezier(.4, 0, .2, 1);
+}
+/* Conteúdo grudado no topo (100vh), enquanto a coluna escura acompanha toda a
+   altura da página — assim a barra "chega até o fim" mesmo com o calendário longo. */
+.sidebar-sticky {
+  position: sticky; top: 0; height: 100vh; height: 100dvh;
+  display: flex; flex-direction: column; padding: 22px 16px; overflow: hidden;
 }
 .brand { display: flex; gap: 12px; align-items: center; padding: 4px 8px 20px; }
 .brand .mark {
@@ -168,8 +172,8 @@ button { font-family: inherit; }
 
 /* ---- Estado RECOLHIDO (só no desktop) ---- */
 @media (min-width: 860px) {
-  body.sidebar-recolhida .app.pronto { padding-left: var(--sidebar-w-collapsed); }
-  body.sidebar-recolhida .sidebar { width: var(--sidebar-w-collapsed); padding-left: 12px; padding-right: 12px; }
+  body.sidebar-recolhida .sidebar { width: var(--sidebar-w-collapsed); }
+  body.sidebar-recolhida .sidebar-sticky { padding-left: 12px; padding-right: 12px; }
   body.sidebar-recolhida .brand { justify-content: center; padding: 4px 0 20px; }
   body.sidebar-recolhida .brand > div:last-child,
   body.sidebar-recolhida .nav a span,
@@ -256,10 +260,13 @@ table.grade thead th {
   padding: 9px 8px; text-align: center; position: sticky; top: 0;
 }
 table.grade thead th:first-child { background: var(--primary-700); }
-.wk-cell { background: var(--gold); color: #2a1a06; font-weight: 800; font-size: 11px; text-align: center; width: 46px; padding: 6px; }
+.wk-cell { background: var(--gold); color: #2a1a06; font-weight: 800; font-size: 11px; text-align: center; vertical-align: middle; width: 46px; padding: 6px; }
 .wk-cell span { writing-mode: vertical-rl; transform: rotate(180deg); text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; }
 td.dia-cell { padding: 7px; min-width: 118px; }
-td.dia-cell.hoje { outline: 2px solid var(--primary); outline-offset: -2px; }
+/* Coluna e célula do dia de hoje bem destacadas */
+table.grade thead th.th-hoje { background: var(--primary); box-shadow: inset 0 -3px 0 var(--gold); }
+td.dia-cell.hoje { box-shadow: inset 0 0 0 2px var(--primary); background: color-mix(in srgb, var(--primary) 6%, var(--surface)); }
+.hoje-badge { display: inline-block; background: var(--primary); color: #fff; font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; padding: 1px 8px; border-radius: 999px; }
 td.dia-cell.vazio { background: repeating-linear-gradient(45deg, var(--surface), var(--surface) 8px, var(--surface-2) 8px, var(--surface-2) 16px); }
 .dia-num { font-size: 11.5px; color: var(--muted); font-weight: 600; margin-bottom: 5px; }
 .dia-num b { color: var(--text); font-size: 13px; }
@@ -276,8 +283,15 @@ td.dia-cell.vazio { background: repeating-linear-gradient(45deg, var(--surface),
 .slot.st-substituicao{ background: var(--st-blue-bg);   border-color: color-mix(in srgb, var(--st-blue) 40%, transparent); }
 .slot.st-solenidade  { background: var(--st-orange-bg); border-color: color-mix(in srgb, var(--st-orange) 40%, transparent); }
 .slot.vazio-slot { color: var(--faint); font-style: italic; background: transparent; border-style: dashed; }
-.slot.meu { box-shadow: inset 0 0 0 2px var(--primary); }
-.slot .voce { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .02em; padding: 1px 6px; border-radius: 5px; margin-left: 4px; color: #fff; background: var(--primary); }
+/* Slot do próprio usuário: bem destacado para ele achar seu nome na escala */
+.slot.meu { box-shadow: inset 0 0 0 2px var(--primary); background: color-mix(in srgb, var(--primary) 10%, var(--surface)); }
+.slot.meu .nome { font-weight: 800; color: var(--primary-700); }
+:root[data-theme="dark"] .slot.meu .nome { color: #c9c2ff; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .slot.meu .nome { color: #c9c2ff; }
+}
+.slot .voce { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .02em; padding: 1px 7px; border-radius: 5px; margin-left: 4px; color: #fff; background: var(--primary); }
+.slot .voce i { font-size: 8.5px; }
 .banner-meu { display: flex; gap: 10px; align-items: center; padding: 11px 14px; border-radius: 12px; background: var(--primary-050); border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent); font-size: 13.5px; font-weight: 600; color: var(--primary-700); margin-bottom: 14px; }
 .banner-meu i { color: var(--primary); }
 .slot .tag { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .02em; padding: 1px 6px; border-radius: 5px; margin-left: 4px; color: #fff; white-space: nowrap; }
@@ -385,9 +399,9 @@ table.grade .slot .obs { text-align: center; }
 @media (min-width: 860px) {
   .topbar { display: none; }
   .tabbar { display: none; }
-  .sidebar { display: flex; }
-  .app.pronto { padding-left: var(--sidebar-w); transition: padding-left .28s cubic-bezier(.4, 0, .2, 1); }
-  .main { padding: 26px 30px 40px; }
+  .app.pronto { display: flex; align-items: stretch; }
+  .sidebar { display: block; }
+  .main { flex: 1; min-width: 0; padding: 26px 30px 40px; }
   .page-head h1 { font-size: 26px; }
 }
 /* Até 1180px (celular, tablet e notebooks menores) usamos os cartões por dia,

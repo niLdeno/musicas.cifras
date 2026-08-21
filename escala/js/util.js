@@ -8,21 +8,22 @@ export const MESES = [
   'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
 ];
 
-// Colunas da grade, na MESMA ordem da escala oficial (começa no sábado).
+// Colunas da grade: a semana começa na SEGUNDA e vai até o DOMINGO.
 export const DIAS_SEMANA = [
-  'sábado', 'domingo', 'segunda-feira', 'terça-feira',
-  'quarta-feira', 'quinta-feira', 'sexta-feira',
+  'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira',
+  'sexta-feira', 'sábado', 'domingo',
 ];
-export const DIAS_CURTOS = ['Sáb', 'Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex'];
+export const DIAS_CURTOS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 
-// Horários de missa por dia da semana. Domingo (getDay()===0) só tem 19h.
-export function horariosDoDia(date) {
-  return date.getDay() === 0 ? ['19:00'] : ['12:00', '19:00'];
+// Todo dia tem sempre as duas missas: 12h (em cima) e 19h (embaixo).
+// Quando não há ninguém escalado no 12h, o slot de cima fica vazio.
+export function horariosDoDia(_date) {
+  return ['12:00', '19:00'];
 }
 
-// Índice de coluna na grade (sábado = 0 ... sexta = 6).
+// Índice de coluna na grade (segunda = 0 ... domingo = 6).
 export function colunaGrade(date) {
-  return (date.getDay() + 1) % 7;
+  return (date.getDay() + 6) % 7;
 }
 
 // Converte 'YYYY-MM-DD' em Date LOCAL (evita o -1 dia do fuso UTC).

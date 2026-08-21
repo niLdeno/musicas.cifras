@@ -140,7 +140,10 @@ function itensNav() {
 
 function sidebar() {
   const aside = el('aside', { class: 'sidebar' });
-  aside.append(el('div', { class: 'brand' }, [
+  const inner = el('div', { class: 'sidebar-sticky' }); // conteúdo grudado; a coluna escura ocupa toda a altura
+  aside.appendChild(inner);
+
+  inner.append(el('div', { class: 'brand' }, [
     el('div', { class: 'mark', html: '<i class="fa-solid fa-music"></i>' }),
     el('div', {}, [el('b', { text: 'Escala' }), el('small', { text: CONFIG.SIGLA })]),
   ]));
@@ -148,7 +151,7 @@ function sidebar() {
   const toggle = el('button', { class: 'side-toggle', title: 'Recolher menu', 'aria-label': 'Recolher ou expandir o menu',
     html: '<i class="fa-solid fa-angles-left" aria-hidden="true"></i><span>Recolher menu</span>' });
   toggle.addEventListener('click', alternarSidebar);
-  aside.appendChild(toggle);
+  inner.appendChild(toggle);
 
   const nav = el('nav', { class: 'nav' });
   itensNav().forEach(([k, r]) => {
@@ -157,12 +160,12 @@ function sidebar() {
     if (wrapAdmin) { const g = el('div', { class: 'grupo-admin' }); g.append(el('div', { class: 'rot', text: 'Coordenação' }), a); nav.appendChild(g); }
     else nav.appendChild(a);
   });
-  aside.appendChild(nav);
+  inner.appendChild(nav);
 
   const temaBtn = el('button', { class: 'side-tema', 'aria-label': 'Alternar tema claro ou escuro', title: 'Tema claro/escuro',
     html: '<i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i><span>Tema claro/escuro</span>' });
   temaBtn.addEventListener('click', alternarTema);
-  aside.appendChild(temaBtn);
+  inner.appendChild(temaBtn);
 
   const user = el('div', { class: 'side-user', role: 'button', tabindex: '0',
     'aria-label': `Sair da conta de ${appState.usuario?.nome || ''}`, title: 'Sair' }, [
@@ -175,7 +178,7 @@ function sidebar() {
   ]);
   user.addEventListener('click', sair);
   user.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sair(); } });
-  aside.appendChild(user);
+  inner.appendChild(user);
   return aside;
 }
 

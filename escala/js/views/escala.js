@@ -5,7 +5,7 @@
 import { store } from '../data/store.js';
 import { STATUS, STATUS_LEGENDA } from '../config.js';
 import {
-  el, esc, semanasDoMes, DIAS_SEMANA, DIAS_CURTOS, nomeMes, capitalizar, parseISO, mesmaData, toISO,
+  el, esc, semanasDoMes, DIAS_SEMANA, DIAS_CURTOS, colunaGrade, nomeMes, capitalizar, parseISO, mesmaData, toISO,
 } from '../util.js';
 import { abrirModal, toast, confirmar } from '../ui.js';
 
@@ -107,23 +107,30 @@ function gradeDesktop(semanas, itemPorChave, grupos, escala) {
   const wrap = el('div', { class: 'grade-wrap' });
   const tabela = el('table', { class: 'grade' });
 
+  const hoje = new Date();
+  const hojeNoMes = hoje.getFullYear() === ctx.ano && hoje.getMonth() + 1 === ctx.mes;
+  const colHoje = hojeNoMes ? colunaGrade(hoje) : -1;
+
   const thead = el('thead');
   const trh = el('tr');
   trh.appendChild(el('th', { 'aria-label': 'Semana', html: '<span aria-hidden="true"></span>' }));
-  DIAS_SEMANA.forEach((d) => trh.appendChild(el('th', { scope: 'col', text: d })));
+  DIAS_SEMANA.forEach((d, idx) =>
+    trh.appendChild(el('th', { scope: 'col', class: idx === colHoje ? 'th-hoje' : null, text: d }))
+  );
   thead.appendChild(trh);
   tabela.appendChild(thead);
 
   const tbody = el('tbody');
-  const hoje = new Date();
   semanas.forEach((sem) => {
     const tr = el('tr');
     tr.appendChild(el('th', { class: 'wk-cell', scope: 'row', html: `<span>${sem.semana}ª semana</span>` }));
     for (let col = 0; col < 7; col++) {
       const dia = sem.dias.find((d) => d.coluna === col);
       if (!dia) { tr.appendChild(el('td', { class: 'dia-cell vazio' })); continue; }
-      const td = el('td', { class: 'dia-cell' + (mesmaData(dia.date, hoje) ? ' hoje' : '') });
-      td.appendChild(el('div', { class: 'dia-num', html: `<b>${dia.date.getDate()}</b> de ${nomeMes(ctx.mes)}` }));
+      const ehHoje = mesmaData(dia.date, hoje);
+      const td = el('td', { class: 'dia-cell' + (ehHoje ? ' hoje' : '') });
+      const badge = ehHoje ? '<span class="hoje-badge">Hoje</span>' : '';
+      td.appendChild(el('div', { class: 'dia-num', html: `<span><b>${dia.date.getDate()}</b> de ${nomeMes(ctx.mes)}</span>${badge}` }));
       dia.horarios.forEach((h) => td.appendChild(slotEl(itemPorChave[`${dia.iso}|${h}`], dia, h, grupos, escala)));
       tr.appendChild(td);
     }
@@ -140,12 +147,13 @@ function gradeMobile(semanas, itemPorChave, grupos, escala) {
   const hoje = new Date();
   semanas.forEach((sem) => {
     sem.dias.forEach((dia) => {
-      const card = el('div', { class: 'dia-card' + (mesmaData(dia.date, hoje) ? ' hoje' : '') });
+      const ehHoje = mesmaData(dia.date, hoje);
+      const card = el('div', { class: 'dia-card' + (ehHoje ? ' hoje' : '') });
       const nomeSem = DIAS_SEMANA[dia.coluna];
       card.appendChild(el('div', { class: 'cab' }, [
         el('div', { class: 'dnum', html: `<b>${dia.date.getDate()}</b><small>${DIAS_CURTOS[dia.coluna]}</small>` }),
         el('div', { class: 'dsem', html: `${capitalizar(nomeSem)}<small>${nomeMes(ctx.mes)} · ${dia.horarios.map((h) => h.replace(':00', 'h')).join(' e ')}</small>` }),
-        el('div', { class: 'semtag', text: `${sem.semana}ª sem.` }),
+        el('div', { class: 'semtag', html: ehHoje ? '<span class="hoje-badge">Hoje</span>' : `${sem.semana}ª sem.` }),
       ]));
       const corpo = el('div', { class: 'corpo' });
       dia.horarios.forEach((h) => corpo.appendChild(slotEl(itemPorChave[`${dia.iso}|${h}`], dia, h, grupos, escala)));
@@ -163,8 +171,8 @@ function slotEl(item, dia, horario, grupos, escala) {
   const s = el('div', { class: `slot st-${st}` + (clic ? ' clicavel' : '') + (item ? '' : ' vazio-slot') + (meu ? ' meu' : '') });
   const meta = STATUS[st];
   const tag = item && st !== 'confirmada' ? `<span class="tag ${st}">${esc(meta.curta)}</span>` : '';
-  const marca = meu ? '<span class="voce">Você</span>' : '';
-  const nome = item ? esc(item.grupoNome || item.rotulo || 'A definir') : 'A definir';
+  const marca = meu ? '<span class="voce"><i class="fa-solid fa-star" aria-hidden="true"></i> Você</span>' : '';
+  const nome = item ? esc(item.grupoNome || item.rotulo || 'A definir') : (ctx.ehGestor ? 'A definir' : '—');
   const hora = horario.replace(':00', 'h');
   s.innerHTML = `<span class="hora">${hora}</span><span class="nome">${nome}</span>${tag}${marca}` +
     (item && item.observacao ? `<div class="obs">${esc(item.observacao)}</div>` : '');

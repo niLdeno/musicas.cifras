@@ -25,13 +25,13 @@ function hojeSaoPaulo(): string {
   return fmt.format(new Date()); // en-CA => 2026-08-19
 }
 
-// Intervalo da semana da escala (sábado anterior .. sexta seguinte) contendo `iso`.
-function semanaSabSex(iso: string): { inicio: string; fim: string; chave: string } {
+// Intervalo da semana (segunda .. domingo) contendo `iso`.
+function semanaSegDom(iso: string): { inicio: string; fim: string; chave: string } {
   const [y, m, d] = iso.split('-').map(Number);
   const base = new Date(Date.UTC(y, m - 1, d));
   const dow = base.getUTCDay(); // 0=dom .. 6=sáb
-  const diasDesdeSab = (dow + 1) % 7; // sáb=0, dom=1, ... sex=6
-  const inicio = new Date(base); inicio.setUTCDate(base.getUTCDate() - diasDesdeSab);
+  const diasDesdeSeg = (dow + 6) % 7; // seg=0, ter=1, ... dom=6
+  const inicio = new Date(base); inicio.setUTCDate(base.getUTCDate() - diasDesdeSeg);
   const fim = new Date(inicio); fim.setUTCDate(inicio.getUTCDate() + 6);
   const f = (dt: Date) => dt.toISOString().slice(0, 10);
   return { inicio: f(inicio), fim: f(fim), chave: `sem-${f(inicio)}` };
@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
   let referencia = '';
   let corpoBase = '';
   if (tipo === 'semana') {
-    const { inicio, fim, chave } = semanaSabSex(hoje);
+    const { inicio, fim, chave } = semanaSegDom(hoje);
     query = query.gte('data', inicio).lte('data', fim);
     referencia = chave;
     corpoBase = 'Você está escalado(a) esta semana. Confira seus dias e horários no app.';
