@@ -351,15 +351,13 @@ table.grade .slot .obs { text-align: center; }
 .aviso-box { display: flex; gap: 10px; padding: 12px 14px; border-radius: 12px; background: var(--primary-050); border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent); font-size: 13.5px; }
 .aviso-box i { color: var(--primary); margin-top: 2px; }
 
-/* Avisos do mês (topo da escala) */
-.aviso-mes { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; margin-bottom: 16px; border-radius: 14px;
-  background: var(--gold-050); border: 1px solid color-mix(in srgb, var(--gold) 38%, transparent); }
-.aviso-mes > i { color: var(--gold); font-size: 18px; margin-top: 2px; flex: none; }
-.aviso-mes b { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: #7a5a15; margin-bottom: 3px; }
-.aviso-mes .txt { white-space: pre-wrap; color: var(--text); font-size: 14px; }
-.aviso-mes .btn { flex: none; align-self: center; }
-:root[data-theme="dark"] .aviso-mes b { color: var(--gold); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .aviso-mes b { color: var(--gold); } }
+/* Botão "Avisos do mês" (destacado quando há aviso) e o texto lido no modal */
+.btn.tem-aviso { border-color: color-mix(in srgb, var(--gold) 55%, transparent); color: #7a5a15; background: var(--gold-050); }
+.btn.tem-aviso:hover { border-color: var(--gold); color: #7a5a15; }
+.btn.tem-aviso .pt { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); display: inline-block; margin-left: 2px; }
+:root[data-theme="dark"] .btn.tem-aviso { color: var(--gold); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn.tem-aviso { color: var(--gold); } }
+.aviso-mes-texto { white-space: pre-wrap; font-size: 15px; line-height: 1.55; color: var(--text); }
 
 /* ---------- Formulários ---------- */
 .campo { margin-bottom: 13px; }

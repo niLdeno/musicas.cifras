@@ -52,9 +52,6 @@ export async function renderEscala(container, appState) {
     );
   }
 
-  const ab = avisosBox(escala);
-  if (ab) container.appendChild(ab);
-
   const semanas = semanasDoMes(ano, mes);
   container.appendChild(gradeDesktop(semanas, itemPorChave, grupos, escala));
   container.appendChild(gradeMobile(semanas, itemPorChave, grupos, escala));
@@ -75,6 +72,8 @@ function cabecalho(escala) {
   nav.append(antes, el('div', { class: 'rot', text: `${capitalizar(nomeMes(ctx.mes))} ${ctx.ano}` }), depois);
 
   const push = el('div', { class: 'push' });
+  const bAvisos = botaoAvisos(escala);
+  if (bAvisos) push.appendChild(bAvisos);
   if (escala && escala.publicada && escala.versao) {
     const hist = el('button', { class: 'btn-ghost btn btn-sm', title: 'Ver histórico de versões',
       html: `<i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> v${escala.versao} · histórico` });
@@ -84,6 +83,28 @@ function cabecalho(escala) {
   push.appendChild(nav);
   head.appendChild(push);
   return head;
+}
+
+// Botão "Avisos do mês" — aparece quando há aviso (para todos) ou sempre para a
+// coordenação (para escrever). Ao clicar, abre uma janela para ler/editar.
+function botaoAvisos(escala) {
+  if (!escala) return null;
+  const texto = (escala.observacoes || '').trim();
+  if (!texto && !ctx.ehGestor) return null;
+  const btn = el('button', { class: 'btn-ghost btn btn-sm' + (texto ? ' tem-aviso' : ''), title: 'Avisos do mês',
+    html: `<i class="fa-solid fa-bullhorn" aria-hidden="true"></i> Avisos do mês${texto ? '<span class="pt" aria-hidden="true"></span>' : ''}` });
+  btn.addEventListener('click', () => abrirAvisos(escala));
+  return btn;
+}
+
+function abrirAvisos(escala) {
+  if (ctx.ehGestor) { editarAvisosMes(escala); return; } // coordenação lê e edita no mesmo lugar
+  const texto = (escala.observacoes || '').trim();
+  abrirModal({
+    titulo: 'Avisos do mês', icone: 'bullhorn', largura: '480px',
+    conteudo: el('div', { class: 'aviso-mes-texto', text: texto || 'Nenhum aviso para este mês.' }),
+    acoes: [{ label: 'Fechar', classe: 'btn' }],
+  });
 }
 
 async function abrirHistorico(escala) {
@@ -103,23 +124,6 @@ async function abrirHistorico(escala) {
   }
   abrirModal({ titulo: 'Histórico da escala', icone: 'clock-rotate-left', conteudo: corpo, largura: '520px',
     acoes: [{ label: 'Fechar', classe: 'btn' }] });
-}
-
-function avisosBox(escala) {
-  const texto = (escala.observacoes || '').trim();
-  if (!texto && !ctx.ehGestor) return null;
-  const box = el('div', { class: 'aviso-mes' });
-  const corpo = el('div', { style: 'flex:1;min-width:0' }, [
-    el('b', { text: 'Avisos do mês' }),
-    el('div', { class: 'txt', text: texto || 'Nenhum aviso para este mês.' }),
-  ]);
-  box.append(el('i', { class: 'fa-solid fa-bullhorn', 'aria-hidden': 'true' }), corpo);
-  if (ctx.ehGestor) {
-    const btn = el('button', { class: 'btn-ghost btn btn-sm', html: `<i class="fa-solid fa-pen" aria-hidden="true"></i> ${texto ? 'Editar' : 'Adicionar'}` });
-    btn.addEventListener('click', () => editarAvisosMes(escala));
-    box.appendChild(btn);
-  }
-  return box;
 }
 
 function editarAvisosMes(escala) {
