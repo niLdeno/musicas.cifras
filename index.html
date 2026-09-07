@@ -1967,6 +1967,54 @@
       display: block;
     }
 
+    /* ✨ Filtros rápidos por momento da missa (acervo) */
+    .chips-momento {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .chip-momento {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-main);
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+
+    .chip-momento:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .chip-momento.ativo {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    .chip-momento .chip-contagem {
+      opacity: 0.7;
+      font-size: 11px;
+      margin-left: 5px;
+    }
+
+    /* ✨ Cabeçalho do visor fixo no topo enquanto rola a cifra (desktop) */
+    @media (min-width: 769px) {
+      .visor-header {
+        position: sticky;
+        top: 12px;
+        z-index: 40;
+      }
+    }
+
     /* =========================================
        ✨ RESPONSIVIDADE (MOBILE & TABLET)
        ========================================= */
@@ -2186,7 +2234,30 @@
       /* --- Layout --- */
       .container {
         margin-left: 0 !important;
-        padding-bottom: 80px;
+        padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+      }
+
+      /* Barra inferior respeita a área segura do aparelho (notch/gestos) */
+      .sidebar {
+        height: calc(62px + env(safe-area-inset-bottom, 0px));
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+
+      /* Filtros de momento: rolagem horizontal em vez de quebrar em várias linhas */
+      .chips-momento {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+      }
+
+      .chips-momento::-webkit-scrollbar {
+        display: none;
+      }
+
+      .chip-momento {
+        flex: 0 0 auto;
       }
 
       .main-area {
@@ -2778,6 +2849,8 @@
           </div>
         </div>
 
+        <div id="acervo-filtros" class="chips-momento" style="display: none;"></div>
+
         <div id="acervo-cards" class="acervo-list"></div>
 
         <div style="height: 32px"></div>
@@ -2974,6 +3047,16 @@
                 title="Instrumento dos diagramas de acorde">
                 <i class="fa-solid fa-guitar"></i> Violão
               </button>
+              <button class="btn-ferramenta" id="btn-autoscroll" onclick="toggleAutoScroll()"
+                title="Rolagem automática (tecla Espaço)">
+                <i class="fa-solid fa-play"></i> Rolar
+              </button>
+              <div class="grupo-fonte" id="grupo-velocidade-scroll" style="display: none;">
+                <button class="btn-ferramenta" onclick="mudarVelocidadeScroll(-1)" title="Mais devagar">−</button>
+                <span id="velocidade-scroll-label"
+                  style="min-width: 34px; text-align: center; font-size: 12px; font-weight: 600;">1x</span>
+                <button class="btn-ferramenta" onclick="mudarVelocidadeScroll(1)" title="Mais rápido">+</button>
+              </div>
             </div>
 
             <div class="controles-tom">
@@ -3485,6 +3568,7 @@
     let filtroRepertorioApenasMinhas = false; // toggle "só minhas músicas" no construtor de repertório
     let playlistAtual = [];
     let indexPlaylist = 0;
+    let _visorHistoryPushed = false; // ✨ há um estado do visor empilhado no histórico?
     let semitonsAcumulados = 0;
     let tamanhoFonteAtual = 18;
     let fonteAtual = "'Courier New', Courier, monospace";
@@ -4407,9 +4491,14 @@
       document.getElementById("tela-visor").style.display = "none";
 
       if (ambiente === "minhas-musicas") filtrarMinhasMusicas();
+      if (ambiente === "acervo") renderizarChipsMomento();
 
       const fab = document.getElementById("fab-nova-musica");
       if (fab) fab.style.display = (ambiente === "acervo" || ambiente === "minhas-musicas") ? "" : "none";
+
+      // ✨ Ao trocar de tela, volta ao topo e libera o histórico do visor.
+      _visorHistoryPushed = false;
+      window.scrollTo({ top: 0, behavior: "auto" });
     }
     function fecharModal(id) {
       document.getElementById(id).style.display = "none";
@@ -4608,6 +4697,7 @@
       if (error) { mostrarToast("Erro ao carregar músicas.", "erro"); return; }
       acervoGlobal = data || [];
       construirIndiceBusca();
+      renderizarChipsMomento();
       filtrarAcervo();
       if (ambienteAtual === "minhas-musicas") filtrarMinhasMusicas();
     }
@@ -4982,13 +5072,74 @@
     }
 
     // ✨ O "Cérebro" da Busca Inteligente (título, autor, momento e letra entre linhas)
+    // ✨ Filtro rápido por momento da missa (Entrada, Comunhão, etc.)
+    let filtroMomentoAcervo = "";
+
+    // Ordem litúrgica canônica (a mesma do datalist de sugestões), usada para
+    // ordenar os chips; momentos fora da lista entram depois, em ordem alfabética.
+    const ORDEM_MOMENTOS = [
+      "Canto de Entrada", "Ato Penitencial", "Hino de Louvor (Glória)",
+      "Salmo Responsorial", "Aclamação ao Evangelho", "Apresentação das Ofertas",
+      "Santo", "Cordeiro de Deus", "Canto de Comunhão", "Ação de Graças", "Canto Final",
+    ];
+
+    function renderizarChipsMomento() {
+      const cont = document.getElementById("acervo-filtros");
+      if (!cont) return;
+
+      const contagem = {};
+      acervoGlobal.forEach((m) => {
+        const mo = (m.momento_missa || "").trim();
+        if (!mo) return;
+        contagem[mo] = (contagem[mo] || 0) + 1;
+      });
+      const momentos = Object.keys(contagem);
+
+      // Só faz sentido oferecer o filtro quando há variedade de momentos.
+      if (momentos.length < 2) {
+        cont.style.display = "none";
+        cont.innerHTML = "";
+        filtroMomentoAcervo = "";
+        return;
+      }
+
+      momentos.sort((a, b) => {
+        const ia = ORDEM_MOMENTOS.indexOf(a);
+        const ib = ORDEM_MOMENTOS.indexOf(b);
+        if (ia !== -1 && ib !== -1) return ia - ib;
+        if (ia !== -1) return -1;
+        if (ib !== -1) return 1;
+        return a.localeCompare(b, "pt-BR");
+      });
+
+      // Se o momento filtrado deixou de existir (ex.: música excluída), reseta.
+      if (filtroMomentoAcervo && !momentos.includes(filtroMomentoAcervo)) {
+        filtroMomentoAcervo = "";
+      }
+
+      const escapar = (s) => s.replace(/"/g, "&quot;");
+      let html = `<button class="chip-momento ${filtroMomentoAcervo === "" ? "ativo" : ""}" onclick="filtrarPorMomento('')"><i class="fa-solid fa-layer-group" style="margin-right:6px;font-size:11px;"></i>Todos</button>`;
+      momentos.forEach((mo) => {
+        html += `<button class="chip-momento ${filtroMomentoAcervo === mo ? "ativo" : ""}" onclick="filtrarPorMomento('${escapar(mo).replace(/'/g, "\\'")}')">${mo}<span class="chip-contagem">${contagem[mo]}</span></button>`;
+      });
+      cont.innerHTML = html;
+      cont.style.display = "flex";
+    }
+
+    function filtrarPorMomento(momento) {
+      filtroMomentoAcervo = momento;
+      renderizarChipsMomento();
+      filtrarAcervo();
+    }
+
     function filtrarAcervo() {
       const termo = normalizarTexto(
         document.getElementById("acervo-busca").value,
       );
-      const filtradas = acervoGlobal.filter((m) =>
-        correspondeBusca(textoBuscaMusica(m), termo),
-      );
+      const filtradas = acervoGlobal.filter((m) => {
+        if (filtroMomentoAcervo && (m.momento_missa || "").trim() !== filtroMomentoAcervo) return false;
+        return correspondeBusca(textoBuscaMusica(m), termo);
+      });
       renderizarAcervo(filtradas);
     }
 
@@ -6601,12 +6752,20 @@
       }
     }
     function iniciarVisor() {
+      pararAutoScroll();
+      // ✨ O botão "voltar" do navegador / gesto de voltar do celular fecha o
+      // visor em vez de sair do app. Empilha um estado só na primeira abertura.
+      if (!_visorHistoryPushed) {
+        try { history.pushState({ visorAberto: true }, ""); } catch (e) { }
+        _visorHistoryPushed = true;
+      }
       document.getElementById("tela-acervo").style.display = "none";
       document.getElementById("tela-minhas-musicas").style.display = "none";
       document.getElementById("tela-repertorios").style.display = "none";
       document.getElementById("tela-dicionario").style.display = "none";
       document.getElementById("tela-solicitacoes").style.display = "none";
       document.getElementById("tela-visor").style.display = "block";
+      window.scrollTo({ top: 0, behavior: "auto" });
       musicaSelecionada = playlistAtual[indexPlaylist];
 
       const seletor = document.getElementById("seletor-versao-visor");
@@ -6653,6 +6812,17 @@
       renderizarTextoTransposto();
     }
     function fecharVisor() {
+      // Se abrimos empilhando um estado no histórico, voltar por ele mantém o
+      // botão físico "voltar" do aparelho em sincronia (o popstate fecha).
+      if (_visorHistoryPushed) {
+        history.back();
+        return;
+      }
+      _fecharVisorAgora();
+    }
+    function _fecharVisorAgora() {
+      pararAutoScroll();
+      _visorHistoryPushed = false;
       document.getElementById("tela-visor").style.display = "none";
       mudarAmbiente(ambienteAtual);
     }
@@ -6861,6 +7031,152 @@
       }
       renderizarTextoTransposto();
     }
+
+    /* =========================================================
+       ✨ ROLAGEM AUTOMÁTICA DO VISOR (para tocar ao vivo)
+       ========================================================= */
+    let autoScrollAtivo = false;
+    let autoScrollRAF = null;
+    let autoScrollVel = parseFloat(localStorage.getItem("gerecifras_scroll_vel")) || 1;
+    let _autoScrollUltimo = 0;
+    let _autoScrollResto = 0;
+
+    function _autoScrollPasso(ts) {
+      if (!autoScrollAtivo) return;
+      if (!_autoScrollUltimo) _autoScrollUltimo = ts;
+      const dt = ts - _autoScrollUltimo;
+      _autoScrollUltimo = ts;
+      // Velocidade base ~24px/s por "1x"; acumula frações para rolagens lentas.
+      const px = 24 * autoScrollVel * (dt / 1000) + _autoScrollResto;
+      const passo = Math.floor(px);
+      _autoScrollResto = px - passo;
+      const el = document.scrollingElement || document.documentElement;
+      const antes = el.scrollTop;
+      if (passo > 0) window.scrollBy(0, passo);
+      const noFim = (window.innerHeight + el.scrollTop) >= (el.scrollHeight - 2);
+      if (noFim && el.scrollTop === antes && passo > 0) {
+        pararAutoScroll();
+        return;
+      }
+      autoScrollRAF = requestAnimationFrame(_autoScrollPasso);
+    }
+
+    function iniciarAutoScroll() {
+      if (autoScrollAtivo) return;
+      if (document.getElementById("tela-visor").style.display === "none") return;
+      autoScrollAtivo = true;
+      _autoScrollUltimo = 0;
+      _autoScrollResto = 0;
+      atualizarBotaoAutoScroll();
+      autoScrollRAF = requestAnimationFrame(_autoScrollPasso);
+    }
+
+    function pararAutoScroll() {
+      autoScrollAtivo = false;
+      if (autoScrollRAF) cancelAnimationFrame(autoScrollRAF);
+      autoScrollRAF = null;
+      atualizarBotaoAutoScroll();
+    }
+
+    function toggleAutoScroll() {
+      autoScrollAtivo ? pararAutoScroll() : iniciarAutoScroll();
+    }
+
+    function mudarVelocidadeScroll(delta) {
+      autoScrollVel = Math.max(0.5, Math.min(6, Math.round((autoScrollVel + delta * 0.5) * 2) / 2));
+      localStorage.setItem("gerecifras_scroll_vel", String(autoScrollVel));
+      atualizarBotaoAutoScroll();
+    }
+
+    function atualizarBotaoAutoScroll() {
+      const btn = document.getElementById("btn-autoscroll");
+      const grupo = document.getElementById("grupo-velocidade-scroll");
+      const lbl = document.getElementById("velocidade-scroll-label");
+      if (lbl) lbl.textContent = autoScrollVel + "x";
+      if (!btn) return;
+      if (autoScrollAtivo) {
+        btn.classList.add("ativo");
+        btn.innerHTML = '<i class="fa-solid fa-pause"></i> Parar';
+        if (grupo) grupo.style.display = "flex";
+      } else {
+        btn.classList.remove("ativo");
+        btn.innerHTML = '<i class="fa-solid fa-play"></i> Rolar';
+        if (grupo) grupo.style.display = "none";
+      }
+    }
+
+    /* ✨ Atalhos de teclado no visor (desktop / pedais bluetooth) */
+    document.addEventListener("keydown", function (e) {
+      if (document.getElementById("tela-visor").style.display === "none") return;
+      if (document.querySelector('.modal-overlay[style*="flex"]')) return;
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)) return;
+      switch (e.key) {
+        case "ArrowRight":
+          if (playlistAtual.length > 1) { e.preventDefault(); navegarRepertorio(1); }
+          break;
+        case "ArrowLeft":
+          if (playlistAtual.length > 1) { e.preventDefault(); navegarRepertorio(-1); }
+          break;
+        case "+": case "=":
+          e.preventDefault(); alterarTom(1);
+          break;
+        case "-": case "_":
+          e.preventDefault(); alterarTom(-1);
+          break;
+        case " ":
+          e.preventDefault(); toggleAutoScroll();
+          break;
+        case "Escape":
+          e.preventDefault(); fecharVisor();
+          break;
+      }
+    });
+
+    /* ✨ Gesto de deslizar (mobile) para trocar de música no repertório */
+    (function () {
+      const rc = document.getElementById("render-cifra");
+      if (!rc) return;
+      let x0 = 0, y0 = 0, t0 = 0;
+      rc.addEventListener("touchstart", function (e) {
+        if (e.touches.length !== 1) return;
+        x0 = e.touches[0].clientX;
+        y0 = e.touches[0].clientY;
+        t0 = Date.now();
+      }, { passive: true });
+      rc.addEventListener("touchend", function (e) {
+        if (playlistAtual.length <= 1) return;
+        // Não conflitar com rolagem horizontal do próprio conteúdo (2/3 colunas).
+        if (rc.scrollWidth > rc.clientWidth + 4) return;
+        const dx = e.changedTouches[0].clientX - x0;
+        const dy = e.changedTouches[0].clientY - y0;
+        const dt = Date.now() - t0;
+        if (dt < 600 && Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 2) {
+          navegarRepertorio(dx < 0 ? 1 : -1);
+        }
+      }, { passive: true });
+    })();
+
+    /* ✨ Botão "voltar" do navegador / gesto de voltar fecha o visor */
+    window.addEventListener("popstate", function () {
+      if (document.getElementById("tela-visor").style.display !== "none") {
+        _visorHistoryPushed = false;
+        _fecharVisorAgora();
+      }
+    });
+
+    /* ✨ Atalho "/" foca a busca do acervo (desktop) */
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "/") return;
+      if (document.getElementById("tela-visor").style.display !== "none") return;
+      if (document.querySelector('.modal-overlay[style*="flex"]')) return;
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)) return;
+      const alvo = ambienteAtual === "minhas-musicas"
+        ? document.getElementById("minhas-busca")
+        : document.getElementById("acervo-busca");
+      if (alvo) { e.preventDefault(); alvo.focus(); alvo.select(); }
+    });
 
     function transporNota(notaCompleta, semitons) {
       return notaCompleta.replace(/([A-G][#b]?)/g, (match) => {
