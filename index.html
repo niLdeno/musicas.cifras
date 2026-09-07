@@ -23,23 +23,28 @@
       --primary: #6d5dfc;
       --primary-600: #5a47f0;
       --primary-700: #4a37d6;
-      --bg-color: #f3f4f8;
+      --primary-050: #f1eeff;
+      --accent2: #a78bfa;
+      --gradient-primary: linear-gradient(135deg, #7d6efe 0%, #6d5dfc 50%, #5a47f0 100%);
+      --bg-color: #f4f5fb;
       --surface: #ffffff;
-      --surface-2: #f7f8fc;
+      --surface-2: #f6f7fc;
       --text-main: #16172e;
-      --text-muted: #6b7088;
-      --border: #e7e8f0;
+      --text-muted: #6b7191;
+      --border: #e8e9f4;
       --accent: #ebe9ff;
       --card-shadow:
-        0 1px 2px rgba(22, 23, 46, 0.04), 0 4px 16px rgba(22, 23, 46, 0.05);
+        0 1px 2px rgba(22, 23, 46, 0.04), 0 6px 20px -6px rgba(22, 23, 46, 0.07);
       --card-shadow-hover:
-        0 10px 20px -6px rgba(22, 23, 46, 0.10),
-        0 20px 44px -10px rgba(109, 93, 252, 0.18);
-      --pill-shadow: 0 6px 18px 0 rgba(109, 93, 252, 0.40);
+        0 12px 24px -8px rgba(22, 23, 46, 0.12),
+        0 24px 48px -12px rgba(109, 93, 252, 0.22);
+      --pill-shadow: 0 8px 22px -4px rgba(109, 93, 252, 0.45);
       --ring: rgba(109, 93, 252, 0.16);
       --sidebar-bg: #15162b;
+      --sidebar-bg-2: #1c1d3a;
       --sidebar-width: 244px;
-      --radius: 16px;
+      --radius: 18px;
+      --bg-glow: radial-gradient(1100px 560px at 108% -12%, rgba(109, 93, 252, 0.08), transparent 58%), radial-gradient(900px 500px at -10% 110%, rgba(224, 89, 11, 0.05), transparent 55%);
 
       --font-ui: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont,
         "Segoe UI", Roboto, sans-serif;
@@ -60,12 +65,44 @@
     body {
       font-family: var(--font-ui);
       background-color: var(--bg-color);
+      background-image: var(--bg-glow);
+      background-attachment: fixed;
+      background-repeat: no-repeat;
       margin: 0;
       color: var(--text-main);
       font-size: var(--font-base);
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
       transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* ✨ Barra de rolagem mais fina e discreta (toque moderno) */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(107, 113, 145, 0.32);
+      border-radius: 999px;
+      border: 2px solid transparent;
+      background-clip: content-box;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(107, 113, 145, 0.5);
+      background-clip: content-box;
+    }
+
+    /* ✨ Anel de foco visível e consistente para navegação por teclado */
+    :focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
     }
 
     h1,
@@ -78,7 +115,7 @@
 
     /* Buttons */
     .btn {
-      background: var(--primary);
+      background: var(--gradient-primary);
       color: white;
       border: none;
       padding: 11px 18px;
@@ -90,37 +127,39 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
       font-size: 14px;
-      box-shadow: 0 2px 6px rgba(109, 102, 241, 0.22);
+      box-shadow: 0 4px 12px -2px rgba(109, 93, 252, 0.35);
     }
 
     .btn:hover {
-      background: var(--primary-600);
       transform: translateY(-1px);
+      filter: brightness(1.06);
       box-shadow: var(--pill-shadow);
     }
 
     .btn:active {
       transform: translateY(0);
+      filter: brightness(0.98);
     }
 
     .btn-secondary {
-      background-color: #ffffff;
+      background: var(--surface);
       color: var(--text-main);
       border: 1px solid var(--border);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 1px 2px rgba(22, 23, 46, 0.05);
     }
 
     .btn-secondary:hover {
-      background-color: #f1f5f9;
-      border-color: #cbd5e1;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-      color: var(--text-main);
+      background: var(--surface-2);
+      border-color: var(--primary);
+      color: var(--primary);
+      box-shadow: 0 4px 12px -4px rgba(109, 93, 252, 0.25);
+      filter: none;
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #7d6efe, var(--primary-600));
+      background: var(--gradient-primary);
     }
 
 
@@ -131,13 +170,13 @@
       top: 0;
       bottom: 0;
       width: var(--sidebar-width);
-      background: var(--sidebar-bg);
+      background: linear-gradient(180deg, var(--sidebar-bg-2) 0%, var(--sidebar-bg) 60%);
       color: #f8fafc;
       padding: 30px 18px;
       z-index: 90;
       display: flex;
       flex-direction: column;
-      border-right: 1px solid rgba(255, 255, 255, 0.05);
+      border-right: 1px solid rgba(255, 255, 255, 0.06);
       transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       overflow-x: hidden;
     }
@@ -213,13 +252,14 @@
 
     /* ✨ Menu Ativo Refinado */
     .nav-active {
-      background: rgba(99, 102, 241, 0.15);
+      background: linear-gradient(90deg, rgba(109, 93, 252, 0.28), rgba(109, 93, 252, 0.10));
       color: #ffffff;
       font-weight: var(--fw-semibold);
       border-left: 4px solid var(--primary);
       /* Marcador Lateral */
       border-radius: 0 12px 12px 0;
       padding-left: 12px;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
     }
 
     .nav-active i {
@@ -331,10 +371,11 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #ece9ff, #f3eaff);
+      background: linear-gradient(135deg, #ece9ff, #f5ecff);
       color: var(--primary);
       font-size: 20px;
       flex-shrink: 0;
+      border: 1px solid rgba(109, 93, 252, 0.12);
       box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.8),
         0 2px 6px rgba(109, 93, 252, 0.12);
       transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1493,6 +1534,61 @@
       outline: none;
       border-color: var(--primary);
       box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    /* ✨ Ícone de lupa dentro da caixa de busca */
+    .search-wrapper {
+      position: relative;
+    }
+
+    .search-wrapper::before {
+      content: "\f002";
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 13px;
+      pointer-events: none;
+      opacity: 0.75;
+    }
+
+    .search-wrapper input {
+      padding-left: 40px !important;
+    }
+
+    /* ✨ Contador de resultados como pílula discreta */
+    #acervo-count,
+    #minhas-count {
+      display: inline-block;
+      min-width: 20px;
+      padding: 1px 9px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: var(--primary);
+      font-weight: var(--fw-bold);
+    }
+
+    /* ✨ Chip de momento ativo com o gradiente da marca */
+    .chip-momento.ativo {
+      background: var(--gradient-primary);
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 4px 12px -3px rgba(109, 93, 252, 0.4);
+    }
+
+    /* ✨ Ícone do card no modo escuro */
+    body.dark-mode .card-icon {
+      background: linear-gradient(135deg, rgba(138, 123, 255, 0.18), rgba(138, 123, 255, 0.08));
+      border-color: rgba(138, 123, 255, 0.22);
+    }
+
+    body.dark-mode #acervo-count,
+    body.dark-mode #minhas-count {
+      background: rgba(138, 123, 255, 0.18);
+      color: var(--primary);
     }
 
     #tela-acervo,
