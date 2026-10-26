@@ -1,0 +1,14 @@
+{
+  "name": "Minha Carteira — investimentos",
+  "short_name": "Carteira",
+  "description": "Acompanhe ações, FIIs, ETFs e BDRs: preço médio, lucro/prejuízo, proventos e IR.",
+  "lang": "pt-BR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f6f3",
+  "theme_color": "#2a78d6",
+  "icons": [
+    { "src": "icons/icone.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

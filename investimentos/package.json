@@ -1,0 +1,10 @@
+{
+  "name": "carteira-investimentos",
+  "private": true,
+  "type": "module",
+  "description": "Acompanhamento de investimentos em renda variável (B3) — app estático, sem build.",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "start": "python3 -m http.server 8080"
+  }
+}
