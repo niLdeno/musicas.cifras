@@ -85,6 +85,30 @@ function mesesDe(inicio, fim) {
   return out;
 }
 
+/** CDI, IPCA e Ibovespa ILUSTRATIVOS para a demonstração (não são dados oficiais). */
+function indicesDemo(hoje) {
+  const cdi = [];
+  const ibov = [];
+  const d = new Date(Date.UTC(2025, 0, 1));
+  let i = 0;
+  while (d.toISOString().slice(0, 10) <= hoje) {
+    const iso = d.toISOString().slice(0, 10);
+    const sem = d.getUTCDay();
+    if (sem !== 0 && sem !== 6) {
+      const anual = iso < '2025-03-20' ? 0.1315 : iso < '2025-06-20' ? 0.1415 : 0.149;
+      cdi.push([iso, +(((1 + anual) ** (1 / 252) - 1) * 100).toFixed(6)]);
+      const t = i / 450;
+      ibov.push([iso, Math.round(121000 * (1 + 0.17 * t) * (1 + Math.sin(i / 23) * 0.03 + Math.cos(i / 9) * 0.008))]);
+      i++;
+    }
+    d.setUTCDate(d.getUTCDate() + 1);
+  }
+  const ipcaTaxas = [0.16, 1.31, 0.56, 0.43, 0.26, 0.24, 0.26, -0.11, 0.48, 0.09, 0.18, 0.33,
+    0.33, 0.62, 0.41, 0.38, 0.29, 0.22, 0.27, 0.15, 0.36];
+  const ipca = mesesDe('2025-01', '2026-09').map((m, k) => [m, ipcaTaxas[k] ?? 0.3]).filter(([m]) => m < hoje.slice(0, 7));
+  return { cdi, ipca, ibov, inicio: '2025-01-01', erros: {}, atualizadoEm: new Date().toISOString(), demo: true };
+}
+
 /** Monta o estado completo da demonstração, incluindo um histórico de patrimônio plausível. */
 export function dadosDemo(hoje = new Date().toISOString().slice(0, 10)) {
   const agora = Date.now();
@@ -110,6 +134,7 @@ export function dadosDemo(hoje = new Date().toISOString().slice(0, 10)) {
 
   return {
     lancamentos, proventos, cotacoes, fotografias,
+    indices: indicesDemo(hoje),
     config: { metas: { acao: 0.5, fii: 0.25, etf: 0.2, bdr: 0.05 }, demo: true },
   };
 }

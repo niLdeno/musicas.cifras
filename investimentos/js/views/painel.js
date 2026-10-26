@@ -7,6 +7,7 @@ import { evolucaoMensal } from '../core/portfolio.js';
 import { apurarIR } from '../core/tax.js';
 import { esc, info, oc, delta, deltaPct, mesCurto, mesLongo, dataBR } from '../ui/dom.js';
 import { rosca, barrasResultado, linhas, corSerie, COR_CLASSE } from '../ui/graficos.js';
+import { dadosComparativo } from './comparar.js';
 
 export function renderPainel(main, ctx) {
   const { carteira, estado } = ctx;
@@ -32,6 +33,8 @@ export function renderPainel(main, ctx) {
       ${kpi('Proventos (12 meses)', oc(brl(r.proventos12m)), `${pct(r.yieldOnCost)} ao ano sobre o aplicado`, 'yieldOnCost')}
       ${kpi('Resultado total', delta(r.resultadoTotal), deltaPct(r.retornoTotal) + ' sobre tudo que investiu', 'resultadoTotal', true)}
     </section>
+
+    ${resumoComparativo(ctx)}
 
     <section class="grade-2">
       <article class="cartao">
@@ -85,6 +88,25 @@ export function renderPainel(main, ctx) {
     const itens = [...itensRes].sort((a, c) => (modo === 'pct' ? c.pct - a.pct : c.valor - a.valor));
     barrasResultado(gr, itens, { modo });
   });
+}
+
+function resumoComparativo(ctx) {
+  const d = dadosComparativo(ctx);
+  if (!d) return '';
+  const { r } = d;
+  const item = (k, nome) => {
+    const ref = r.refs[k];
+    if (!ref || ref.indisponivel) return '';
+    const acima = ref.diferenca >= 0;
+    return `<li><b class="delta ${acima ? 'ganho' : 'perda'}">${acima ? '▲ Acima' : '▼ Abaixo'}</b><span>${nome}</span><small>${oc(brlSinal(ref.diferenca))}</small></li>`;
+  };
+  const itens = [item('cdi', 'da renda fixa (CDI)'), item('ipca', 'da inflação (IPCA)'), item('ibov', 'da média da bolsa (Ibovespa)')].join('');
+  return `<section class="cartao resumo-comp">
+    <div><h2>Valeu a pena? ${info('comparativo')}</h2>
+      <p class="dica">Sua carteira comparada com o mesmo dinheiro, nas mesmas datas, em outras alternativas.</p></div>
+    ${itens ? `<ul>${itens}</ul>` : '<p class="dica">Buscando CDI, IPCA e Ibovespa…</p>'}
+    <a class="btn" href="#/comparar">Ver comparativo →</a>
+  </section>`;
 }
 
 function kpi(rotulo, valor, sub, chave, destaque = false) {

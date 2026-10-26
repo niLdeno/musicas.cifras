@@ -17,7 +17,7 @@
   <!-- Content Security Policy: só carrega scripts do próprio site e da CDN do Chart.js;
        só conversa com a API de cotações. Reduz muito o risco de XSS. -->
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://brapi.dev; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'" />
+    content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://brapi.dev https://api.bcb.gov.br; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'" />
   <link rel="stylesheet" href="css/styles.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
   <script type="module" src="js/app.js"></script>

@@ -17,6 +17,7 @@ você registra suas operações e ele mostra, em linguagem simples, se cada pape
 | **Ativo** | Explicação do resultado daquele papel, **linha do tempo** mostrando como cada operação mexeu no preço médio, proventos e cotação manual. |
 | **Operações** | Compras, vendas, desdobramentos/grupamentos e bonificações. Importação e exportação em **CSV**. Detecta inconsistências (ex.: venda maior que a posição). |
 | **Proventos** | Dividendos, JCP e rendimentos de FII por mês, ranking de pagadores e yield on cost. |
+| **Valeu a pena?** | Compara a carteira com **CDI** (renda fixa), **inflação (IPCA)** e **Ibovespa**, simulando os **mesmos aportes, nas mesmas datas**. Mostra ganho de cada alternativa, **ganho real** (acima da inflação), "% do CDI" e a **rentabilidade ao ano (TIR)**, que considera quando cada real entrou. |
 | **Imposto de Renda** | Apuração mensal: isenção de R$ 20 mil em ações, 15% (ações/ETF/BDR), 20% (FII), **compensação de prejuízos**, DARF mínimo de R$ 10 e vencimento. Ficha de **Bens e Direitos** em 31/12. |
 | **Aprenda** | Glossário completo. Todo número do app tem um **ⓘ** que explica o conceito com exemplo. |
 
@@ -39,6 +40,15 @@ Vêm da [brapi.dev](https://brapi.dev) (dados da B3 com atraso de alguns minutos
 alguns ativos de teste funcionam. **Crie um token gratuito** na brapi e cole em
 **Configurações → Cotações automáticas**. Se faltar cotação de algum ativo, informe o preço
 manualmente na página dele.
+
+## Índices de comparação
+
+- **CDI** (série 12) e **IPCA** (série 433): API pública do **Banco Central** (SGS), sem cadastro.
+  O IPCA do mês ainda não divulgado é estimado repetindo a última taxa (o app avisa).
+- **Ibovespa**: histórico diário pela brapi.dev. O tamanho do histórico depende do plano do token;
+  se ele não cobrir a data do seu primeiro aporte, a comparação com o Ibovespa fica indisponível.
+- Compras viram aportes e vendas/proventos viram resgates na simulação; por isso o "ganho total"
+  da carteira é o mesmo "resultado total" do Painel.
 
 ## Privacidade e backup
 
@@ -72,6 +82,7 @@ investimentos/
 │   ├── core/             # regras de negócio PURAS (sem DOM) — cobertas por testes
 │   │   ├── portfolio.js  #   preço médio, posições, resultados, evolução
 │   │   ├── tax.js        #   apuração de IR e bens e direitos
+│   │   ├── benchmark.js  #   CDI/IPCA/Ibovespa: simulação dos aportes e TIR
 │   │   ├── validacao.js  #   validação de formulários, CSV e backup
 │   │   ├── classes.js    #   classes de ativos e sugestão pelo ticker
 │   │   ├── money.js      #   arredondamento e formatação pt-BR

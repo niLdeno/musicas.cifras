@@ -18,12 +18,14 @@ import { renderIR } from './views/ir.js';
 import { renderAprender } from './views/aprender.js';
 import { renderConfig } from './views/config.js';
 import { escolherNovaOperacao } from './views/formularios.js';
+import { renderComparar, garantirIndices } from './views/comparar.js';
 
 const ICONES = {
   painel: '<path d="M3 13h8V3H3zM13 21h8V11h-8zM3 21h8v-6H3zM13 3v6h8V3z"/>',
   carteira: '<path d="M3 7h18v13H3z"/><path d="M16 13h2M3 7l3-4h12l3 4"/>',
   lancamentos: '<path d="M7 4h10M7 9h10M7 14h6M4 4h.01M4 9h.01M4 14h.01M15 19l2 2 4-4"/>',
   proventos: '<circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.6-1.5-3-1.5-1.7 0-3 .8-3 2s1.3 1.7 3 2 3 .8 3 2-1.3 2-3 2c-1.4 0-2.5-.5-3-1.5M12 6v2M12 16v2"/>',
+  comparar: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
   ir: '<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/>',
   aprender: '<path d="M2 8l10-5 10 5-10 5z"/><path d="M6 10v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"/>',
   config: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
@@ -34,8 +36,9 @@ const ROTAS = {
   carteira:    { titulo: 'Carteira',        render: renderCarteira,    aba: true },
   lancamentos: { titulo: 'Operações',       render: renderLancamentos, aba: true },
   proventos:   { titulo: 'Proventos',       render: renderProventos,   aba: true },
+  comparar:    { titulo: 'Valeu a pena?',   render: renderComparar,    aba: true, aba_rotulo: 'Comparar' },
   ir:          { titulo: 'Imposto de Renda', render: renderIR,         aba: false },
-  aprender:    { titulo: 'Aprenda',         render: renderAprender,    aba: true },
+  aprender:    { titulo: 'Aprenda',         render: renderAprender,    aba: false },
   config:      { titulo: 'Configurações',   render: renderConfig,      aba: false },
 };
 
@@ -64,7 +67,7 @@ function montarMenu() {
   $('#menu').innerHTML = Object.entries(ROTAS).map(([k, r]) =>
     `<a href="#/${k}" data-rota="${k}">${svg(k)}<span>${r.titulo}</span></a>`).join('');
   $('#abas').innerHTML = Object.entries(ROTAS).filter(([, r]) => r.aba).map(([k, r]) =>
-    `<a href="#/${k}" data-rota="${k}">${svg(k)}<span>${r.titulo}</span></a>`).join('') +
+    `<a href="#/${k}" data-rota="${k}">${svg(k)}<span>${r.aba_rotulo || r.titulo}</span></a>`).join('') +
     `<a href="#/config" data-rota="config">${svg('config')}<span>Mais</span></a>`;
 }
 
@@ -75,7 +78,7 @@ function render() {
   const main = antigo.cloneNode(false);
   antigo.replaceWith(main);
   const ctx = contexto();
-  const marcada = nome === 'ativo' ? 'carteira' : nome === 'ir' ? 'config' : nome;
+  const marcada = nome === 'ativo' ? 'carteira' : nome === 'ir' || nome === 'aprender' ? 'config' : nome;
   document.querySelectorAll('[data-rota]').forEach((a) => {
     const ativo = a.closest('#menu') ? a.dataset.rota === (nome === 'ativo' ? 'carteira' : nome) : a.dataset.rota === marcada;
     a.classList.toggle('ativo', !!ativo);
@@ -204,6 +207,7 @@ function iniciar() {
   const datas = Object.values(store.get().cotacoes).filter((c) => !c.manual).map((c) => c.atualizadoEm).sort();
   const ult = datas[datas.length - 1];
   if (!ult || Date.now() - new Date(ult).getTime() > 15 * 60000) atualizarCotacoes({ silencioso: true });
+  garantirIndices(contexto()).catch((e) => console.warn('Índices indisponíveis:', e.message));
 
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     navigator.serviceWorker.register('sw.js').catch(() => {});

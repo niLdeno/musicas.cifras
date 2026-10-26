@@ -116,6 +116,38 @@ export const GLOSSARIO = {
     texto: 'A empresa dá ações novas aos acionistas. Ela informa um "custo atribuído" por ação, que entra no seu preço médio (use-o no campo de preço).',
     secao: 'Eventos',
   },
+  comparativo: {
+    titulo: 'Comparativo com CDI, inflação e Ibovespa',
+    texto: 'Simula: "e se eu tivesse colocado o mesmo dinheiro, nas mesmas datas, em outro investimento?". Cada compra vira um aporte e cada venda ou provento vira um resgate. Responde se a bolsa está valendo a pena em relação às alternativas.',
+    exemplo: 'Você ganhou R$ 300 na bolsa; o CDI daria R$ 180 → você ficou R$ 120 acima da renda fixa.',
+    secao: 'Comparativo',
+  },
+  cdi: {
+    titulo: 'CDI',
+    texto: 'A taxa que os bancos usam entre si, praticamente igual à Selic. É a referência da renda fixa: Tesouro Selic, CDBs e fundos DI rendem perto de 100% do CDI, com risco bem menor que a bolsa. Por isso é a régua do "custo de oportunidade".',
+    secao: 'Comparativo',
+  },
+  ipca: {
+    titulo: 'IPCA (inflação)',
+    texto: 'O índice oficial de inflação do Brasil. Mostra quanto os preços subiram. Se a sua carteira rendeu menos que o IPCA, você perdeu poder de compra, mesmo com "lucro" em reais.',
+    secao: 'Comparativo',
+  },
+  ibovespa: {
+    titulo: 'Ibovespa',
+    texto: 'O principal índice da bolsa brasileira: a média das ações mais negociadas. Comparar com ele mostra se as suas escolhas foram melhores ou piores do que simplesmente comprar "a bolsa toda" (por exemplo, pelo ETF BOVA11).',
+    secao: 'Comparativo',
+  },
+  tir: {
+    titulo: 'Rentabilidade ao ano (TIR)',
+    texto: 'Taxa Interna de Retorno: a taxa anual que explica como o seu dinheiro cresceu, levando em conta QUANDO cada aporte entrou. Quem colocou R$ 1.000 há um ano e R$ 1.000 ontem não pode dividir o ganho por R$ 2.000 — a TIR resolve isso. Em prazos menores que 3 meses ela não é exibida, porque anualizar poucos dias distorce muito.',
+    secao: 'Comparativo',
+  },
+  ganhoReal: {
+    titulo: 'Ganho real',
+    texto: 'O ganho descontada a inflação: quanto o seu poder de compra aumentou de verdade. É calculado com os mesmos aportes corrigidos pelo IPCA.',
+    exemplo: 'Ganhou R$ 300, mas a inflação teria levado seus aportes a +R$ 90 → ganho real de R$ 210.',
+    secao: 'Comparativo',
+  },
   isencao20k: {
     titulo: 'Isenção de R$ 20 mil (ações)',
     texto: 'Se o total de VENDAS de ações no mês (o valor vendido, não o lucro) for de até R$ 20.000, o lucro dessas vendas é isento de IR. Não vale para FIIs, ETFs, BDRs nem day trade.',

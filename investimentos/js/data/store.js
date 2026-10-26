@@ -13,6 +13,7 @@ const vazio = () => ({
   proventos: [],
   cotacoes: {},     // { TICKER: { preco, variacaoDia, nome, atualizadoEm, manual } }
   fotografias: [],  // [{ data, patrimonio, custo }] — 1 por dia, para o gráfico de evolução
+  indices: null,    // { cdi, ipca, ibov, inicio, erros, atualizadoEm } — CDI/IPCA/Ibovespa (cache)
   config: {
     tokenBrapi: '',
     metas: {},       // { acao: 0.5, fii: 0.3, ... }
@@ -106,6 +107,11 @@ export const store = {
     salvar();
   },
 
+  salvarIndices(indices) {
+    estado.indices = indices;
+    salvar();
+  },
+
   // --- Configurações --------------------------------------------------------
   configurar(parcial) {
     estado.config = { ...estado.config, ...parcial };
@@ -118,7 +124,8 @@ export const store = {
       app: 'carteira-investimentos',
       versao: VERSAO_ESQUEMA,
       exportadoEm: new Date().toISOString(),
-      dados: { ...estado, config: { ...estado.config, tokenBrapi: '' } }, // nunca exporta o token
+      // nunca exporta o token; índices são baixados de novo quando preciso
+      dados: { ...estado, indices: null, config: { ...estado.config, tokenBrapi: '' } },
     };
   },
   importar(backup) {
